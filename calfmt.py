@@ -2,10 +2,6 @@
 
 # Skapat av Christian Davén 2005
 
-import error
-import timetable
-from i18n import *
-
 # DAISYKTH40818|20050103|080000|100000|Projects and Powergames F11|Sal A
 
 class Reader:

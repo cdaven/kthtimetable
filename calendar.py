@@ -165,7 +165,7 @@ class Time:
         elif (isinstance(arg, str) or isinstance(arg, unicode)) and len(arg) >= 6:
             hour = int(arg[:2])
             minute = int(arg[2:4])
-            second = int(arg[4:])
+            second = int(arg[4:6])
         elif isinstance(arg, int):
             hour = arg / 3600
             minute = (arg - hour * 3600) / 60
