@@ -4,6 +4,7 @@
 
 import error
 import timetable
+from i18n import *
 
 def isUTF8(string):
     "Klarar åtminstone åäö men inte hela UTF-8!"
@@ -33,10 +34,10 @@ class Reader:
             try:
                 input = file(input).readlines()
             except IOError:
-                raise error.ReadError(_("Kan inte lasa fran fil") + " " + input, input)
+                raise error.ReadError(U_("Could not read from") + " " + input, input)
 
         if not self.verifyFormat(input):
-            raise error.DataError(_("Felaktig vCalendar-data"))
+            raise error.DataError(U_("Bad vCalendar data"))
 
         events = []
         import encodings
@@ -113,5 +114,5 @@ class Writer:
         try:
             file(filename, "w+").writelines(data)
         except IOError:
-            raise error.WriteError(_("Kan inte skriva till fil"), filename)
+            raise error.WriteError(U_("Could not write to"), filename)
 

@@ -6,6 +6,7 @@ import urllib
 import re
 import error
 import calendar
+from i18n import *
 
 def getITUCourses(input = None, callback = None):
     """
@@ -19,7 +20,7 @@ def getITUCourses(input = None, callback = None):
             url = urllib.urlopen("http://www.it.kth.se/schema.html?termin=" + period +
                 "&program=0&institution=0&Visa=Visa")
         except IOError:
-            raise error.ReadError(_("Kunde inte lasa fran") + " www.it.kth.se/schema.html", "www.it.kth.se/schema.html")
+            raise error.ReadError(U_("Could not read from") + " www.it.kth.se/schema.html", "www.it.kth.se/schema.html")
 
         if callback: callback()
         input = url.read()
@@ -27,7 +28,7 @@ def getITUCourses(input = None, callback = None):
     if callback: callback()
 
     if len(input) == 0:
-        raise error.DataError(_("Schemageneratorn gav ingen data"))
+        raise error.DataError(U_("Received no data from") + " " + U_("the timetable server"))
 
     import timetable
     all = re.findall("value=\"(\d{3,})\"[^a-zåäöA-ZÅÄÖ0-9]*(.*?) \((.*?)\)", descape(input))

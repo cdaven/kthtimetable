@@ -41,6 +41,13 @@ class ConfigParserX(ConfigParser.SafeConfigParser):
 
         return val
 
+    def getboolean(self, section, key):
+        val = True
+        if ConfigParser.SafeConfigParser.has_option(self, section, key):
+            val = ConfigParser.SafeConfigParser.getboolean(self, section, key)
+
+        return val
+
     # en wrapper-metod som sparar Unicode-värdet som Latin-1
     def set(self, section, key, value):
         if isinstance(value, unicode):

@@ -70,7 +70,7 @@ class CourseList:
         for course in self.courses:
             if course == code: return course
 
-        raise ValueError(U_("Kursen") + " " + U_("finns inte") + " (" + U_("kod") + " " + str(code) + ")")
+        raise ValueError(U_("The course") + " " + U_("does not exist") + " (" + U_("code") + " " + str(code) + ")")
 
     def getCourseName(self, code):
         "Returnerar namnet (ev. användardefinierat) på en kurs"
@@ -173,7 +173,7 @@ class TimeTable:
             for event in remove:
                 self.eventlist.removeEvent(event.getID())
         else:
-            raise ValueError(U_("Felaktig kalla") + " " + source)
+            raise ValueError(U_("Bad source id") + ": " + source)
         
     def isEmpty(self):
         return self.eventlist.isEmpty()
@@ -212,7 +212,7 @@ class TimeTable:
                 events.append(event)
 
         if not coursefound:
-            raise ValueError(U_("Kursen") + " " + str(code) + " " + U_("finns inte"))
+            raise ValueError(U_("The course") + " " + str(code) + " " + U_("does not exist"))
             
         return events
 
@@ -263,7 +263,7 @@ class TimeTable:
         try:
             config.readfp(file(filename))
         except IOError:
-            raise error.ReadError(U_("Kan inte lasa fran fil"), filename)
+            raise error.ReadError(U_("Could not read from"), filename)
 
         # läser först in inställningarna och kurserna ...
         for section in config.sections():
@@ -295,13 +295,11 @@ class TimeTable:
                     event.course = courselist.getCourse(config.get(section, "course"))
                     event.type = config.get(section, "type")
                 except ConfigParser.NoOptionError:
-                    raise error.DataError(U_("Felaktig data i fil") + " " + filename)
+                    raise error.DataError(U_("Bad data in file") + " " + filename)
 
                 event.group = config.getintorzero(section, "group")
                 event.seriesno = config.getintorzero(section, "seriesno")
-                event.active = False
-                if config.getintorzero(section, "active") == 1:
-                    event.active = True
+                event.active = config.getboolean(section, "active")
 
                 self.addEvent(event)
 
@@ -332,7 +330,7 @@ class TimeTable:
                 
                 if event.group: config.set(event.getID(), "group", event.group)
                 if event.seriesno: config.set(event.getID(), "seriesno", event.seriesno)
-                if not event.active: config.set(event.getID(), "active", "0")
+                if not event.active: config.set(event.getID(), "active", "false")
         
         global courselist
         if not courselist.isEmpty():
@@ -344,7 +342,7 @@ class TimeTable:
         try:
             config.write(file(filename, "w+"))
         except IOError:
-            raise error.WriteError(U_("Kan inte skriva till fil"), filename)
+            raise error.WriteError(U_("Could not write to"), filename)
     
 # -----------------------------------------------------------
 class Course:
@@ -466,7 +464,7 @@ class Event:
     def getNiceString(self):
         string = "[" + self.begin.getNiceString() + "-" + self.end.getNiceString() + "] " + unicode(self)
         if not self.active:
-            string = U_("inaktiverad")
+            string = U_("inactivated")
         return string
 
     def setID(self, id):
@@ -499,7 +497,7 @@ class Event:
             self.group = data["group"]
             self.seriesno = data["seriesno"]
         else:
-            raise RuntimeError(U_("Ingen parser ar initialiserad"))
+            raise RuntimeError(U_("No parser has been initialized"))
     
     def copyFromDict(self, other):
         keys = other.keys()
@@ -540,14 +538,14 @@ class Event:
             except ValueError:
                 description = unicode(self.course) + " "
 
-        if self.type == u"Föreläsning": description += U_("F")
-        elif self.type == u"Övning": description += U_("O")
-        elif self.type == u"Lektion": description += U_("Lekt")
+        if self.type == u"Föreläsning": description += U_("Lect")
+        elif self.type == u"Övning": description += U_("Tut")
+        elif self.type == u"Lektion": description += U_("Lesson")
         elif self.type == u"Seminarium": description += U_("Sem")
-        elif self.type == u"Laboration": description += U_("Labb")
-        elif self.type == u"Kontrollskrivning": description += U_("KS")
-        elif self.type == u"Salsskrivning": description += U_("Tenta")
-        elif self.type == u"Tentamen": description += U_("Tenta")
+        elif self.type == u"Laboration": description += U_("Lab")
+        elif self.type == u"Kontrollskrivning": description += U_("Quiz")
+        elif self.type == u"Salsskrivning": description += U_("Exam")
+        elif self.type == u"Tentamen": description += U_("Exam")
         elif self.type == u"Workshop": description += U_("WS")
         elif self.type == u"Introduktion": description += U_("Intro")
         elif self.type == u"Information": description += U_("Info")
@@ -613,13 +611,13 @@ class EventList:
         try:
             del self.events[id]
         except KeyError:
-            raise ValueError(U_("Handelsen") + " " + str(id) + " " + U_("finns inte"))
+            raise ValueError(U_("The event") + " " + str(id) + " " + U_("does not exist"))
             
     def getEvent(self, id):
         try:
             return self.events[id]
         except KeyError:
-            raise ValueError(U_("Handelsen") + " " + str(id) + " " + U_("finns inte"))
+            raise ValueError(U_("The event") + " " + str(id) + " " + U_("does not exist"))
 
 # -----------------------------------------------------------
 class TimeTableComparator:
@@ -694,12 +692,12 @@ class HTMLExporter:
             'http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd'>
             <html xmlns='http://www.w3.org/1999/xhtml' xml:lang='sv'>
             <head>
-            <title>""" + U_("Schema") + """</title>
+            <title>""" + U_("TimeTable") + """</title>
             <meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
             <meta name='generator' content='KTH TimeTable' />
             <link rel='stylesheet' type='text/css' href='timetable-html.css' />
             </head>
-            <body><h1>""" + U_("Schema") + "</h1>"
+            <body><h1>""" + U_("TimeTable") + "</h1>"
 
         date = fromdate.getLastMonday()
         while date <= todate:
@@ -711,7 +709,7 @@ class HTMLExporter:
 
     def formatWeek(self, date):
         import settings
-        self.html += "<div class='week'><h2>" + U_("Vecka") + " " + str(date.getWeek()) + "</h2>"
+        self.html += "<div class='week'><h2>" + U_("Week") + " " + str(date.getWeek()) + "</h2>"
         for i in range(settings.lastweekday + 1):
             events = EventSorter().sort(self.timetable.getEventsForDate(date))
             self.formatDay(date, events)

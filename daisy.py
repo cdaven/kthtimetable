@@ -8,6 +8,7 @@ import re
 import timetable
 import error
 import settings
+from i18n import *
 
 # -----------------------------------------------------------
 class Conduit:
@@ -28,7 +29,7 @@ class Conduit:
             generated = url.read()
             if self.callback: self.callback()
         except IOError:
-            raise error.ReadError(_("Kunde inte lasa fran") + " " + _("schemaservern"))
+            raise error.ReadError(U_("Could not read from") + " " + U_("the timetable server"))
 
         start = generated.find("/servlet/schema.ics")
         end = generated.find("\"", start)

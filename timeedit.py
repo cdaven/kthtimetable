@@ -7,6 +7,7 @@ import calendar
 import re
 import error
 import settings
+from i18n import *
 
 # -----------------------------------------------------------
 class Conduit:
@@ -37,7 +38,7 @@ class Conduit:
                 print "skrev hämtad data till fil"
             return data
         except IOError:
-            raise error.ReadError(_("Kunde inte lasa fran") + " " + _("schemaservern"))
+            raise error.ReadError(U_("Could not read from") + " " + U_("the timetable server"))
     
     def getFromYearAndWeek(self):
         week = str((calendar.Date() - 14).getWeek())
@@ -63,12 +64,12 @@ class Conduit:
         try:
             data = self.urlopener.open(url, getdata).read()
         except IOError:
-            raise error.ReadError(_("Kunde inte lasa fran") + " " + _("schemaservern"))
+            raise error.ReadError(U_("Could not read from") + " " + U_("the timetable server"))
 
         rxcode = re.escape(code)
         rx = re.search("<TD>" + rxcode + "</TD>.*<TD>(\w.*?)</TD>", data, re.DOTALL|re.IGNORECASE)
         if not rx:
-            raise ValueError(_("Kursen") + " " + code + " " + _("finns inte"))
+            raise ValueError(U_("The course") + " " + code + " " + U_("does not exist"))
         
         import timetable
         return timetable.Course(code.upper(), rx.group(1))

@@ -9,9 +9,9 @@
 
 import sys
 import os, os.path
-import i18n
+from i18n import *
 
-i18n.getTranslation("sv")
+getTranslation("sv")
 
 # Raderar alla tmpXXXXXX-filer som skapats av PyInformationalMessagesFrame
 files = os.listdir(os.getcwd())
@@ -27,7 +27,7 @@ if len(sys.argv) > 1:
     elif sys.argv[1] == "tomorrow":
         events = timetable.timetable.getEventsForDate(calendar.Date() + 1)
     else:
-        print _("Okant kommando")
+        print U_("Unknown command")
         sys.exit(1)
         
     events = timetable.EventSorter().sort(events)
@@ -38,7 +38,7 @@ else:
         import wx
         import wx.lib.infoframe
     except:
-        print _("Kunde inte starta wxPython. Kontrollera att du har en version\nsom ar kompatibel med den installerade Python-versionen.")
+        print U_("Could not start wxPython.\nPlease make sure your installed version of wxPython is compatible with your Python version.")
         sys.exit(1)    
     
     import gui

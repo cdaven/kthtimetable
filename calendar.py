@@ -16,9 +16,9 @@ SUN = 6
 
 # -----------------------------------------------------------
 class Date:
-    WEEKDAYS = [U_("Man"), U_("Tis"), U_("Ons"), U_("Tor"), U_("Fre"), U_("Lor"), U_("Son")]
-    MONTHS = [U_("Januari"), U_("Februari"), U_("Mars"), U_("April"), U_("Maj"), U_("Juni"),
-            U_("Juli"), U_("Augusti"), U_("September"), U_("Oktober"), U_("November"), U_("December")]
+    WEEKDAYS = [U_("Mon"), U_("Tue"), U_("Wed"), U_("Thu"), U_("Fri"), U_("Sat"), U_("Sun")]
+    MONTHS = [U_("January"), U_("February"), U_("March"), U_("April"), U_("May"), U_("June"),
+            U_("July"), U_("August"), U_("September"), U_("October"), U_("November"), U_("December")]
 
     def __init__(self, arg=None):
         "Kan initialiseras med datetime.date, Date, sträng eller tomt"

@@ -29,7 +29,7 @@ class HolidayChecker:
             self.holidays[Date().getYear()] = self.generator.generate(Date().getYear())
             self.otherdays[Date().getYear()] = self.generator.generateOther(Date().getYear())
         else:
-            raise ValueError(U_("Helgdagsgeneratorn") + " " + str(id) + " " + U_("finns inte."))
+            raise ValueError(U_("The holiday generator") + " " + str(id) + " " + U_("does not exist"))
 
     def checkHoliday(self, date):
         """
@@ -128,18 +128,18 @@ class SweHolidays(HolidayGenerator):
         yearstr = str(year)
         
         # rörliga helgdagar
-        holidays.append(Holiday(easter - 2, U_("Langfredag")))
-        holidays.append(Holiday(easter + 1, U_("Annandag pask")))
-        holidays.append(Holiday(easter + 39, U_("Kristi himmelsfards dag")))
-        holidays.append(Holiday(midsummer - 1, U_("Midsommarafton")))
+        holidays.append(Holiday(easter - 2, U_("Good Friday")))
+        holidays.append(Holiday(easter + 1, U_("Easter Monday")))
+        holidays.append(Holiday(easter + 39, U_("Ascension Day")))
+        holidays.append(Holiday(midsummer - 1, U_("Midsummer Eve")))
 
         # fasta helgdagar
-        holidays.append(Holiday(Date(yearstr + "0101"), U_("Nyarsdagen")))
-        holidays.append(Holiday(Date(yearstr + "0106"), U_("Trettondedag jul")))
-        holidays.append(Holiday(Date(yearstr + "0501"), U_("Forsta maj")))
-        holidays.append(Holiday(Date(yearstr + "0606"), U_("Sveriges nationaldag")))
-        holidays.append(Holiday(Date(yearstr + "1225"), U_("Juldagen")))
-        holidays.append(Holiday(Date(yearstr + "1226"), U_("Annandag jul")))
+        holidays.append(Holiday(Date(yearstr + "0101"), U_("New Year's Day")))
+        holidays.append(Holiday(Date(yearstr + "0106"), U_("Epiphany")))
+        holidays.append(Holiday(Date(yearstr + "0501"), U_("May 1st")))
+        holidays.append(Holiday(Date(yearstr + "0606"), U_("Sweden's National Day")))
+        holidays.append(Holiday(Date(yearstr + "1225"), U_("Christmas Day")))
+        holidays.append(Holiday(Date(yearstr + "1226"), U_("Boxing Day")))
         
         return holidays
 
@@ -150,23 +150,23 @@ class SweHolidays(HolidayGenerator):
         yearstr = str(year)
 
         easter = self.getEaster(year)
-        holidays.append(Holiday(easter - 47, U_("Fettisdagen")))
+        holidays.append(Holiday(easter - 47, U_("Shrove Tuesday")))
 
         # Nationella flaggdagar och andra högtidsdagar som inte också är helgdagar
-        holidays.append(Holiday(Date(yearstr + "0128"), U_("Konungens namnsdag")))
-        holidays.append(Holiday(Date(yearstr + "0214"), U_("Alla hjartans dag")))
+        holidays.append(Holiday(Date(yearstr + "0128"), U_("The King's Name-Day")))
+        holidays.append(Holiday(Date(yearstr + "0214"), U_("St. Valentine's Day")))
         #holidays.append(Holiday(Date(yearstr + "0229"), U_("Skottdagen")))
-        holidays.append(Holiday(Date(yearstr + "0308"), U_("Internationella kvinnodagen")))
-        holidays.append(Holiday(Date(yearstr + "0312"), U_("Kronprinsessans namnsdag")))
-        holidays.append(Holiday(Date(yearstr + "0430"), U_("Konungens fodelsedag")))
-        holidays.append(Holiday(Date(yearstr + "0714"), U_("Kronprinsessans fodelsedag")))
-        holidays.append(Holiday(Date(yearstr + "0808"), U_("Drottningens namnsdag")))
-        holidays.append(Holiday(Date(yearstr + "1024"), U_("FN-dagen")))
-        holidays.append(Holiday(Date(yearstr + "1106"), U_("Gustav Adolfsdagen")))
-        holidays.append(Holiday(Date(yearstr + "1210"), U_("Nobeldagen")))
-        holidays.append(Holiday(Date(yearstr + "1213"), U_("Lucia")))
-        holidays.append(Holiday(Date(yearstr + "1223"), U_("Drottningens fodelsedag")))
-        holidays.append(Holiday(Date(yearstr + "1224"), U_("Julafton")))
-        holidays.append(Holiday(Date(yearstr + "1231"), U_("Nyarsafton")))
+        holidays.append(Holiday(Date(yearstr + "0308"), U_("International Women's Day")))
+        holidays.append(Holiday(Date(yearstr + "0312"), U_("The Crown Princess' Name-Day")))
+        holidays.append(Holiday(Date(yearstr + "0430"), U_("The King's Birthday")))
+        holidays.append(Holiday(Date(yearstr + "0714"), U_("The Crown Princess' Birthday")))
+        holidays.append(Holiday(Date(yearstr + "0808"), U_("The Queen's Name-Day")))
+        holidays.append(Holiday(Date(yearstr + "1024"), U_("United Nations Day")))
+        holidays.append(Holiday(Date(yearstr + "1106"), U_("The Gustavus Adolphus Day")))
+        holidays.append(Holiday(Date(yearstr + "1210"), U_("The Alfred Nobel Day")))
+        holidays.append(Holiday(Date(yearstr + "1213"), U_("Lucia Day")))
+        holidays.append(Holiday(Date(yearstr + "1223"), U_("The Queen's Birthday")))
+        holidays.append(Holiday(Date(yearstr + "1224"), U_("Christmas Eve")))
+        holidays.append(Holiday(Date(yearstr + "1231"), U_("New Year's Eve")))
 
         return holidays
