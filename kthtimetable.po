@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: Wed Dec 29 17:16:04 2004\n"
+"POT-Creation-Date: Wed Dec 29 23:51:12 2004\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -314,7 +314,7 @@ msgid "Empty string ignored"
 msgstr "Tom sträng ignorerad"
 
 #: gui.py:489
-msgid "Make settings"
+msgid "Change settings"
 msgstr "Gör inställningar"
 
 #: gui.py:496
