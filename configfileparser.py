@@ -32,8 +32,7 @@ class ConfigParserX(ConfigParser.SafeConfigParser):
 
     # en wrapper-metod som returnerar värdet som Unicode
     def get(self, section, key):
-        val = ConfigParser.SafeConfigParser.get(self, section, key)
-        return unicode(val, "latin_1")
+        return unicode(ConfigParser.SafeConfigParser.get(self, section, key), "latin_1")
 
     # en wrapper-metod som sparar Unicode-värdet som Latin-1
     def set(self, section, key, value):

@@ -22,24 +22,24 @@ class Date:
 
     def __init__(self, arg=None):
         "Kan initialiseras med datetime.date, Date, sträng eller tomt"
-        
-        if isinstance(arg, datetime.date):
-            year = arg.year
-            month = arg.month
-            day = arg.day
-        elif (isinstance(arg, str) or isinstance(arg, unicode)) and (len(arg) == 8 or len(arg) == 14):
-            year = int(arg[:4])
-            month = int(arg[4:6])
-            day = int(arg[6:8])
-        elif isinstance(arg, Date):
+
+        if isinstance(arg, Date):
             year = arg.getYear()
             month = arg.getMonth()
             day = arg.getDay()
+        elif isinstance(arg, datetime.date):
+            year = arg.year
+            month = arg.month
+            day = arg.day
+        elif (isinstance(arg, str) or isinstance(arg, unicode)) and len(arg) >= 8:
+            year = int(arg[:4])
+            month = int(arg[4:6])
+            day = int(arg[6:8])
         else:
             year = datetime.date.today().year
             month = datetime.date.today().month
             day = datetime.date.today().day
-        
+
         self.__date = datetime.date(year, month, day)
 
     def __str__(self):
@@ -154,18 +154,18 @@ class Date:
 # -----------------------------------------------------------
 class Time:
     def __init__(self, arg=None):
-        if isinstance(arg, datetime.time):
-            hour = arg.hour
-            minute = arg.minute
-            second = arg.second
-        elif (isinstance(arg, str) or isinstance(arg, unicode)) and len(arg) == 6:
-            hour = int(arg[:2])
-            minute = int(arg[2:4])
-            second = int(arg[4:])
-        elif isinstance(arg, Time):
+        if isinstance(arg, Time):
             hour = arg.getHour()
             minute = arg.getMinute()
             second = arg.getSecond()
+        elif isinstance(arg, datetime.time):
+            hour = arg.hour
+            minute = arg.minute
+            second = arg.second
+        elif (isinstance(arg, str) or isinstance(arg, unicode)) and len(arg) >= 6:
+            hour = int(arg[:2])
+            minute = int(arg[2:4])
+            second = int(arg[4:])
         elif isinstance(arg, int):
             hour = arg / 3600
             minute = (arg - hour * 3600) / 60

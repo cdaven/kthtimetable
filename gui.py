@@ -195,6 +195,8 @@ class MainFrame(wx.Frame):
 
             for event in timetable.timetable.getEventsForDate(date):
                 self.days[weekday].addEvent(event)
+
+            self.days[weekday].showEvents()
             self.days[weekday].Thaw()
 
             date += 1
@@ -1175,7 +1177,7 @@ class EventOrganiser:
             for clash in clashes:
                 clash.clashes = maxclashes
                 
-    def showAllEvents(self):
+    def showEvents(self):
         # den rena superklassen kan inte visa någon grafik,
         # däremot subklassen DayPanel
         if self.__class__ == EventOrganiser:
@@ -1210,7 +1212,6 @@ class EventOrganiser:
                 columns.append([event])
 
         self.countClashes(columns)
-        self.showAllEvents()
 
     def isClash(self, event1, event2):
         if event1 == event2:
