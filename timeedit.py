@@ -70,7 +70,7 @@ class Conduit:
         rxcode = re.escape(code)
         rx = re.search("<TD>(" + rxcode + ")</TD>.*<TD>(\w.*?)</TD>", data, re.DOTALL|re.IGNORECASE)
         if not rx:
-            raise ValueError(U_("The course") + " " + code + " " + U_("does not exist"))
+            raise ValueError(U_("The course ") + code + " " + U_("does not exist"))
         
         return timetable.Course(rx.group(1), rx.group(2))
 

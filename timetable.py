@@ -58,14 +58,14 @@ class CourseList:
         for course in self.courses:
             if course == id: return course
 
-        raise ValueError(U_("The course") + " " + U_("does not exist") + " (" + U_("code") + " " + str(id) + ")")
+        raise ValueError(U_("The course ") + U_("does not exist") + " (" + U_("code") + " " + str(id) + ")")
 
     def getCourseByCode(self, code):
         "Returnerar en kurs definierad av kurskod"
         for course in self.courses:
             if course.hasCode(code): return course
 
-        raise ValueError(U_("The course") + " " + U_("does not exist") + " (" + U_("code") + " " + str(id) + ")")
+        raise ValueError(U_("The course ") + U_("does not exist") + " (" + U_("code") + " " + str(id) + ")")
 
     def getCourseName(self, code):
         "Returnerar namnet (ev. användardefinierat) på en kurs"
@@ -155,7 +155,6 @@ class CachedCourseList(CourseList):
 
     def __init__(self):
         CourseList.__init__(self)
-        self.courses = []
         self.readFromFile()
 
     def readFromFile(self):
@@ -857,7 +856,7 @@ class EventList:
                 events.append(event)
 
         if not coursefound:
-            raise ValueError(U_("The course") + " " + str(course) + " " + U_("does not exist"))
+            raise ValueError(U_("The course ") + str(course) + " " + U_("does not exist"))
             
         return events
 

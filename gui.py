@@ -11,7 +11,7 @@ import error
 from i18n import *
 
 applicationname = u"KTH TimeTable"
-applicationversion = u"2.5"
+applicationversion = u"2.6"
 
 # -----------------------------------------------------------
 class MainFrame(wx.Frame):
@@ -49,10 +49,10 @@ class MainFrame(wx.Frame):
         layout.Add(self.statusbar, 0, wx.EXPAND)
 
         self.SetSizerAndFit(layout)
-        self.CentreOnScreen()
         wx.EVT_CLOSE(self, self.OnClose)
 
         self.SetSize(wx.Size(size_x, size_y))
+        self.CentreOnScreen()
         if maximized: self.Maximize()
 
         self.GoToday(None)
@@ -242,7 +242,7 @@ class MainFrame(wx.Frame):
             if timeeditcourses:
                 data += self.updateFromTimeEdit(timeeditcourses)
 
-            #file("dbg-caldata", "w+").writelines(data)
+            file("dbg-caldata", "w+").writelines(data)
 
             self.timetable.importCourses(data)
             self.timetable.save()
@@ -251,10 +251,9 @@ class MainFrame(wx.Frame):
             wx.MessageDialog(self, msg, U_("Server error"), style=wx.OK|wx.ICON_ERROR).ShowModal()
             return
         except ValueError, e:
-            raise
-            #msg = U_("The timetable fetched from the server is corrupt and unusable.")
-            #wx.MessageDialog(self, msg, U_("Server error"), style=wx.OK|wx.ICON_ERROR).ShowModal()
-            #return
+            msg = U_("The timetable fetched from the server is corrupt and unusable.")
+            wx.MessageDialog(self, msg, U_("Server error"), style=wx.OK|wx.ICON_ERROR).ShowModal()
+            return
         except error.WriteError:
             msg = U_("Could not save the timetable. The file may be write-protected.")
             wx.MessageDialog(self, msg, U_("File error"), style=wx.OK|wx.ICON_ERROR).ShowModal()
@@ -561,21 +560,32 @@ class CourseNamesDialog(OKCancelDialog):
         self.Centre()
 
     def SaveAndClose(self, evt):
+        cache = timetable.CachedCourseList()
         for i in range(len(self.courses)):
-            id = self.courses[i].id
+            course = self.courses[i]
             name = self.edits[i].GetValue()
 
             if not name:
-                msg = U_("You have entered an empty course name. The new name will be the course code.")
-                dialog = wx.MessageDialog(self, msg, U_("Empty string"),
-                    style=wx.OK|wx.CANCEL|wx.ICON_INFORMATION)
-                if dialog.ShowModal() == wx.ID_OK:
-                    self.timetable.setCourseName(id, id)
+                if course.isDaisy():
+                    name = cache.getCourse(course.id).name
+                    msg = U_("You entered no name for the course ") + course.code + ".\n" +\
+                        U_("The new name will be the official Daisy name.")
                 else:
+                    name = course.code
+                    msg = U_("You entered no name for the course ") + course.code + ".\n" +\
+                        U_("The new name will be the course code.")
+
+                dialog = wx.MessageDialog(self, msg, U_("No name"),
+                    style=wx.OK|wx.CANCEL|wx.ICON_INFORMATION)
+
+                if dialog.ShowModal() == wx.ID_OK:
+                    self.timetable.setCourseName(course.id, name)
+                else:
+                    self.edits[i].SetValue(name)
                     self.edits[i].SetFocus()
                     return
             else:
-                self.timetable.setCourseName(id, name)
+                self.timetable.setCourseName(course.id, name)
 
         self.EndModal(wx.ID_OK)
 
@@ -889,14 +899,14 @@ class ChooseCoursesDialog(OKCancelDialog):
             try:
                 self.courselist.InsertItems(courses)
             except ValueError:
-                msg = U_("The course") + " " + U_("is already chosen.")
+                msg = U_("The course ") + U_("is already chosen.")
                 wx.MessageDialog(self, msg, U_("Already chosen"),
                     style=wx.ICON_INFORMATION).ShowModal()
 
             self.courseedit.SetValue("")
         else:
-            msg = U_("The course") + " " + code + " " + U_("does not exist") + " " + U_("in Daisy or TimeEdit.")
-            wx.MessageDialog(self, msg, U_("The course") + " " + U_("does not exist"),
+            msg = U_("The course ") + code + " " + U_("does not exist") + " " + U_("in Daisy or TimeEdit.")
+            wx.MessageDialog(self, msg, U_("The course ") + U_("does not exist"),
                 style=wx.ICON_WARNING).ShowModal()
 
         self.SetFocus()
@@ -935,7 +945,7 @@ class ChooseCoursesDialog(OKCancelDialog):
         if self.radiodaisy.GetValue():
             settings.preferred_system = "Daisy"
 
-        self.timetable.clear()
+        self.timetable.clearCourses()
         for i in range(self.courselist.GetCount()):
             self.timetable.addCourse(self.courselist.GetClientData(i))
         self.timetable.removeOrphanEvents()
@@ -1168,7 +1178,6 @@ class CourseListBox(wx.ListBox):
         for course in courses:
             for i in range(self.GetCount()):
                 if course is self.GetClientData(i):
-                    print course
                     raise ValueError("Course already in list")
 
             self.Append(self.__courseToString(course), course)
