@@ -34,6 +34,7 @@ class CourseTest(xunittest.TestCase):
         self.failIfEqual(c1, c3)
         self.failIfEqual(c1, c2)
         self.failUnlessEqual(c3, c4)
+        self.failUnlessEqual(c1, c1)
         
     def testHasCode(self):
         c = timetable.Course("*:36/2I1225/2I1374/2I1190", "DSV-kurs")

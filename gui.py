@@ -463,7 +463,7 @@ class GroupsDialog(OKCancelDialog):
 
         for course in self.courses:
             try:
-                groups = self.timetable.getAllGroups(course.code)
+                groups = self.timetable.getAllGroups(course)
             except ValueError:
                 groups = []
                 msg = U_("There is no information on which groups") + " " + course.name + "\n" + U_("is divided into. You have to fetch the timetable first.")
@@ -474,7 +474,7 @@ class GroupsDialog(OKCancelDialog):
             if groups:
                 groups.sort()
                 groups.append(self.nogroup.encode("latin_1"))
-                rightcomponent = Choice(self, (70, -1), groups, course.code)
+                rightcomponent = Choice(self, (70, -1), groups, course)
 
                 # sätter först "ingen"/"alla" som vald
                 rightcomponent.SetStringSelection(self.nogroup)
@@ -511,7 +511,7 @@ class GroupsDialog(OKCancelDialog):
         for course in self.choices:
             group = course.GetStringSelection()
             if group == self.nogroup: group = ""
-            self.timetable.setCourseGroup(course.coursecode, group)
+            self.timetable.setCourseGroup(course.course.id, group)
 
         self.EndModal(wx.ID_OK)
 
@@ -522,7 +522,7 @@ class CourseNamesDialog(OKCancelDialog):
     def __init__(self, parent, timetable):
         OKCancelDialog.__init__(self, parent, U_("Name courses"))
 
-        self.coursecodes = []
+        self.courses = []
         self.edits = []
         self.timetable = timetable
 
@@ -536,7 +536,7 @@ class CourseNamesDialog(OKCancelDialog):
         layout = wx.BoxSizer(wx.VERTICAL)
 
         for course in courses:
-            self.coursecodes.append(course.code)
+            self.courses.append(course)
 
             text = StaticText(self, course.code, size=(110, -1))
             edit = wx.TextCtrl(self, -1, size=(240, -1))
@@ -555,20 +555,21 @@ class CourseNamesDialog(OKCancelDialog):
         self.Centre()
 
     def SaveAndClose(self, evt):
-        for i in range(len(self.coursecodes)):
-            code = self.coursecodes[i]
+        for i in range(len(self.courses)):
+            id = self.courses[i].id
             name = self.edits[i].GetValue()
 
             if not name:
-                msg = U_("You have entered an empty string. This entry will be ignored.")
-                dialog = wx.MessageDialog(self, msg, U_("Empty string ignored"), style=wx.OK|wx.CANCEL|wx.ICON_INFORMATION)
+                msg = U_("You have entered an empty course name. The new name will be the course code.")
+                dialog = wx.MessageDialog(self, msg, U_("Empty string"),
+                    style=wx.OK|wx.CANCEL|wx.ICON_INFORMATION)
                 if dialog.ShowModal() == wx.ID_OK:
-                    self.timetable.setCourseName(code, code)
+                    self.timetable.setCourseName(id, id)
                 else:
                     self.edits[i].SetFocus()
                     return
             else:
-                self.timetable.setCourseName(code, name)
+                self.timetable.setCourseName(id, name)
 
         self.EndModal(wx.ID_OK)
 
@@ -1127,9 +1128,9 @@ class ProgressDialog:
 
 # -----------------------------------------------------------
 class Choice(wx.Choice):
-    def __init__(self, parent, size, choices, coursecode):
+    def __init__(self, parent, size, choices, course):
         wx.Choice.__init__(self, parent, -1, size=size, choices=choices)
-        self.coursecode = coursecode
+        self.course = course
 
 
 # -----------------------------------------------------------
@@ -1592,8 +1593,26 @@ class EventPanel(Panel):
         (posx, posy) = self.calcPos(sizex)
         self.SetSize((sizex, sizey))
         self.MoveXY(posx, posy)
-        self.label.SetSize((sizex - 3, sizey - 3))
-        
+        self.resizeLabel()
+
+    def resizeLabel(self):
+        # flyttar ned texten om "panelen" börjar så högt upp att texten annars inte syns
+        ypos = self.GetPositionTuple()[1]
+        (sizex, sizey) = self.calcSize()
+
+        textypos = 2
+        if ypos < 0:
+            # skymmer delar av texten för att markera att aktiviteten börjar tidigare
+            textypos -= ypos + 10
+
+        if self.label:
+            self.label.SetSize((sizex - 3, sizey - 3))
+            self.label.MoveXY(2,textypos)
+        else:
+            # behöver sätta en storlek (size) för att inte radbrytas i Windows
+            self.label = StaticText(self, unicode(self.event), wordwrap=True,
+                size=(sizex-3, sizey-3), pos=(2,textypos))
+
     def paint(self):
         bgcolour = guisettings.bgcolour_event
         fgcolour = guisettings.colour_event_text
@@ -1615,16 +1634,6 @@ class EventPanel(Panel):
         if wx.MINOR_VERSION >= 5: # 2.5
             self.ClearBackground()
 
-        # flyttar ned texten om "panelen" börjar så högt upp att texten annars inte syns
-        ypos = self.GetPositionTuple()[1]
-        textypos = 2
-        if ypos < 0:
-            textypos -= ypos + 10 # skymmer delar av texten för att markera
-                                  # att aktiviteten börjar tidigare
-
-                                                                          # behöver sätta en storlek
-                                                                          # för att inte radbrytas i MSW
-        self.label = StaticText(self, unicode(self.event), wordwrap=True, size=(10,10), pos=(2,textypos))
         self.resize()
 
     def OnClick(self, evt):

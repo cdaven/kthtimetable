@@ -61,7 +61,7 @@ else:
     try:
         settings.save()
     except error.WriteError:
-        sys.stderr.write(U_("Could not save the settings. The file may be write-protected."))
+        sys.stderr.write(U_("Could not save the settings. The file may be write-protected.").encode("latin_1"))
 
 # -----------------------------------------------------------
 # The GNU General Public License is a Free Software license. Like any Free

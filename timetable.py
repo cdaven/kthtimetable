@@ -247,11 +247,11 @@ class TimeTable:
 
         return events
 
-    def getAllGroups(self, code):
+    def getAllGroups(self, course):
         "Returnerar alla möjliga grupper för en viss kurs"
 
         groups = []
-        events = self.getAllEventsForCourse(code)
+        events = self.getAllEventsForCourse(course)
         for event in events:
             if event.group and event.group not in groups:
                 groups.append(event.group)
@@ -426,8 +426,8 @@ class TimeTable:
     def getEvent(self, id):
         return self.eventlist.getEvent(id)
 
-    def getAllEventsForCourse(self, code):
-        return self.eventlist.getAllEventsForCourse(code)
+    def getAllEventsForCourse(self, course):
+        return self.eventlist.getAllEventsForCourse(course)
 
     def removeCourseEvents(self, course):
         self.eventlist.removeCourseEvents(course)
@@ -718,7 +718,7 @@ class Event:
 
         for course in self.cachedcourselist.getAllMatchingName(name):
             if self.timetable.hasCourse(course):
-                return self.timetable.getCourseByCode(course)
+                return self.timetable.getCourseByCode(course.code)
 
         return None
 
@@ -846,18 +846,18 @@ class EventList:
         
         return events
 
-    def getAllEventsForCourse(self, code):
+    def getAllEventsForCourse(self, course):
         "Returnerar alla händelser för en viss kurs, utan hänsyn till gruppval"
         
         events = []
         coursefound = False
         for event in self.getAll():
-            if event.course == code:
+            if event.course == course:
                 coursefound = True
                 events.append(event)
 
         if not coursefound:
-            raise ValueError(U_("The course") + " " + str(code) + " " + U_("does not exist"))
+            raise ValueError(U_("The course") + " " + str(course) + " " + U_("does not exist"))
             
         return events
 
