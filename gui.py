@@ -486,7 +486,7 @@ class SettingsDialog(OKCancelDialog):
     "Dialogruta för inställningar"
 
     def __init__(self, parent):
-        OKCancelDialog.__init__(self, parent, U_("Make settings"))
+        OKCancelDialog.__init__(self, parent, U_("Change settings"))
         layout = wx.BoxSizer(wx.VERTICAL)
         setting1 = wx.BoxSizer(wx.HORIZONTAL)
         setting2 = wx.BoxSizer(wx.HORIZONTAL)
