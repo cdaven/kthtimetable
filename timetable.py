@@ -276,7 +276,7 @@ class TimeTable:
     def isEmpty(self):
         return self.eventlist.isEmpty()
 
-    def importVCalData(self, input):
+    def importVCalData(self, input, course = None):
         "Importerar aktiviteter från vCalendar-format"
 
         import vcalendar
@@ -507,7 +507,7 @@ class Course:
 class Event:
     "En schemalagd händelse"
 
-    def __init__(self, idordict = None, date = None, begin = None, end = None, location = None, summary = None, active = True):
+    def __init__(self, data = None):
         """
             Tar emot strängrepresentationer för de fält som Daisy anger
             och gör om till bättre lämpade typer samt tolkar
@@ -526,24 +526,13 @@ class Event:
         self.seriesno = 0        # händelsetypens löpnummer (ex. (föreläsning) 7, (lektion) 3)
         
         self.parser = None
-        self.active = active     # händelsen är aktiv, dvs. ej "borttagen"
+        self.active = True       # händelsen är aktiv, dvs. ej "borttagen"
         
-        if not idordict:
-            # om id är None (eller inte satt) sätts inte instansens värden här
+        if not data:
+            # om data är None sätts inte instansens värden här
             return
-
-        if isinstance(idordict, dict):
-            self.copyFromDict(idordict)
         else:
-            self.setID(idordict)
-            self.setParser(idordict)
-            if summary and self.parser:
-                self.parseSummary(summary)
-    
-            if location: self.location = location
-            if date: self.date = calendar.Date(date)
-            if begin: self.begin = calendar.Time(begin)
-            if end: self.end = calendar.Time(end)
+            self.copyFromDict(data)
             
     def __repr__(self):
         "Returnerar en exakt beskrivning av aktuell händelse"
@@ -604,30 +593,31 @@ class Event:
             import timeedit
             self.parser = timeedit.SummaryParser()
 
-    def parseSummary(self, summary):
+    def _parseSummary(self, summary):
         global courselist
-        if self.parser:
-            data = self.parser.parse(summary)
-            self.type = data["type"]
+        data = self.parser.parse(summary)
+        self.type = data["type"]
+        self.group = data["group"]
+        self.seriesno = data["seriesno"]
+        if not self.location:
+            # om inte copyFromDict redan satt lokalen,
+            # som den gör för Daisy-aktiviteter
             self.location = data["location"]
-            self.group = data["group"]
-            self.seriesno = data["seriesno"]
 
-            try:
+        try:
+            if not self.course:
                 self.course = courselist.getCourse(data["course"])
-            except ValueError:
-                "Testar alternativa sätt att hitta rätt kurs för aktivitet"
+        except ValueError:
+            "Testar alternativa sätt att hitta rätt kurs för aktivitet"
 
-                if self.__id.startswith("DAISYKTH"):
-                    course = self._findDaisyCourse(data["course"])
-                    if course: self.course = course
-                    else: raise
-                elif self.__id.endswith("timeedit.evolvera.se"):
-                    course = self._findTimeEditCourse(data["course"])
-                    if course: self.course = course
-                    else: raise
-        else:
-            raise RuntimeError(U_("No parser has been initialized"))
+            if self.__id.startswith("DAISYKTH"):
+                course = self._findDaisyCourse(data["course"])
+                if course: self.course = course
+                else: raise
+            elif self.__id.endswith("timeedit.evolvera.se"):
+                course = self._findTimeEditCourse(data["course"])
+                if course: self.course = course
+                else: raise
 
     def _findDaisyCourse(self, name):
         """
@@ -669,17 +659,16 @@ class Event:
         if "id" in keys:
             self.setID(other["id"])
             self.setParser(other["id"])
-        if "summary" in keys: self.parseSummary(other["summary"])
+        if "course" in keys: self.course = other["course"]
         if "date" in keys: self.date = calendar.Date(other["date"])
         if "begin" in keys: self.begin = calendar.Time(other["begin"])
         if "end" in keys: self.end = calendar.Time(other["end"])
         if "type" in keys: self.type = other["type"]
         if "group" in keys: self.group = other["group"]
         if "seriesno" in keys: self.seriesno = other["seriesno"]
-        if "course" in keys: self.course = other["course"]
         if "active" in keys: self.active = other["active"]
-        if "location" in keys and other["location"]:
-            self.location = other["location"]
+        if "location" in keys: self.location = other["location"]
+        if "summary" in keys and self.parser: self._parseSummary(other["summary"])
 
     def _manipulateLocation(self, location):
         """
