@@ -71,7 +71,7 @@ class MainFrame(wx.Frame):
         # ritar ut saker för varje veckodag
         for i in range(settings.lastweekday + 1):
             # själva namnet på dagen (fylls i senare under updateView())
-            self.daylabels.append(StaticText(self, "Ons 15", size=(60, 15), style=wx.ST_NO_AUTORESIZE|wx.ALIGN_CENTRE|wx.SIMPLE_BORDER))
+            self.daylabels.append(StaticText(self, "Ons 15", size=(60, 15), style=wx.ALIGN_CENTRE|wx.SIMPLE_BORDER))
             self.daylabels[-1].SetBackgroundColour(guisettings.bgcolour_daylabel)
 
             daynames.Add(self.daylabels[-1], 1, wx.RIGHT|wx.LEFT, 1)
@@ -86,7 +86,7 @@ class MainFrame(wx.Frame):
         
     def AddButtonsAndLabels(self):
         self.weeklabel = StaticText(self, "Vecka 43", size=(-1, -1), style=wx.ALIGN_CENTRE)
-        self.datelabel = StaticText(self, "Juli 2004", size=(150, 25), style=wx.ST_NO_AUTORESIZE|wx.ALIGN_RIGHT)
+        self.datelabel = StaticText(self, "Juli 2004", size=(150, 25), style=wx.ALIGN_RIGHT)
 
         guisettings.font_default.SetWeight(wx.BOLD)
         guisettings.font_default.SetPointSize(guisettings.font_default.GetPointSize() + 1)
@@ -148,8 +148,8 @@ class MainFrame(wx.Frame):
     def OnClose(self, event):
         try:
             timetable.timetable.save()
-        except error.WriteError, e:
-            msg = U_("Could not save the timetable. The file may be write-protected. The filename is") + ": " + e.filename
+        except error.WriteError:
+            msg = U_("Could not save the timetable. The file may be write-protected.")
             wx.MessageDialog(self, msg, U_("File error"), style=wx.OK|wx.ICON_ERROR).ShowModal()
 
         self.Destroy()
@@ -388,7 +388,7 @@ class GroupsDialog(OKCancelDialog):
                 msg = U_("There is no information on which groups") + " " + course.name + "\n" + U_("is divided into. You have to fetch the timetable first.")
                 wx.MessageDialog(self, msg, U_("Timetable missing"), style=wx.OK|wx.ICON_INFORMATION).ShowModal()
 
-            text = StaticText(self, course.name, size=(150, -1), style=wx.ST_NO_AUTORESIZE)
+            text = StaticText(self, course.name, size=(150, -1))
 
             if groups:
                 groups.sort()
@@ -456,7 +456,7 @@ class CourseNamesDialog(OKCancelDialog):
         for course in courses:
             self.coursecodes.append(course.code)
 
-            text = StaticText(self, course.code, size=(110, -1), style=wx.ST_NO_AUTORESIZE)
+            text = StaticText(self, course.code, size=(110, -1))
             edit = wx.TextCtrl(self, -1, size=(240, -1))
             edit.SetValue(course.name)
             self.edits.append(edit)
@@ -504,25 +504,25 @@ class SettingsDialog(OKCancelDialog):
 
         size = (150,-1)
 
-        setting1.Add(StaticText(self, U_("Last day of week:"), size=size, style=wx.ST_NO_AUTORESIZE), 0, wx.ALL, 10)
+        setting1.Add(StaticText(self, U_("Last day of week:"), size=size), 0, wx.ALL, 10)
         self.daysinweek = wx.Choice(self, -1, size=(100,-1), choices=[U_("Fri"), U_("Sat"), U_("Sun")])
         self.daysinweek.SetSelection(settings.lastweekday - 4)
         setting1.Add(self.daysinweek, 0, wx.LEFT|wx.RIGHT, 10)
 
-        setting2.Add(StaticText(self, U_("Program language:"), size=size, style=wx.ST_NO_AUTORESIZE), 0, wx.ALL, 10)
+        setting2.Add(StaticText(self, U_("Program language:"), size=size), 0, wx.ALL, 10)
         self.language = wx.Choice(self, -1, size=(100,-1), choices=["English", "Svenska"])
         if settings.language == "en": self.language.SetSelection(0)
         elif settings.language == "sv": self.language.SetSelection(1)
         setting2.Add(self.language, 0, wx.LEFT|wx.RIGHT, 10)
 
-        setting3.Add(StaticText(self, U_("Start of day:"), size=size, style=wx.ST_NO_AUTORESIZE), 0, wx.ALL, 10)
+        setting3.Add(StaticText(self, U_("Start of day:"), size=size), 0, wx.ALL, 10)
         self.daybegin = wx.Choice(self, -1, size=(100,-1), choices=["08:00", "09:00", "10:00"])
         if settings.daybegin <= calendar.Time("080000"): self.daybegin.SetSelection(0)
         elif settings.daybegin <= calendar.Time("090000"): self.daybegin.SetSelection(1)
         else: self.daybegin.SetSelection(2)
         setting3.Add(self.daybegin, 0, wx.LEFT|wx.RIGHT, 10)
 
-        setting4.Add(StaticText(self, U_("End of day:"), size=size, style=wx.ST_NO_AUTORESIZE), 0, wx.ALL, 10)
+        setting4.Add(StaticText(self, U_("End of day:"), size=size), 0, wx.ALL, 10)
         self.dayend = wx.Choice(self, -1, size=(100,-1), choices=["17:00", "18:00", "19:00", "20:00", "21:00"])
         if settings.dayend <= calendar.Time("170000"): self.dayend.SetSelection(0)
         elif settings.dayend <= calendar.Time("180000"): self.dayend.SetSelection(1)
@@ -564,8 +564,7 @@ class ChooseCoursesDialog(OKCancelDialog):
         addbtn = wx.Button(self, 90, U_("&Add"))
         addbtn.SetDefault()
 
-        newcourse.Add(StaticText(self, U_("Enter one course code at a time:"), size=(200,-1),
-            style=wx.ST_NO_AUTORESIZE), 0, wx.TOP, 5)
+        newcourse.Add(StaticText(self, U_("Enter one course code at a time:"), size=(200,-1)), 0, wx.TOP, 5)
         newcourse.Add(self.courseedit, 0)
         newcourse.Add(wx.Window(self, -1), 1)
         newcourse.Add(addbtn, 0)
@@ -576,7 +575,7 @@ class ChooseCoursesDialog(OKCancelDialog):
         wx.EVT_BUTTON(self, 20, self.RemoveCourse)
         wx.EVT_BUTTON(self, 90, self.addCourse)
         
-        layout.Add(StaticText(self, U_("Choose the courses you want included in your timetable. Both TimeEdit and Daisy courses can be added. The course code may be incomplete for Daisy courses; all matching courses will then be added."), size=(450,60), wordwrap=True, style=wx.ST_NO_AUTORESIZE), 0, wx.LEFT|wx.TOP, 10)
+        layout.Add(StaticText(self, U_("Choose the courses you want included in your timetable. Both TimeEdit and Daisy courses can be added. The course code may be incomplete for Daisy courses; all matching courses will then be added."), size=(450,-1), wordwrap=True), 0, wx.LEFT|wx.TOP, 10)
         layout.Add(newcourse, 0, wx.LEFT|wx.TOP|wx.RIGHT, 10)
 
         self.radiodaisy = wx.RadioButton(self, -1, "Daisy")
@@ -716,7 +715,7 @@ class AboutDialog(wx.Dialog):
         msg += U_("The program and its source code is licensed under the terms of the GNU GPL.\n\nPlease send bug reports and suggestions to") + " <cd@kth.se>"
 
         layout = wx.BoxSizer(wx.VERTICAL)
-        layout.Add(StaticText(self, msg, wordwrap=True, size=(300,150), style=wx.ST_NO_AUTORESIZE),
+        layout.Add(StaticText(self, msg, wordwrap=True, size=(300,-1)),
             0, wx.LEFT|wx.TOP|wx.RIGHT, 10)
         layout.Add(btn, 0, wx.ALL, 10)
         self.SetSizerAndFit(layout)
@@ -956,27 +955,36 @@ class CourseListBox(wx.ListBox):
 
 # -----------------------------------------------------------
 class StaticText(wx.StaticText):
-    "Textruta med standardtypsnitt"
+    "Textruta med standardtypsnitt och radbrytning för wxGTK"
 
     def __init__(self, parent, label, pos = (-1,-1), size = (-1,-1), wordwrap = False, style = 0):
         label = label.replace("&", "&&")        
-        wx.StaticText.__init__(self, parent, -1, label, pos=pos, size=size, style=style)
+        wx.StaticText.__init__(self, parent, -1, label, pos=pos, size=size, style=style|wx.ST_NO_AUTORESIZE)
         self.SetFont(guisettings.font_default)
 
-        self.wordwrap = False
-        self.originallabel = ""
+        self.wordwrap = wordwrap
+        self.originallabel = label
+        self.bestheight = (size[1] == -1)
 
-        # "Wordwrap" finns endast i wxWindows och wxGTK med stöd för GTK2
-        if wx.Platform == "__WXGTK__" and wordwrap:
-            self.wordwrap = True
-            self.originallabel = label
-            self.SetLabel(self.wordWrap(label))
+        if wordwrap:
+            # radbryter texten
+            self.SetLabel(label)
 
         wx.EVT_SIZE(self, self.OnResize)
         
     def OnResize(self, evt):
         if self.wordwrap:
-            self.SetLabel(self.wordWrap(self.originallabel))
+            self.SetLabel(self.originallabel)
+
+    def SetLabel(self, label):
+        if self.wordwrap and (wx.Platform == "__WXGTK__" or self.bestheight):
+            label = self.wordWrap(label)
+        if wx.Platform == "__WXMSW__":
+            label = label.replace("\n", "\r\n")
+
+        wx.StaticText.SetLabel(self, label)
+        if self.bestheight:
+            self.setBestHeight()
         
     def getOneWord(self, text):
         separators = " -,"
@@ -1019,8 +1027,11 @@ class StaticText(wx.StaticText):
             if label: label += "\n"
             label += self.wrapLine(line)
         
-        return label       
+        return label
 
+    def setBestHeight(self):
+        "Sätter höjden så att all text visas"
+        self.SetClientSizeWH(self.GetClientSizeTuple()[0], self.GetBestSize()[1])
 
 # -----------------------------------------------------------
 class TimePanel(Panel):
@@ -1287,9 +1298,7 @@ class GraphicalEvent:
         return self.event.getNiceString()
 
     def show(self):
-        if self.panel:
-            self.panel.Destroy()
-
+        self.hide()
         self.panel = EventPanel(self.parent, self, self.clashes, self.column)
 
     def hide(self):
@@ -1369,7 +1378,9 @@ class EventPanel(Panel):
             textypos -= ypos + 10 # skymmer delar av texten för att markera
                                   # att aktiviteten börjar tidigare
 
-        self.label = StaticText(self, unicode(self.event), wordwrap=True, pos=(2,textypos), style=wx.ST_NO_AUTORESIZE)
+                                                                          # behöver sätta en storlek
+                                                                          # för att inte radbrytas i MSW
+        self.label = StaticText(self, unicode(self.event), wordwrap=True, size=(10,10), pos=(2,textypos))
         self.resize()
 
     def OnClick(self, evt):

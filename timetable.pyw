@@ -43,6 +43,7 @@ else:
         sys.exit(1)    
     
     import gui
+    import error
     
     class Application(wx.App):
         def OnInit(self):
@@ -56,7 +57,11 @@ else:
         
     app = Application(0)
     app.MainLoop()
-    settings.save()
+
+    try:
+        settings.save()
+    except error.WriteError:
+        sys.stderr.write(U_("Could not save the settings. The file may be write-protected."))
 
 # -----------------------------------------------------------
 # The GNU General Public License is a Free Software license. Like any Free
