@@ -6,7 +6,8 @@ import timetable
 import calendar
 import settings
 
-subscription_url = "http://chrome/wap/index.py"
+upload_url = "http://kthtimetable.sourceforge.net/cgi-bin/upload.py"
+fetch_url = "http://kthtimetable.sourceforge.net/cgi-bin/fetch.py"
 
 # -----------------------------------------------------------
 class Subscription:
@@ -16,10 +17,11 @@ class Subscription:
 
     def get(self, userid):
         import urllib
-        global subscription_url
+        global fetch_url
+
         course = SubscribedCourse(userid)
         self.timetable.addCourse(course)
-        self.timetable.importOneCourse(urllib.urlopen(subscription_url + "/fetch?" +
+        self.timetable.importOneCourse(urllib.urlopen(fetch_url +
             urllib.quote_plus(userid)).readlines(), course)
 
         # ändrar alla hämtade Event till SubscribedEvent
@@ -33,20 +35,75 @@ class Subscription:
             course = self.timetable.getCourse(userid)
             self.timetable.removeCourseEvents(course)
             self.timetable.removeCourse(userid)
-        except ValueError:
+        except ValueError, e:
             pass
 
     def put(self):
         import urllib
         from email.MIMEText import MIMEText
-        global subscription_url
+        global upload_url
 
         if settings.publish and settings.publish_userid:
             vars = urllib.urlencode({"courselist": self.timetable.pickleCourses(), "username": settings.publish_userid})
-            if urllib.urlopen("http://chrome/wap/index.py/upload", vars).read() == "OK":
+            if urllib.urlopen(upload_url, vars).read().endswith("OK"):
                 return True
 
         return False
+
+
+# -----------------------------------------------------------
+class Group:
+
+    def __init__(self, name, members = []):
+        newmembers = []
+        for member in members:
+            if not isinstance(member, unicode):
+                member = unicode(member, "latin_1")
+            newmembers.append(member)
+
+        self._name = name
+        self._members = newmembers
+        self._visible = False
+
+    def __str__(self):
+        memberstring = ""
+        for member in self._members:
+            memberstring += member.encode("latin_1") + "|"
+        return memberstring[:-1]
+
+    def getName(self):
+        return self._name
+
+    def setName(self, name):
+        self._name = name
+
+    def getMembers(self):
+        return self._members
+
+    def setMembers(self, members):
+        self._members = members
+
+    def show(self, timetable):
+        ss = Subscription(timetable)
+        for member in self._members:
+            ss.get(member)
+        
+        EventCompresser().compress(timetable)
+        self._visible = True
+
+    def hide(self, timetable):
+        ss = Subscription(timetable)
+        for member in self._members:
+            ss.remove(member)
+
+        self._visible = False
+
+    def isVisible(self):
+        return self._visible
+
+    def copyStatus(self, other):
+        self._visible = other.isVisible()
+
 
 # -----------------------------------------------------------
 class EventCompresser:
@@ -91,6 +148,7 @@ class EventCompresser:
             except ValueError:
                 pass
 
+
 # -----------------------------------------------------------
 class SubscribedCourse(timetable.Course):
     "En 'kurs' för prenumererade aktiviteter"
@@ -123,14 +181,6 @@ class SubscribedEvent(timetable.Event):
         self.type = u"Föreläsning"
         self.names = [unicode(event.course)]
 
-        #self.__id = data["id"]
-        #self.course = data["course"]
-        #self.date = calendar.Date(data["date"])
-        #self.begin = calendar.Time(data["begin"])
-        #self.end = calendar.Time(data["end"])
-        #self.type = u"Föreläsning"
-        #self.names = [data["course"]]
-
     def __unicode__(self):
         string = ""
         for name in self.names:
@@ -157,7 +207,7 @@ class SubscribedEvent(timetable.Event):
                 self.names.append(name)
 
     def copyDetails(self, other):
-        self.addNamesFrom(other)
+        pass
 
     def getID(self):
         return self.__id

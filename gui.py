@@ -113,15 +113,13 @@ class MainFrame(wx.Frame):
         menubar = wx.MenuBar()
 
         menu = wx.Menu()
-        menu.Append(120, U_("&Export..."))
-        menu.Append(150, U_("IMPORT"))
+        menu.Append(110, U_("&Export..."))
         menu.AppendSeparator()
-        menu.Append(999, U_("&Quit"))
+        menu.Append(120, U_("&Quit"))
         menubar.Append(menu, U_("&File"))
 
-        wx.EVT_MENU(self, 120, self.ExportEvents)
-        wx.EVT_MENU(self, 150, self.Import)
-        wx.EVT_MENU(self, 999, self.OnClose)
+        wx.EVT_MENU(self, 110, self.ExportEvents)
+        wx.EVT_MENU(self, 120, self.OnClose)
 
         menu = wx.Menu()
         menu.Append(210, U_("Choose &courses..."))
@@ -139,21 +137,22 @@ class MainFrame(wx.Frame):
         wx.EVT_MENU(self, 240, self.NameCourses)
         wx.EVT_MENU(self, 250, self.MakeSettings)
 
-        menu = wx.Menu()
-        menu.Append(310, U_("Create &new group..."))
-        menu.AppendSeparator()
-        menubar.Append(menu, U_("&Subscriptions"))
+        #menu = wx.Menu()
+        #menu.Append(310, U_("Create &new group..."))
+        #menu.AppendSeparator()
+        #menubar.Append(menu, U_("&Subscriptions"))
 
-        wx.EVT_MENU(self, 310, self.CreateSubscription)
-        #wx.EVT_MENU_RANGE(self, 320, 350, self.Menu401To403)
+        #wx.EVT_MENU(self, 310, self.CreateSubscription)
+        #wx.EVT_MENU_RANGE(self, 320, 900, self.SubscriptionGroupMenus)
 
         menu = wx.Menu()
-        menu.Append(410, U_("&About..."))
+        menu.Append(100, U_("&About..."))
         menubar.Append(menu, U_("&Help"))
 
-        wx.EVT_MENU(self, 410, self.About)
+        wx.EVT_MENU(self, 100, self.About)
 
         self.SetMenuBar(menubar)
+        #self.updateGroupMenu()
 
     def OnClose(self, event):
         try:
@@ -216,12 +215,6 @@ class MainFrame(wx.Frame):
 
             date += 1
 
-    def Import(self, evt):
-        import subscription
-        subscription.Subscription(self.timetable).get("cd")
-        #subscription.EventCompresser().compress()
-        self.updateView()
-
     def ExportEvents(self, evt):
         ExportDialog(self, self.timetable).ShowModal()
         self.SetFocus()
@@ -243,7 +236,7 @@ class MainFrame(wx.Frame):
             if timeeditcourses:
                 data += self.updateFromTimeEdit(timeeditcourses)
 
-            file("dbg-caldata", "w+").writelines(data)
+            #file("dbg-caldata", "w+").writelines(data)
 
             self.timetable.importCourses(data)
             self.timetable.save()
@@ -263,8 +256,13 @@ class MainFrame(wx.Frame):
 
         self.updateView()
 
-        import subscription
-        subscription.Subscription(self.timetable).put()
+        #if settings.publish:
+        #    import subscription
+        #    progressdialog = ProgressDialog(self, U_("Publishing timetable"), [U_("Uploading to") + " sf.net"])
+        #    progressdialog.startProgress()
+        #    subscription.Subscription(self.timetable).put()
+        #    # TODO: Visa fel om det inte gick
+        #    progressdialog.stopProgress()
 
     def updateFromTimeEdit(self, codes):
         import timeedit
@@ -281,7 +279,7 @@ class MainFrame(wx.Frame):
 
     def updateFromDaisy(self, ids):
         import daisy
-        progressdialog = ProgressDialog(self, U_("Fetching the timetable from") + " Daisy", [U_("Connecting to") + " it.kth.se...", U_("Receiving data..."), U_("Generating timetable..."), U_("Receiving timetable...")])
+        progressdialog = ProgressDialog(self, U_("Fetching the timetable from") + " Daisy", [U_("Connecting to") + " it.kth.se...", U_("Receiving timetable..."), U_("Receiving timetable..."), U_("Receiving timetable...")])
         progressdialog.startProgress()
         try:
             data = daisy.Conduit(progressdialog.increaseProgress).getvCalendarData(ids)
@@ -291,12 +289,6 @@ class MainFrame(wx.Frame):
         
         progressdialog.stopProgress()
         return data
-
-    def NewEvent(self, evt):
-        pass
-
-    def Preferences(self, evt):
-        pass
 
     def About(self, evt):
         AboutDialog(self).ShowModal()
@@ -325,10 +317,79 @@ class MainFrame(wx.Frame):
             self.updateView()
         self.SetFocus()
 
-    def CreateSubscription(self, evt):
-        if SubscriptionDialog(self, self.timetable).ShowModal() == wx.ID_OK:
+    def CreateSubscription(self, evt = None, name = ""):
+        if SubscriptionDialog(self, self.timetable, name).ShowModal() == wx.ID_OK:
             self.updateView()
         self.SetFocus()
+
+    def updateGroupMenu(self):
+        ID_FIRST = 320
+        ID_MAIN = 1000
+        ID_STEP = 10
+
+        menubar = self.GetMenuBar()
+        menu = menubar.GetMenu(menubar.FindMenu(U_("&Subscriptions")))
+
+        # tar först bort tidigare gruppmenyer
+        for i in range(menu.GetMenuItemCount() - 2):
+            id = ID_MAIN + ID_FIRST + ID_STEP * i
+            menu.Remove(menu.FindItemById(id).GetId())
+
+        # lägger till en undermeny för varje grupp
+        names = self.timetable.getAllSubscriptionGroupNames()
+        menuid = ID_FIRST
+        for group in map(self.timetable.getSubscriptionGroup, names):
+            submenu = wx.Menu()
+            submenu.AppendCheckItem(menuid, U_("&Show group"))
+
+            if group.isVisible():
+                submenu.FindItemById(menuid).Check()
+
+            submenu.Append(menuid + 1, U_("&Edit group"))
+            submenu.Append(menuid + 2, U_("&Remove group"))
+            menu.AppendMenu(ID_MAIN + menuid, group.getName(), submenu)
+            menuid += ID_STEP
+
+    def SubscriptionGroupMenus(self, evt):
+        ID_FIRST = 320
+        ID_MAIN = 1000
+        ID_STEP = 10
+
+        id = evt.GetId()
+        menubar = self.GetMenuBar()
+        menu = menubar.GetMenu(menubar.FindMenu(U_("&Subscriptions")))
+
+        if str(id)[-1] == "0": # visa grupp
+            name = menu.FindItemById(id + ID_MAIN).GetText()
+            if menu.FindItemById(id).IsChecked():
+                # hämta och visa grupp
+                progressdialog = ProgressDialog(self, U_("Fetching timetable"), [U_("Receiving timetable...")])
+                progressdialog.startProgress()
+                self.timetable.getSubscriptionGroup(name).show(self.timetable)
+                # TODO: Visa fel om det inte gick
+                progressdialog.stopProgress()
+            else:
+                # dölj grupp
+                self.timetable.getSubscriptionGroup(name).hide(self.timetable)
+
+            self.updateView()
+
+        elif str(id)[-1] == "1": # redigera grupp
+            name = menu.FindItemById(id + ID_MAIN - 1).GetText()
+            self.CreateSubscription(name = name)
+            self.updateGroupMenu()
+
+        elif str(id)[-1] == "2": # ta bort grupp
+            name = menu.FindItemById(id + ID_MAIN - 2).GetText()
+
+            # döljer gruppen om den visas
+            if menu.FindItemById(id - 2).IsChecked():
+                print "hiding group first", name
+                self.timetable.getSubscriptionGroup(name).hide(self.timetable)
+                self.updateView()
+
+            self.timetable.removeSubscriptionGroup(name)
+            self.updateGroupMenu()
 
 
 # -----------------------------------------------------------
@@ -550,28 +611,28 @@ class SettingsDialog(OKCancelDialog):
         else: self.dayend.SetSelection(4)
         setting4.Add(self.dayend, 0, wx.LEFT|wx.RIGHT, 10)
 
-        boxtitle = wx.StaticBox(self, -1, U_("Publishing"))
-        setting5 = wx.StaticBoxSizer(boxtitle, wx.VERTICAL)
+        #boxtitle = wx.StaticBox(self, -1, U_("Publishing"))
+        #setting5 = wx.StaticBoxSizer(boxtitle, wx.VERTICAL)
 
-        self.radiobtnDoNotPublish = wx.RadioButton(self, -1, U_("Do not publish timetable"))
-        self.radiobtnPublish = wx.RadioButton(self, -1, U_("Publish timetable with id:"))
-        self.userid = wx.TextCtrl(self, -1, value=settings.publish_userid)
+        #self.radiobtnDoNotPublish = wx.RadioButton(self, -1, U_("Do not publish timetable"))
+        #self.radiobtnPublish = wx.RadioButton(self, -1, U_("Publish timetable with id:"))
+        #self.userid = wx.TextCtrl(self, -1, value=settings.publish_userid)
 
-        self.userid.Disable()
-        self.radiobtnDoNotPublish.SetValue(True)
-        if settings.publish:
-            self.userid.Enable(True)
-            self.radiobtnPublish.SetValue(True)
+        #self.userid.Disable()
+        #self.radiobtnDoNotPublish.SetValue(True)
+        #if settings.publish:
+        #    self.userid.Enable(True)
+        #    self.radiobtnPublish.SetValue(True)
 
-        radiotxt = wx.BoxSizer(wx.HORIZONTAL)
-        radiotxt.Add(self.radiobtnPublish, 0, wx.ALL, 5)
-        radiotxt.Add(self.userid)
+        #radiotxt = wx.BoxSizer(wx.HORIZONTAL)
+        #radiotxt.Add(self.radiobtnPublish, 0, wx.ALL, 5)
+        #radiotxt.Add(self.userid)
 
-        wx.EVT_RADIOBUTTON(self, self.radiobtnDoNotPublish.GetId(), self.OnPublishDeselect)
-        wx.EVT_RADIOBUTTON(self, self.radiobtnPublish.GetId(), self.OnPublishSelect)
+        #wx.EVT_RADIOBUTTON(self, self.radiobtnDoNotPublish.GetId(), self.OnPublishDeselect)
+        #wx.EVT_RADIOBUTTON(self, self.radiobtnPublish.GetId(), self.OnPublishSelect)
 
-        setting5.Add(self.radiobtnDoNotPublish, 0, wx.ALL, 5)
-        setting5.Add(radiotxt)
+        #setting5.Add(self.radiobtnDoNotPublish, 0, wx.ALL, 5)
+        #setting5.Add(radiotxt)
 
         layout.Add(StaticText(self, U_("The settings will need a\nprogram restart to take effect.")), 0,
             wx.EXPAND|wx.ALL, 10)
@@ -579,7 +640,7 @@ class SettingsDialog(OKCancelDialog):
         layout.Add(setting3, 0, wx.TOP|wx.LEFT|wx.RIGHT, 10)
         layout.Add(setting4, 0, wx.TOP|wx.LEFT|wx.RIGHT, 10)
         layout.Add(setting2, 0, wx.ALL, 10)
-        layout.Add(setting5, 0, wx.EXPAND|wx.ALL, 10)
+        #layout.Add(setting5, 0, wx.EXPAND|wx.ALL, 10)
         layout.Add(self.buttons, 0, wx.EXPAND|wx.ALL, 10)
 
         self.SetSizerAndFit(layout)
@@ -611,8 +672,8 @@ class SettingsDialog(OKCancelDialog):
         #    else:
         #        return
 
-        settings.publish = self.radiobtnPublish.GetValue()
-        settings.publish_userid = self.userid.GetValue()
+        #settings.publish = self.radiobtnPublish.GetValue()
+        #settings.publish_userid = self.userid.GetValue()
 
         self.EndModal(wx.ID_OK)
 
@@ -621,10 +682,11 @@ class SettingsDialog(OKCancelDialog):
 class SubscriptionDialog(OKCancelDialog):
     "Dialogruta för hantering av en prenumerationsgrupp"
 
-    def __init__(self, parent, ttable):
+    def __init__(self, parent, ttable, name):
         OKCancelDialog.__init__(self, parent, U_("Select group members"))
 
         self.timetable = ttable
+        self.originalname = name
 
         layout = wx.BoxSizer(wx.VERTICAL)
         groupname = wx.BoxSizer(wx.HORIZONTAL)
@@ -632,6 +694,7 @@ class SubscriptionDialog(OKCancelDialog):
 
         groupname.Add(StaticText(self, U_("Enter group name:")))
         self.groupedit = wx.TextCtrl(self, -1, size=(150, -1))
+        self.groupedit.SetValue(name)
         groupname.Add(self.groupedit, 0, wx.LEFT, 10)
 
         self.useredit = wx.TextCtrl(self, -1, size=(150, -1))
@@ -641,7 +704,10 @@ class SubscriptionDialog(OKCancelDialog):
         newuser.Add(self.useredit, 0)
         newuser.Add(addbtn, 0, wx.LEFT, 10)
 
-        self.userlist = wx.ListBox(self, -1, size=(300,250), style=wx.LB_EXTENDED|wx.LB_SORT)
+        members = []
+        if name:
+            members = ttable.getSubscriptionGroup(name).getMembers()
+        self.userlist = wx.ListBox(self, -1, size=(300,250), choices=members, style=wx.LB_EXTENDED|wx.LB_SORT)
 
         layout.Add(groupname, 0, wx.LEFT|wx.TOP|wx.RIGHT, 10)
 
@@ -691,6 +757,29 @@ class SubscriptionDialog(OKCancelDialog):
             self.userlist.Delete(self.userlist.FindString(item))
 
     def SaveAndClose(self, evt):
+        if not self.groupedit.GetValue():
+            msg = U_("Please enter a name for this group.")
+            wx.MessageDialog(self, msg, U_("Group name missing"),
+                style=wx.OK|wx.ICON_WARNING).ShowModal()
+            return
+
+        if self.userlist.GetCount():
+            members = []
+            for i in range(self.userlist.GetCount()):
+                members.append(self.userlist.GetString(i))
+
+            self.timetable.addSubscriptionGroup(self.groupedit.GetValue(), members)
+            original = self.timetable.getSubscriptionGroup(self.originalname)
+            if original:
+                self.timetable.getSubscriptionGroup(self.groupedit.GetValue()).copyStatus(original)
+                self.timetable.removeSubscriptionGroup(self.originalname)
+        else:
+            msg = U_("The group is empty. Do you want to remove it?")
+            dialog = wx.MessageDialog(self, msg, U_("Group name missing"), style=wx.YES_NO|wx.ICON_QUESTION)
+            if dialog.ShowModal() == wx.ID_YES:
+                self.timetable.removeSubscriptionGroup(self.groupedit.GetValue())
+
+        self.GetParent().updateGroupMenu()
         self.EndModal(wx.ID_OK)
 
 
@@ -1020,7 +1109,7 @@ class ProgressDialog:
     def startProgress(self):
         self.progress = 0
         self.progressdialog = wx.ProgressDialog(self.caption, self.messages[0],
-            maximum=len(self.messages) + 1, parent=self.parent)
+            maximum=len(self.messages), parent=self.parent, style=wx.PD_AUTO_HIDE)
     
     def increaseProgress(self):
         self.progress += 1
@@ -1029,6 +1118,8 @@ class ProgressDialog:
         self.parent.UpdateWindowUI()
 
     def stopProgress(self):
+        self.progressdialog.Update(self.progress + 1, self.messages[self.progress])
+        self.progressdialog.UpdateWindowUI()
         self.progressdialog.Destroy()
 
 

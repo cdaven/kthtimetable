@@ -48,7 +48,6 @@ class CourseList:
     def removeCourse(self, code):
         "Tar bort en kurs ur listan"
         self.courses.remove(self.getCourse(code))
-        print "tar inte bort alla kurshändelser!"
 
     def hasCourse(self, course):
         for c in self.courses:
@@ -148,7 +147,10 @@ class CachedCourseList(CourseList):
 
     def __init__(self):
         CourseList.__init__(self)
+        self.courses = []
+        self.readFromFile()
 
+    def readFromFile(self):
         import os.path
         import time
 
@@ -215,6 +217,7 @@ class TimeTable:
     def __init__(self):
         self.eventlist = EventList(self)
         self.courselist = CourseList()
+        self.groups = {}
         self.updated = None
         
     def clear(self):
@@ -292,6 +295,28 @@ class TimeTable:
             if not self.hasCourse(event.course):
                 self.removeEvent(event.getID())
 
+    def addSubscriptionGroup(self, name, members):
+        if not isinstance(name, unicode):
+            name = unicode(name, "latin_1")
+
+        if isinstance(members, str):
+            members = members.split("|")
+        self.groups[name] = subscription.Group(name, members)
+
+    def getAllSubscriptionGroupNames(self):
+        names = self.groups.keys()
+        names.sort()
+        return names
+
+    def getSubscriptionGroup(self, name):
+        return self.groups[name]
+
+    def removeSubscriptionGroup(self, name):
+        try:
+            del self.groups[name]
+        except KeyError:
+            pass
+
     def load(self, filename = ""):
         "Läser in schemat från en INI-liknande fil"
 
@@ -324,9 +349,16 @@ class TimeTable:
                     data = pair[1].split("|")
                     self.addCourse(code, data[0], int(data[1]), data[2])
 
+            elif section == "groups":
+                pairs = config.items(section)
+                for pair in pairs:
+                    name = pair[0]
+                    members = pair[1].split("|")
+                    self.addSubscriptionGroup(name, members)
+
         # ... och därefter alla händelser som beror på de inlästa kurserna
         for section in config.sections():
-            if section != "main" and section != "courses" and section != "settings":
+            if section != "main" and section != "courses" and section != "settings" and section != "groups":
                 event = Event(self)
 
                 event.setID(section)
@@ -376,6 +408,11 @@ class TimeTable:
             for course in self.getAllPersistentCourses():
                 value = course.name + "|" + str(course.id) + "|" + course.group
                 config.set("courses", course.code, value)
+
+        if self.groups:
+            config.add_section("groups")
+            for name in self.getAllSubscriptionGroupNames():
+                config.set("groups", name.encode("latin_1"), str(self.getSubscriptionGroup(name)))
 
         try:
             config.write(file(filename, "w+"))
@@ -670,6 +707,9 @@ class Event:
             som redan finns i kurslistan.
         """
 
+        if self.cachedcourselist.isEmpty():
+            self.cachedcourselist.readFromFile()
+
         for course in self.cachedcourselist.getAllMatchingName(name):
             if self.timetable.hasCourse(course):
                 return self.timetable.getCourse(course)
@@ -863,6 +903,7 @@ class EventList:
                 # den händelsen ignoreras
                 import sys
                 sys.stderr.write("\n" + str(e) + "\n")
+                return
 
         EventCleaner().mark(self._add(event))
 
@@ -940,7 +981,7 @@ class VCalendarExporter:
 # -----------------------------------------------------------
 class HTMLExporter:
 
-    def export(self, filename, timetable, fromdate, todate):
+    def generate(self, timetable, fromdate, todate):
         self.timetable = timetable
         self.html = """<!DOCTYPE html PUBLIC '-//W3C//DTD XHTML 1.1//EN'
             'http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd'>
@@ -959,6 +1000,10 @@ class HTMLExporter:
             date += 7
             
         self.html += "</body></html>"
+        return self.html.encode("utf8")
+
+    def export(self, filename, timetable, fromdate, todate):
+        self.generate(timetable, fromdate, todate)
         file(filename, "w+").write(self.html.encode("utf8"))
 
     def formatWeek(self, date):
