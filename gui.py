@@ -11,7 +11,7 @@ import error
 from i18n import *
 
 applicationname = u"KTH TimeTable"
-applicationversion = u"2.4"
+applicationversion = u"2.5"
 
 # -----------------------------------------------------------
 class MainFrame(wx.Frame):
@@ -504,8 +504,8 @@ class SettingsDialog(OKCancelDialog):
 
         size = (150,-1)
 
-        setting1.Add(StaticText(self, U_("Days in week:"), size=size, style=wx.ST_NO_AUTORESIZE), 0, wx.ALL, 10)
-        self.daysinweek = wx.Choice(self, -1, size=(100,-1), choices=["5", "6", "7"])
+        setting1.Add(StaticText(self, U_("Last day of week:"), size=size, style=wx.ST_NO_AUTORESIZE), 0, wx.ALL, 10)
+        self.daysinweek = wx.Choice(self, -1, size=(100,-1), choices=[U_("Fri"), U_("Sat"), U_("Sun")])
         self.daysinweek.SetSelection(settings.lastweekday - 4)
         setting1.Add(self.daysinweek, 0, wx.LEFT|wx.RIGHT, 10)
 
@@ -546,7 +546,7 @@ class SettingsDialog(OKCancelDialog):
         settings.dayend = calendar.Time(self.dayend.GetStringSelection()[:2] + "0000")
         settings.daybegin = calendar.Time(self.daybegin.GetStringSelection()[:2] + "0000")
         settings.language = self.language.GetStringSelection()[:2].lower()
-        settings.lastweekday = int(self.daysinweek.GetStringSelection()) - 1
+        settings.lastweekday = self.daysinweek.GetSelection() + 4
 
         self.EndModal(wx.ID_OK)
 
