@@ -1354,6 +1354,8 @@ class HoursPanel(TimePanel):
 class EventOrganiser:
     "Ordnar händelser -- förberedande för den grafiska utplaceringen"
 
+    sorter = timetable.EventSorter()
+
     def __init__(self):
         self.events = []
 
@@ -1417,7 +1419,7 @@ class EventOrganiser:
     def _put(self):
         columns = [[]]
 
-        for event in timetable.EventSorter().sort(self.events):
+        for event in self.sorter.sort(self.events):
             event.clashes = 0
             foundspot = False
 
