@@ -739,9 +739,8 @@ class HTMLExporter:
 
     def formatEvent(self, event):
         if event.active:
-            print self.html
             self.html += "<div class='event'>" +\
-                event.begin.getNiceString() + "-" + event.end.getNiceString() + ": " + str(event) +\
+                event.begin.getNiceString() + "-" + event.end.getNiceString() + ": " + unicode(event) +\
                 "</div>"
 
 # -----------------------------------------------------------
@@ -754,13 +753,13 @@ class CSVExporter(VCalendarExporter):
         for event in events:
             data += self.formatEvent(event) + "\n"
 
-        file(filename, "w+").write(data)
+        file(filename, "w+").write(data.encode("latin_1"))
 
     def formatEvent(self, event):
         import settings
         data = self.makeListItem(settings.event_export_category)
         data += self.makeListItem("0")
-        data += self.makeListItem(str(event))
+        data += self.makeListItem(unicode(event))
         data += self.makeListItem("")
         data += self.makeListItem("0")
         data += self.makeListItem(self.formatDateAndTime(event.date, event.begin))
