@@ -11,7 +11,7 @@ import error
 from i18n import *
 
 applicationname = "KTH TimeTable"
-applicationversion = "2.1"
+applicationversion = "2.1+"
 
 # -----------------------------------------------------------
 class MainFrame(wx.Frame):
@@ -474,7 +474,7 @@ class CourseNamesDialog(OKCancelDialog):
         self.EndModal(wx.ID_OK)
 
 # -----------------------------------------------------------
-class ChooseCoursesDialog(wx.Dialog):
+class ChooseCoursesXDialog(wx.Dialog):
     "Dialogruta för val av kurser"
     
     def __init__(self, parent):
@@ -530,9 +530,11 @@ class ChooseCoursesDialog(wx.Dialog):
         timetable.timetable.save()
         self.EndModal(wx.ID_OK)
 
+
+cacheddaisycourselist = [] # den från Internet hämtade kurslistan cachas
 # -----------------------------------------------------------
-class ChooseKTHCoursesDialog(OKCancelDialog):
-    "Dialogruta för val av KTH-centralt-kurser"
+class ChooseCoursesDialog(OKCancelDialog):
+    "Dialogruta för val av kurser"
 
     def __init__(self, parent):
         OKCancelDialog.__init__(self, parent, U_("Choose courses"))
@@ -541,20 +543,21 @@ class ChooseKTHCoursesDialog(OKCancelDialog):
         newcourse = wx.BoxSizer(wx.HORIZONTAL)
         list = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.courseedit = wx.TextCtrl(self, -1, size=(200, -1))
+        self.courseedit = wx.TextCtrl(self, -1, size=(400, -1))
         addbtn = wx.Button(self, 10, U_("&Add"))
         addbtn.SetDefault()
         newcourse.Add(self.courseedit, 0)
         newcourse.Add(addbtn, 0, wx.LEFT, 10)
 
         self.chosencourses = []
-        self.courselist = wx.ListBox(self, -1, size=(200,100))
+        self.courselist = CourseListBox(self, timetable.courselist.getAllCourses(), size=(400,250))
         list.Add(self.courselist)
         list.Add(wx.Button(self, 20, U_("&Remove")), 0, wx.LEFT, 10)
     
         wx.EVT_BUTTON(self, 10, self.AddCourse)
         wx.EVT_BUTTON(self, 20, self.RemoveCourse)
         
+        layout.Add(StaticText(self, U_("Choose the courses you want included in your timetable. Both TimeEdit\nand Daisy courses can be added. The course code may be incomplete\nfor Daisy courses; all matching courses will then be added.")), 0, wx.LEFT|wx.TOP, 10)
         layout.Add(StaticText(self, U_("Enter one course code at a time:")), 0, wx.LEFT|wx.TOP, 10)
         layout.Add(newcourse, 0, wx.LEFT|wx.TOP|wx.RIGHT, 10)
         layout.Add(list, 0, wx.LEFT|wx.TOP|wx.RIGHT, 10)
@@ -563,128 +566,19 @@ class ChooseKTHCoursesDialog(OKCancelDialog):
         self.SetSizerAndFit(layout)
         self.CentreOnScreen()
         
-        timeeditcoursecodes = timetable.courselist.getAllTimeEditCourseCodes()
-        timeeditcourses = []
-        for code in timeeditcoursecodes:
-            timeeditcourses.append(timetable.courselist.getCourse(code))
-
-        self.addCoursesToListBox(timeeditcourses)
+        self.daisycourses = timetable.CachedCourseList()
+        if self.daisycourses.isEmpty():
+            self.daisycourses.setCourses(self.getDaisyCourses())
         
-    def addCoursesToListBox(self, courses):
-        for course in courses:
-            self.courselist.Append(course.code + " (" + course.name + ")", course)
-
-    def AddCourse(self, evt):
-        import timeedit
-        
-        progressdialog = ProgressDialog(self, U_("Fetching course name"), [U_("Receiving data from") + " schema.sys.kth.se..."])
-        progressdialog.startProgress()
-
-        try:
-            course = timeedit.Conduit().getCourseInfo(self.courseedit.GetValue())
-        except ValueError:
-            progressdialog.stopProgress()
-            msg = U_("The course") + " " + U_("does not exist") + " " + U_("in TimeEdit.")
-            wx.MessageDialog(self, msg, U_("The course") + " " + U_("does not exist"), style=wx.ICON_WARNING).ShowModal()
-            self.courseedit.SetFocus()
-            self.courseedit.SetSelection(-1, -1)
-            return
-        
-        self.courselist.Append(course.code + " (" + course.name + ")", course)
-        progressdialog.stopProgress()
-        self.courseedit.SetFocus()
-        self.courseedit.SetValue("")
-        
-    def RemoveCourse(self, evt):
-        selected = self.courselist.GetSelections()
-        for i in selected:
-            self.courselist.Delete(i)
-    
-    def SaveAndClose(self, evt):
-        self.chosencourses = []
-        for i in range(self.courselist.GetCount()):
-            course = self.courselist.GetClientData(i)
-            self.chosencourses.append(course)
-        
-        self.EndModal(wx.ID_OK)
-    
-
-cachedcourselist = [] # den från Internet hämtade kurslistan cachas
-# -----------------------------------------------------------
-class ChooseITUCoursesDialog(OKCancelDialog):
-    "Dialogruta för val av ITU-kurser"
-
-    def __init__(self, parent):
-        global cachedcourselist
-
-        OKCancelDialog.__init__(self, parent, U_("Choose courses"))
-        
-        self.progressdialog = ProgressDialog(self, U_("Fetching course list"), [U_("Connecting to") + " it.kth.se...",
-            U_("Receiving data..."), U_("Analysing data...")])
-
-        self.chosencourses = []
-        daisycoursecodes = timetable.courselist.getAllDaisyCourseCodes()
-        daisycourses = []
-        for code in daisycoursecodes:
-            daisycourses.append(timetable.courselist.getCourse(code))
-        
-        self.list_chosen = CourseListBox(self, daisycourses, id=100)
-        self.list_all = CourseListBox(self, cachedcourselist, id=200, antagonist=self.list_chosen)
-        
-        vertbuttons = wx.BoxSizer(wx.VERTICAL)
-        vertbuttons.Add((0, 10), 1)
-        vertbuttons.Add(wx.Button(self, 10, "<-", size=(25,-1)))
-        vertbuttons.Add((0, 10))
-        vertbuttons.Add(wx.Button(self, 20, "->", size=(25,-1)))
-        vertbuttons.Add((0, 10), 1)
-
-        self.buttons.Prepend((10, 0), 1)
-        self.buttons.Add((30, 0))
-        self.buttons.Add(wx.Button(self, 1, U_("Fetch course list")))
-        self.buttons.Add((10, 0), 1)
-
-        layout = wx.BoxSizer(wx.VERTICAL)
-        lists = wx.BoxSizer(wx.HORIZONTAL)
-
-        lists.Add(self.list_chosen, 0, wx.ALL, 10)
-        lists.Add(vertbuttons, 0, wx.EXPAND)
-        lists.Add(self.list_all, 0, wx.ALL, 10)
-
-        layout.Add(StaticText(self, U_("Choose your Daisy courses:")), 0, wx.TOP|wx.LEFT, 10)
-        layout.Add(lists, 0, wx.EXPAND|wx.ALL, 10)
-        layout.Add(self.buttons, 0, wx.EXPAND|wx.ALL, 10)
-
-        self.SetSizerAndFit(layout)
-        self.Centre()
-
-        wx.EVT_BUTTON(self, 1, self.UpdateList)
-        wx.EVT_BUTTON(self, 10, self.MoveLeft)
-        wx.EVT_BUTTON(self, 20, self.MoveRight)
-        
-        wx.EVT_LISTBOX_DCLICK(self, 100, self.MoveRight)
-        wx.EVT_LISTBOX_DCLICK(self, 200, self.MoveLeft)
-
-    def UpdateList(self, evt):
-        self.list_all.Set(self.getCourses())
-
-    def MoveLeft(self, evt):
-        courses = self.list_all.GetSelectedCourses()
-        self.list_all.DeleteSelected()
-        self.list_chosen.InsertItems(courses)
-
-    def MoveRight(self, evt):
-        courses = self.list_chosen.GetSelectedCourses()
-        self.list_chosen.DeleteSelected()
-        self.list_all.InsertItems(courses)
-
-    def getCourses(self):
+    def getDaisyCourses(self):
         import daisy
-        global cachedcourselist
-        self.progressdialog.startProgress()
+        progressdialog = ProgressDialog(self, U_("Fetching course list"), [U_("Connecting to") + " it.kth.se...",
+            U_("Receiving data..."), U_("Connecting to") + " it.kth.se...", U_("Receiving data..."), ""])
+        progressdialog.startProgress()
 
         courses = []
         try:
-            courses = daisy.Conduit().getCourses() # callback=self.progressdialog.increaseProgress)
+            courses = daisy.Conduit().getCourses(progressdialog.increaseProgress)
             cachedcourselist = courses
         except error.ReadError:
             msg = U_("Could not read from") + " " + U_("the IT University web site.") + "\n" + U_("Make sure you have access to the Internet.")
@@ -693,12 +587,63 @@ class ChooseITUCoursesDialog(OKCancelDialog):
             msg = U_("Got bad and unusable data from") + " " + U_("the IT University web site.")
             wx.MessageDialog(self, msg, U_("Server error"), style=wx.OK|wx.ICON_ERROR).ShowModal()
 
-        self.progressdialog.stopProgress()
+        progressdialog.stopProgress()
         return courses
 
+    def AddCourse(self, evt):
+        code = self.courseedit.GetValue()
+        courses = self.lookForCourseInDaisy(code)
+        if courses:
+            # kursen fanns i Daisy, lägger till alla som matchar
+            self.courselist.InsertItems(courses)
+        else:
+            # letar i TimeEdit istället
+            self.lookForCourseInTimeEdit(code)
+
+        self.SetFocus()
+        self.courseedit.SetFocus()
+        self.courseedit.SetValue("")
+
+    def lookForCourseInDaisy(self, code):
+        courses = []
+        try:
+            courses = self.daisycourses.getCourses(code)
+        except ValueError:
+            pass
+
+        return courses
+
+    def lookForCourseInTimeEdit(self, code):
+        import timeedit
+        
+        progressdialog = ProgressDialog(self, U_("Fetching course name"), [U_("Receiving data from") + " schema.sys.kth.se..."])
+        progressdialog.startProgress()
+
+        try:
+            course = timeedit.Conduit().getCourseInfo(code)
+        except ValueError:
+            progressdialog.stopProgress()
+            msg = U_("The course") + " " + U_("does not exist") + " " + U_("in Daisy or TimeEdit.")
+            wx.MessageDialog(self, msg, U_("The course") + " " + U_("does not exist"),
+                style=wx.ICON_WARNING).ShowModal()
+            return
+        
+        self.courselist.InsertItems([course])
+        progressdialog.stopProgress()
+        
+    def RemoveCourse(self, evt):
+        selected = self.courselist.GetSelections()
+        for i in selected:
+            self.courselist.Delete(i)
+    
     def SaveAndClose(self, evt):
-        self.chosencourses = self.list_chosen.GetAllCourses()
+        self.daisycourses.save()
+        timetable.courselist.clear()
+        for i in range(self.courselist.GetCount()):
+            timetable.courselist.addCourse(self.courselist.GetClientData(i))
+        timetable.timetable.removeOrphanEvents()
         self.EndModal(wx.ID_OK)
+
 
 # -----------------------------------------------------------
 class AboutDialog(wx.Dialog):
@@ -894,15 +839,11 @@ class Choice(wx.Choice):
 
 # -----------------------------------------------------------
 class CourseListBox(wx.ListBox):
-    "Listbox specialanpassad för 'dubbel kurslista'"
+    "Listbox för kurslista; innehåller alltid högst en av varje kurs"
     
-    def __init__(self, parent, courses, id=-1, antagonist=None, size=(250,300), style=0):
+    def __init__(self, parent, courses, id=-1, size=(250,300), style=0):
         wx.ListBox.__init__(self, parent, id, size=size, style=wx.LB_EXTENDED|wx.LB_SORT|style)
-        self.antagonist = antagonist # ev. en annan listbox; får inte innehålla samma kurser som antagonisten
         self.Set(courses)
-
-    def makeReadable(self, course):
-        return course.name + " (" + course.code + ")"
 
     def Set(self, courses):
         self.Freeze()
@@ -910,39 +851,19 @@ class CourseListBox(wx.ListBox):
         self.InsertItems(courses)
         self.Thaw()
         
-    def __add(self, courses):
+    def InsertItems(self, courses):
         self.Freeze()
 
         for course in courses:
-            string = self.makeReadable(course)
-            if self.FindString(string) == wx.NOT_FOUND:
-                self.Append(string, course)
-        
+            already = False
+            for i in range(self.GetCount()):
+                if course.code == self.GetClientData(i).code:
+                    already = True
+
+            if not already:
+                self.Append(course.name + " (" + course.code + ")", course)
+
         self.Thaw()
-
-    def InsertItems(self, courses):
-        # lägger bara till de element som inte
-        # finns i den eventuella antagonisten;
-        # dubletter godkänns inte heller
-
-        if not self.antagonist:
-            self.__add(courses)
-            return
-
-        allowedlist = []
-        forbiddenlist = self.antagonist.GetAllCourses()
-        for course in courses:
-            allowed = True
-
-            for forbidden in forbiddenlist:
-                if course == forbidden:
-                    allowed = False
-                    break
-
-            if allowed:
-                allowedlist.append(course)
-
-        self.__add(allowedlist)
 
     def DeleteSelected(self):
         self.Freeze()

@@ -88,7 +88,6 @@ class Conduit:
 
         if callback: callback()
         input = url.read()
-        if callback: callback()
 
         if len(input) == 0:
             raise error.DataError(U_("Received no data from") + " " + U_("the timetable server"))
@@ -98,6 +97,7 @@ class Conduit:
         for a in all:
             courses.append(timetable.Course(a[2].strip(), a[1].strip(), int(a[0])))
 
+        if callback: callback()
         return courses
 
     def descape(self, text):

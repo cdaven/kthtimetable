@@ -64,6 +64,11 @@ class CourseList:
         global timetable
         timetable.removeCourseEvents(code)
 
+    def hasCourse(self, course):
+        for c in self.courses:
+            if c == course: return True
+        return False
+
     def getCourse(self, code):
         "Returnerar en kurs definierad av kod"
 
@@ -130,6 +135,71 @@ class CourseList:
 
         return courses
 
+    def getAllCourses(self):
+        courses = []
+        for course in self.courses:
+            courses.append(course)
+
+        return courses
+
+# -----------------------------------------------------------
+class CachedCourseList(CourseList):
+    "Lista med kurser som hämtats från ITU:s webbplats"
+
+    filename = "daisycourses"
+
+    def __init__(self):
+        import os.path
+        import time
+        import pickle
+
+        try:
+            self.courses = pickle.load(file(self.filename))
+            if self.isOldList(calendar.Date(time.localtime(os.path.getctime(self.filename)))):
+                self.courses = []
+        except IOError:
+            self.courses = []
+
+    def isEmpty(self):
+        return self.courses == []
+
+    def isOldList(self, date):
+        diff = calendar.Date() - date
+        monthtoday = calendar.Date().getMonth()
+        monththen = date.getMonth()
+
+        if (monthtoday > 9 and monththen < 10) or diff > 90:
+            return True
+        elif (monthtoday > 2 and monththen < 3) or diff > 90:
+            return True
+
+        return False
+
+    def save(self):
+        import pickle
+        pickle.dump(self.courses, file(self.filename, "w+"))
+
+    def setCourses(self, courselist):
+        self.courses = courselist
+
+    def getCourses(self, code):
+        courses = []
+        code = code.upper()
+        for course in self.courses:
+            if self.isMatch(code, course):
+                courses.append(course)
+
+        return courses
+
+    def isMatch(self, code, course):
+        codes = course.code.split("/")
+        for c in codes:
+            if code in c:
+                return True
+
+        return False
+
+
 # -----------------------------------------------------------
 class TimeTable:
     "Ett schema (dvs en samling schemalagda händelser)"
@@ -162,7 +232,7 @@ class TimeTable:
 
         return events
     
-    def clearEventsFromSource(self, source):
+    def __clearEventsFromSource(self, source):
         if source == "Daisy":
             remove = self.getAllDaisyEvents()
             for event in remove:
@@ -180,7 +250,6 @@ class TimeTable:
     def importData(self, input, source):
         "Importerar data från fil eller lista -- ersätter aktuellt schema"
         import vcalendar
-        self.clearEventsFromSource(source)
         newevents = vcalendar.Reader().read(input)
         if newevents:
             self.eventlist.addEvents(newevents)
@@ -240,6 +309,16 @@ class TimeTable:
                 self.eventlist.removeEvent(event.getID())
         except ValueError:
             return # redan borttaget
+
+    def removeOrphanEvents(self):
+        "Tar bort alla händelser vars kurs inte längre finns i kurslistan"
+
+        global courselist
+        remove = []
+
+        for event in self.eventlist.getAll():
+            if not courselist.hasCourse(event.course):
+                self.eventlist.removeEvent(event.getID())
 
     def load(self, filename = ""):
         "Läser in schemat från en INI-liknande fil"
