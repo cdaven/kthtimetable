@@ -246,7 +246,7 @@ class TimeTable:
         "Läser in schemat från en INI-liknande fil"
 
         import ConfigParser # för undantag
-        import configparser
+        import configfileparser
         import settings
         import os.path
 
@@ -259,7 +259,7 @@ class TimeTable:
         if not os.path.exists(filename):
             return # ger inget felmeddelande
 
-        config = configparser.ConfigParserX()
+        config = configfileparser.ConfigParserX()
         try:
             config.readfp(file(filename))
         except IOError:
@@ -318,13 +318,13 @@ class TimeTable:
     def save(self, filename = ""):
         "Sparar schemat till en INI-liknande fil"
 
-        import configparser
+        import configfileparser
 
         if not filename:
             import settings
             filename = settings.timetablefile
 
-        config = configparser.ConfigParserX()
+        config = configfileparser.ConfigParserX()
 
         if not self.isEmpty():
             config.add_section("main")
@@ -728,7 +728,7 @@ class HTMLExporter:
             date += 1
             
         self.html += "</div>\n"
-            
+
     def formatDay(self, date, events):
         self.html += "<div class='day'><h3>" + date.getWeekDayName() +\
             " " + str(date.getDay()) + "/" + str(date.getMonth()) + "</h3>"

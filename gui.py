@@ -11,7 +11,7 @@ import error
 from i18n import *
 
 applicationname = "KTH TimeTable"
-applicationversion = "2.1pre"
+applicationversion = "2.1"
 
 # -----------------------------------------------------------
 class MainFrame(wx.Frame):
@@ -204,6 +204,7 @@ class MainFrame(wx.Frame):
 
     def ExportEvents(self, evt):
         ExportDialog(self).ShowModal()
+        self.SetFocus()
 
     def Update(self, evt):
         daisycourses = timetable.courselist.getAllDaisyCourseIDs()
@@ -274,10 +275,12 @@ class MainFrame(wx.Frame):
     def ChooseGroups(self, evt):
         if GroupsDialog(self).ShowModal() == wx.ID_OK:
             self.updateView()
+        self.SetFocus()
 
     def NameCourses(self, evt):
         if CourseNamesDialog(self).ShowModal() == wx.ID_OK:
             self.updateView()
+        self.SetFocus()
 
     def ChooseCourses(self, evt):
         if ChooseCoursesDialog(self).ShowModal() == wx.ID_OK:
@@ -286,6 +289,7 @@ class MainFrame(wx.Frame):
             dialog = wx.MessageDialog(self, msg, U_("Uppdatera?"), style=wx.YES_NO|wx.ICON_QUESTION)
             if dialog.ShowModal() == wx.ID_YES:
                 self.Update(None)
+        self.SetFocus()
 
 # -----------------------------------------------------------
 class OKCancelDialog(wx.Dialog):
@@ -295,6 +299,7 @@ class OKCancelDialog(wx.Dialog):
         wx.Dialog.__init__(self, parent, -1, caption)
 
         self.cancelled = False
+        self.shown = False
         self.parent = parent
         self.buttons = wx.BoxSizer(wx.HORIZONTAL)
 
@@ -319,12 +324,14 @@ class OKCancelDialog(wx.Dialog):
         """
 
         self.cancelled = True
-        self.EndModal(wx.ID_CANCEL)
+        if self.shown:
+            self.EndModal(wx.ID_CANCEL)
 
     def ShowModal(self):
         "Visar dialogrutan endast om __init__() inte avbröts"
 
         if not self.cancelled:
+            self.shown = True
             return wx.Dialog.ShowModal(self)
         else:
             return wx.ID_CANCEL

@@ -1,41 +1,41 @@
 # -*- coding: iso-8859-1 -*-
 
-# Skapat av Christian DavÃ©n 2004
+# Skapat av Christian Davén 2004
 
 import ConfigParser
 
 class ConfigParserX(ConfigParser.SafeConfigParser):
     """
-        En nÃ¥got modifierad variant av "INI-filslÃ¤sare".
+        En något modifierad variant av "INI-filsläsare".
 
-        Filerna Ã¤r pÃ¥ typen
+        Filerna är på typen
 
             [sektion]
-            nyckel = vÃ¤rde
+            nyckel = värde
     """
 
     import re
 
-    # gÃ¶r vÃ¤nsterledet "case sensitive" och lÃ¥ter
-    # det ocksÃ¥ innehÃ¥lla ':' (avgrÃ¤nsare mÃ¥ste vara '=')
-    # eftersom kursnamn kan innehÃ¥lla ':'.
+    # gör vänsterledet "case sensitive" och låter
+    # det också innehålla ':' (avgränsare måste vara '=')
+    # eftersom kursnamn kan innehålla ':'.
     OPTCRE = re.compile(
         r'(?P<option>[^=\s][^=]*)'
         r'\s*(?P<vi>[=])\s*'
         r'(?P<value>.*)$'
         )
 
-    # istÃ¤llet fÃ¶r att fÃ¤lten ska skrivas med gemener
-    # skrivs de helt enkelt som de Ã¤r (i strÃ¤ngrepresentation)
+    # istället för att fälten ska skrivas med gemener
+    # skrivs de helt enkelt som de är (i strängrepresentation)
     # (pekar om funktionen optionxform(option) till str(option))
     optionxform = str
 
-    # en wrapper-metod som returnerar vÃ¤rdet som Unicode
+    # en wrapper-metod som returnerar värdet som Unicode
     def get(self, section, key):
         val = ConfigParser.SafeConfigParser.get(self, section, key)
         return unicode(val, "latin_1")
 
-    # en wrapper-metod som sparar Unicode-vÃ¤rdet som Latin-1
+    # en wrapper-metod som sparar Unicode-värdet som Latin-1
     def set(self, section, key, value):
         if isinstance(value, unicode):
             value = value.encode("latin_1")
