@@ -732,6 +732,7 @@ class ExportDialog(OKCancelDialog):
         self.todate.setDate(self.fromdate.date + 6)
 
         size = (20,20)
+        # större knappar i GTK än i Windows
         if wx.Platform == "__WXGTK__":
             size = (35,30)
 

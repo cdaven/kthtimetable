@@ -15,13 +15,7 @@ class Conduit:
     
     def __init__(self, callback = None):
         self.callback = callback
-        self.urlopener = internet.CookieURLopener()
-        self.loggedin = False
 
-    def __del__(self):
-        if self.loggedin:
-            self.logout()
-            
     def getvCalendarData(self, courseids):
         getdata = "?generator=true"
 
@@ -42,7 +36,7 @@ class Conduit:
         if start == -1 or end == -1:
             raise error.DataError
 
-        url = self.urlopener.open("http://daisy.it.kth.se" + generated[start:end])
+        url = urllib.urlopen("http://daisy.it.kth.se" + generated[start:end])
         if self.callback: self.callback()
 
         data = url.readlines()
@@ -52,51 +46,6 @@ class Conduit:
             print "skrev hämtad data till fil"
 
         return data
-
-    def login(self, username, password):
-        pass
-
-    def login_X(self, username, password):
-        postdata = urllib.urlencode({"anvnamn": username, "losenord": password})
-        
-        output = self.urlopener.open("https://daisy.it.kth.se/servlet/DaisyStudentInloggning",
-            postdata).read()
-
-        if output.find("Felaktig inloggning") != -1:
-            self.loggedin = False
-            raise error.LoginError
-
-        self.loggedin = True
-
-    def logout(self):
-        pass
-
-    def logout_X(self):
-        if self.loggedin:
-            try:
-                self.urlopener.open("https://daisy.it.kth.se/servlet/LoggaUt")
-            except IOError:
-                pass
-            
-    def getTimeTableData_X(self, courseids):
-        postdata = urllib.urlencode({"table": "true"})
-
-        for id in courseids:
-            postdata += "&" + urllib.urlencode({"momentid": id})
-
-        generated = self.urlopener.open("https://daisy.it.kth.se/servlet/schema.SchemaGenerator",
-            postdata).read()
-
-        start = generated.find("schema.pdf.Pdf", 2000)
-        end = generated.find("\"", start)
-
-        if start == -1 or end == -1:
-            raise error.DataError
-
-        if self.callback: self.callback()
-
-        return self.urlopener.open("https://daisy.it.kth.se/servlet/schema.ics?" +
-            generated[start+14:end]).readlines()
 
 # -----------------------------------------------------------
 class SummaryParser:
