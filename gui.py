@@ -33,7 +33,7 @@ class MainFrame(wx.Frame):
         settings.load()
 
         self.SetBackgroundColour(guisettings.bgcolour_default)
-        if wx.Platform != "__WXGTK__":
+        if wx.MINOR_VERSION >= 5:
             self.ClearBackground()
 
         layout = wx.BoxSizer(wx.VERTICAL)
@@ -52,7 +52,7 @@ class MainFrame(wx.Frame):
         wx.EVT_CLOSE(self, self.OnClose)
  
         self.GoToday(None)
-        
+
         if calendar.Date() - timetable.timetable.updated > 7:
             msg = U_("Det var over en vecka sedan du uppdaterade schemat senast. Det kan ha\nforandrats sedan dess. Vill du uppdatera schemat nu?")
             if wx.MessageDialog(self, msg, U_("Gammalt schema"),
@@ -64,15 +64,19 @@ class MainFrame(wx.Frame):
         hoursanddays = wx.BoxSizer(wx.HORIZONTAL)
         daynames = wx.BoxSizer(wx.HORIZONTAL)
 
-        hoursanddays.Add(HoursPanel(self), 0, wx.EXPAND)
+        flag = wx.EXPAND
+        if wx.MINOR_VERSION >= 5:
+            flag |= wx.FIXED_MINSIZE
+
+        hoursanddays.Add(HoursPanel(self), 0, flag)
 
         # ritar ut saker för varje veckodag
         for i in range(settings.lastweekday + 1):
             # själva namnet på dagen (fylls i senare under updateView())
-            self.daylabels.append(StaticText(self, "veckodag", size=(60, 15), style=wx.ST_NO_AUTORESIZE|wx.ALIGN_CENTRE|wx.SIMPLE_BORDER))
+            self.daylabels.append(StaticText(self, "Ons 15", size=(60, 15), style=wx.ST_NO_AUTORESIZE|wx.ALIGN_CENTRE|wx.SIMPLE_BORDER))
             self.daylabels[-1].SetBackgroundColour(guisettings.bgcolour_daylabel)
 
-            daynames.Add(self.daylabels[-1], 1, wx.LEFT|wx.RIGHT, 1)
+            daynames.Add(self.daylabels[-1], 1, wx.RIGHT|wx.LEFT, 1)
 
             # schemat för dagen, åtminstone utrymmet för detsamma
             self.days.append(DayPanel(self))
@@ -80,11 +84,11 @@ class MainFrame(wx.Frame):
             
         weekview.Add(daynames, 0, wx.EXPAND|wx.LEFT, 60)
         weekview.Add(hoursanddays, 1, wx.EXPAND)
-        return weekview    
+        return weekview
         
     def AddButtonsAndLabels(self):
-        self.weeklabel = StaticText(self, "Vecka XX", size=(-1, -1), style=wx.ALIGN_CENTRE)
-        self.datelabel = StaticText(self, "Månad år", size=(150, 25), style=wx.ST_NO_AUTORESIZE|wx.ALIGN_RIGHT)
+        self.weeklabel = StaticText(self, "Vecka 43", size=(-1, -1), style=wx.ALIGN_CENTRE)
+        self.datelabel = StaticText(self, "Juli 2004", size=(150, 25), style=wx.ST_NO_AUTORESIZE|wx.ALIGN_RIGHT)
 
         guisettings.font_default.SetWeight(wx.BOLD)
         guisettings.font_default.SetPointSize(guisettings.font_default.GetPointSize() + 1)
@@ -106,7 +110,7 @@ class MainFrame(wx.Frame):
     
     def AddMenu(self):
         menubar = wx.MenuBar()
-        
+
         menu = wx.Menu()
         menu.Append(120, U_("&Exportera..."))
         menu.AppendSeparator()
@@ -133,7 +137,7 @@ class MainFrame(wx.Frame):
         wx.EVT_MENU(self, 260, self.NameCourses)
         wx.EVT_MENU(self, 310, self.About)
 
-        self.SetMenuBar(menubar)   
+        self.SetMenuBar(menubar)
 
     def OnClose(self, event):
         try:
@@ -241,7 +245,7 @@ class MainFrame(wx.Frame):
         except:
             progressdialog.stopProgress()
             raise
-        
+
         progressdialog.stopProgress()
         timetable.timetable.importData(data, "TimeEdit")
 
@@ -430,7 +434,7 @@ class CourseNamesDialog(OKCancelDialog):
             self.coursecodes.append(course.code)
 
             text = StaticText(self, course.code, size=(100, -1), style=wx.ST_NO_AUTORESIZE)
-            edit = wx.TextCtrl(self, -1, size=(100, -1))
+            edit = wx.TextCtrl(self, -1, size=(200, -1))
             edit.SetValue(course.name)
             self.edits.append(edit)
 
@@ -727,17 +731,21 @@ class ExportDialog(OKCancelDialog):
         self.todate = DateText(self)
         self.todate.setDate(self.fromdate.date + 6)
 
+        size = (20,20)
+        if wx.Platform == "__WXGTK__":
+            size = (35,30)
+
         fromdate = wx.BoxSizer(wx.HORIZONTAL)
         fromdate.Add(self.fromdate)
-        fromdate.Add(wx.Button(self, 10, "-", size=(30,30)), 0, wx.LEFT, 10)
-        fromdate.Add(wx.Button(self, 20, "+", size=(30,30)), 0, wx.LEFT, 2)
-        fromdate.Add(wx.Button(self, 30, "+7", size=(30,30)), 0, wx.LEFT, 2)
+        fromdate.Add(wx.Button(self, 10, "-", size=size), 0, wx.LEFT, 10)
+        fromdate.Add(wx.Button(self, 20, "+", size=size), 0, wx.LEFT, 2)
+        fromdate.Add(wx.Button(self, 30, "+7", size=size), 0, wx.LEFT, 2)
 
         todate = wx.BoxSizer(wx.HORIZONTAL)
         todate.Add(self.todate)
-        todate.Add(wx.Button(self, 110, "-", size=(30,30)), 0, wx.LEFT, 10)
-        todate.Add(wx.Button(self, 120, "+", size=(30,30)), 0, wx.LEFT, 2)
-        todate.Add(wx.Button(self, 130, "+7", size=(30,30)), 0, wx.LEFT, 2)
+        todate.Add(wx.Button(self, 110, "-", size=size), 0, wx.LEFT, 10)
+        todate.Add(wx.Button(self, 120, "+", size=size), 0, wx.LEFT, 2)
+        todate.Add(wx.Button(self, 130, "+7", size=size), 0, wx.LEFT, 2)
 
         self.buttons.Prepend((10,0), 1)
         self.buttons.Add((10,0), 1)
@@ -966,6 +974,7 @@ class StaticText(wx.StaticText):
         self.wordwrap = False
         self.originallabel = ""
 
+        # "Wordwrap" finns endast på wxGTK med stöd för GTK2
         if wx.Platform == "__WXGTK__" and wordwrap:
             self.wordwrap = True
             self.originallabel = label
@@ -1025,10 +1034,9 @@ class StaticText(wx.StaticText):
 class TimePanel(Panel):
     def __init__(self, parent):
         import sys
-        if sys.platform == "win32":
-            style = wx.SIMPLE_BORDER|wx.FULL_REPAINT_ON_RESIZE
-        else:
-            style = wx.SIMPLE_BORDER
+        style = wx.SIMPLE_BORDER
+        if wx.MINOR_VERSION >= 5:
+            style |= wx.FULL_REPAINT_ON_RESIZE
 
         Panel.__init__(self, parent, -1, size=(60,250), style=style)
         wx.EVT_PAINT(self, self.OnPaint)
@@ -1061,7 +1069,7 @@ class HoursPanel(TimePanel):
 
         TimePanel.__init__(self, parent)
         self.SetBackgroundColour(guisettings.bgcolour_hours)
-        if wx.Platform != "__WXGTK__":
+        if wx.MINOR_VERSION >= 5:
             self.ClearBackground()
 
     def OnPaint(self, evt):
@@ -1294,9 +1302,8 @@ class EventPanel(Panel):
         (posx, posy) = self.calcPos(sizex)
         
         Panel.__init__(self, parent, -1, size=(sizex, sizey), pos=(posx, posy), style=wx.SIMPLE_BORDER)
-#        self.label = StaticText(self, str(self.event), wordwrap=True, pos=(2,2), size=(sizex - 3, sizey - 3), style=wx.ST_NO_AUTORESIZE)
         self.paint()
-        
+
         wx.EVT_LEFT_DCLICK(self.label, self.OnClick)
         self.SetToolTip(wx.ToolTip(self.event.getNiceString()))
 
@@ -1337,7 +1344,7 @@ class EventPanel(Panel):
             self.label.SetForegroundColour(fgcolour)
             self.label.SetBackgroundColour(bgcolour)
 
-        if wx.Platform != "__WXGTK__":
+        if wx.MINOR_VERSION >= 5:
             self.ClearBackground()
 
         self.label = StaticText(self, unicode(self.event), wordwrap=True, pos=(2,2), style=wx.ST_NO_AUTORESIZE)
@@ -1348,3 +1355,4 @@ class EventPanel(Panel):
         self.event.toggleActive()
         self.SetToolTip(wx.ToolTip(self.event.getNiceString()))
         self.paint()
+

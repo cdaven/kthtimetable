@@ -160,7 +160,7 @@ class TimeTable:
         for event in self.eventlist.getAll():
             if courselist.getCourseType(event.course) == "TimeEdit":
                 events.append(event)
-        
+
         return events
     
     def clearEventsFromSource(self, source):
@@ -717,7 +717,7 @@ class HTMLExporter:
             date += 7
             
         self.html += "</body></html>"
-        file(filename, "w+").write(self.html)
+        file(filename, "w+").write(self.html.encode("utf8"))
 
     def formatWeek(self, date):
         import settings
@@ -736,9 +736,10 @@ class HTMLExporter:
             self.formatEvent(event)
 
         self.html += "</div>"
-        
+
     def formatEvent(self, event):
         if event.active:
+            print self.html
             self.html += "<div class='event'>" +\
                 event.begin.getNiceString() + "-" + event.end.getNiceString() + ": " + str(event) +\
                 "</div>"

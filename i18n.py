@@ -1,11 +1,11 @@
 # -*- coding: iso-8859-1 -*-
 
-# Skapat av Christian DavÃ©n 2004
+# Skapat av Christian Davén 2004
 
 import gettext
 import sys
 
-# HÃ¤mtar Ã¶versÃ¤ttningsfilerna
+# Hämtar översättningsfilerna
 
 translation = None
 
@@ -18,10 +18,10 @@ def getTranslation(lang):
         sys.stderr.write("Couldn't find translation for " + lang + "\n" + str(e) + "\n")
         sys.exit(1)
     
-    # SÃ¤tter grÃ¤nssnittets sprÃ¥k
+    # Sätter gränssnittets språk
     translation.install()
 
-# konverterar sprÃ¥kspecifika strÃ¤ngar till unicode
+# konverterar språkspecifika strängar till unicode
 def U_(string):
     return unicode(_(string), "utf8")
 
