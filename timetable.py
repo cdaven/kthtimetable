@@ -144,7 +144,8 @@ class CourseList:
         courses = []
 
         for course in self.courses:
-            if course.name == name:
+            # Daisy exporterar ibland ofullständigt namn
+            if course.name.startswith(name):
                 courses.append(course)
 
         return courses
@@ -627,6 +628,8 @@ class Event:
 
         global courselist
         stored = CachedCourseList().getAllMatchingName(name)
+        course = None
+
         for course in stored:
             try:
                 course = courselist.getCourse(course.code)
