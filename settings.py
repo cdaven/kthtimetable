@@ -51,5 +51,6 @@ dayend = calendar.Time("200000")
 lastweekday = calendar.FRI
 
 eventtype_examination = ["Salsskrivning", "Kontrollskrivning", "Dugga", "Tentamen"]
+event_export_category = "KTHTimeTable"
 
 in_debug_mode = False

@@ -675,9 +675,12 @@ class VCalendarExporter:
         activeevents = []
         for event in events:
             if event.active: activeevents.append(event)
-        
+
+        self.write(activeevents, filename)
+
+    def write(self, events, filename):        
         import vcalendar
-        vcalendar.Writer().write(activeevents, filename)
+        vcalendar.Writer().write(events, filename)
 
 # -----------------------------------------------------------
 class HTMLExporter:
@@ -727,6 +730,48 @@ class HTMLExporter:
             self.html += "<div class='event'>" +\
                 event.begin.getNiceString() + "-" + event.end.getNiceString() + ": " + str(event) +\
                 "</div>"
+
+# -----------------------------------------------------------
+class CSVExporter(VCalendarExporter):
+    "Exporterar schema till komma-separerad lista för ex. JPilot"
+    
+    def write(self, events, filename):
+        data = """CSV datebook: Category, Private, Description, Note, Event, Begin, End, Alarm, Advance, Advance Units, Repeat Type, Repeat Forever, Repeat End, Repeat Frequency, Repeat Day, Repeat Days, Week Start, Number of Exceptions, Exceptions\n"""
+
+        for event in events:
+            data += self.formatEvent(event) + "\n"
+
+        file(filename, "w+").write(data)
+
+    def formatEvent(self, event):
+        import settings
+        data = self.makeListItem(settings.event_export_category)
+        data += self.makeListItem("0")
+        data += self.makeListItem(str(event))
+        data += self.makeListItem("")
+        data += self.makeListItem("0")
+        data += self.makeListItem(self.formatDateAndTime(event.date, event.begin))
+        data += self.makeListItem(self.formatDateAndTime(event.date, event.end))
+        data += self.makeListItem("0")
+        data += self.makeListItem("0")
+        data += self.makeListItem("0")
+        data += self.makeListItem("0")
+        data += self.makeListItem("0")
+        data += self.makeListItem("0")
+        data += self.makeListItem("0")
+        data += self.makeListItem("0")
+        data += self.makeListItem("0")
+        data += self.makeListItem("1")
+        data += self.makeListItem("0")
+        data += self.makeListItem("0")
+        return data[:-1]
+
+    def formatDateAndTime(self, date, time):
+        return str(date.getYear()) + " " + str(date.getMonth()) + " " + str(date.getDay()) +\
+            "  " + time.getNiceString()
+
+    def makeListItem(self, item):
+        return "\"" + item + "\","
 
 # -----------------------------------------------------------
 class EventSorter:

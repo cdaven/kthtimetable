@@ -10,7 +10,7 @@ import timetable
 import error
 
 applicationname = "KTH TimeTable"
-applicationversion = "2.1"
+applicationversion = "2.2"
 
 # center(width)
 # Return centered in a string of length width. Padding is done using spaces. 
@@ -184,10 +184,7 @@ class MainFrame(wx.Frame):
 
         for day in self.daylabels:
             weekday = date.getWeekDay()
-            self.days[weekday].colorize(False)
-            if date == calendar.Date():
-                self.days[weekday].colorize(True)
-
+            self.days[weekday].colorize(date)
             day.SetLabel(date.getWeekDayName() + " " + str(date.getDay()))
 
             self.days[weekday].Freeze()
@@ -852,7 +849,7 @@ class ExportDialog(OKCancelDialog):
 
     def SaveAndClose(self, evt):
         filedialog = wx.FileDialog(self, "Exportera till fil",
-            wildcard="vCalendar-filer (*.vcs)|*.vcs|iCalendar-filer (*.ics)|*.ics|HTML-filer (*.html)|*.html|Alla filer|*.*",
+            wildcard="vCalendar-filer (*.vcs)|*.vcs|iCalendar-filer (*.ics)|*.ics|HTML-filer (*.html)|*.html|CSV-filer (*.csv)|*.csv|Alla filer|*.*",
             style=wx.SAVE|wx.OVERWRITE_PROMPT)
         if filedialog.ShowModal() == wx.ID_OK:
             import os.path
@@ -863,6 +860,8 @@ class ExportDialog(OKCancelDialog):
                     self.exportVCalendar(filedialog.GetPath(), self.fromdate.date, self.todate.date)
                 elif extension == ".html" or extension == ".htm":
                     self.exportHTML(filedialog.GetPath(), self.fromdate.date, self.todate.date)
+                elif extension == ".csv":
+                    self.exportCSV(filedialog.GetPath(), self.fromdate.date, self.todate.date)
                 else:
                     msg = "Kan inte exportera till det angivna formatet."
                     wx.MessageDialog(self, msg, "Okänd filändelse", style=wx.OK|wx.ICON_INFORMATION).ShowModal()
@@ -879,6 +878,9 @@ class ExportDialog(OKCancelDialog):
         
     def exportHTML(self, filename, fromdate, todate):
         timetable.HTMLExporter().export(filename, timetable.timetable, fromdate, todate)
+
+    def exportCSV(self, filename, fromdate, todate):
+        timetable.CSVExporter().export(filename, timetable.timetable, fromdate, todate)
 
 # -----------------------------------------------------------
 class DateText(wx.TextCtrl):
@@ -1311,8 +1313,10 @@ class DayPanel(TimePanel, EventOrganiser):
         EventOrganiser.clear(self)
 
     def colorize(self, today):
-        if today:
+        if calendar.Date() == today:
             self.SetBackgroundColour(guisettings.bgcolour_schedule_today)
+        elif today.isHoliday():
+            self.SetBackgroundColour(guisettings.bgcolour_schedule_holiday)
         else:
             self.SetBackgroundColour(guisettings.bgcolour_schedule)
 

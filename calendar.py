@@ -18,7 +18,7 @@ class Date:
     WEEKDAYS = ["Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön"]
     MONTHS = ["Januari", "Februari", "Mars", "April", "Maj", "Juni",
             "Juli", "Augusti", "September", "Oktober", "November", "December"]
-    
+
     def __init__(self, arg=None):
         "Kan initialiseras med datetime.date, Date, sträng eller tomt"
         
@@ -117,6 +117,9 @@ class Date:
             return self.getNextMonday()
         else:
             return self.getLastMonday()
+
+    def isHoliday(self):
+        return holidaychecker.check(self)
         
     def isDaylightSavingTime(self):
         "Är aktuellt datum i sommartid?"
@@ -283,3 +286,6 @@ class DateTime:
     def getDate(self):
         return self.__datetime.date()
     
+# -----------------------------------------------------------
+from holidays import HolidayChecker
+holidaychecker = HolidayChecker("SWE")
