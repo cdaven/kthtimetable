@@ -11,7 +11,7 @@ import error
 from i18n import *
 
 applicationname = "KTH TimeTable"
-applicationversion = "2.2+"
+applicationversion = "2.2.1"
 
 # -----------------------------------------------------------
 class MainFrame(wx.Frame):
@@ -119,9 +119,9 @@ class MainFrame(wx.Frame):
         menu.Append(210, U_("Choose &courses..."))
         menu.Append(220, U_("&Fetch timetable...\tF5"))
         menu.AppendSeparator()
-        menu.Append(230, U_("Export"))
-        menu.Append(240, U_("Import"))
-        menu.AppendSeparator()
+        #menu.Append(230, U_("Export"))
+        #menu.Append(240, U_("Import"))
+        #menu.AppendSeparator()
         menu.Append(250, U_("Choose &groups..."))
         menu.Append(260, U_("&Name courses..."))
         menu.AppendSeparator()
@@ -136,8 +136,8 @@ class MainFrame(wx.Frame):
         wx.EVT_MENU(self, 120, self.ExportEvents)
         wx.EVT_MENU(self, 210, self.ChooseCourses)
         wx.EVT_MENU(self, 220, self.Update)
-        wx.EVT_MENU(self, 230, self.Export)
-        wx.EVT_MENU(self, 240, self.Import)
+        #wx.EVT_MENU(self, 230, self.Export)
+        #wx.EVT_MENU(self, 240, self.Import)
         wx.EVT_MENU(self, 250, self.ChooseGroups)
         wx.EVT_MENU(self, 260, self.NameCourses)
         wx.EVT_MENU(self, 270, self.MakeSettings)

@@ -17,8 +17,6 @@ lastweekday = 0
 eventtype_examination = ["Salsskrivning", "Kontrollskrivning", "Dugga", "Tentamen"]
 language = ""
 
-in_debug_mode = False
-
 # -----------------------------------------------------------
 def setDefaults():
     global daybegin, dayend, lastweekday, event_export_category, language

@@ -19,32 +19,32 @@ class Conduit:
         self.callback = callback
         
     def getTimeTableURL(self, coursecodes):
-        url = "http://schema.sys.kth.se/4DACTION/iCalGetEntries/"
+        url = "http://schema.sys.kth.se/4DACTION/iCalGetReservations/"
         url += self.getFromYearAndWeek() + "/"
         url += self.getToYearAndWeek()
 
         for code in coursecodes:
             url += "/" + code
             
-        url += ".ics"
+        url += ".vcs"
+
+        print url
+
         return url
 
     def getvCalendarData(self, coursecodes):
         try:
             url = self.urlopener.open(self.getTimeTableURL(coursecodes))
             if self.callback: self.callback()
-            data = url.readlines()
-            if settings.in_debug_mode:
-                file("dbg-timeeditdata", "w+").writelines(data)
-                print "skrev hämtad data till fil"
-            return data
+            return url.readlines()
         except IOError:
             raise error.ReadError(U_("Could not read from") + " " + U_("the timetable server"))
     
     def getFromYearAndWeek(self):
-        week = str((calendar.Date() - 14).getWeek())
+        date = calendar.Date() - 14
+        week = str(date.getWeek())
         if len(week) == 1: week = "0" + week
-        return str(calendar.Date().getYear() - 2000) + week
+        return str(date.getYear() - 2000) + week
     
     def getToYearAndWeek(self):
         today = calendar.Date()
@@ -82,53 +82,61 @@ class Conduit:
 class SummaryParser:
 
     def __init__(self):
-        self.types = {"DL": u"Datalaboration", "F": u"Föreläsning", "FÖ": u"Fältövning",
+        self.types = {"DL": u"Datalaboration", "Frl": u"Föreläsning", "FÖ": u"Fältövning",
             "L": u"Laboration", "Le": u"Lektion", "Proj": u"Projekt", "RS": u"Räknestuga",
             "Sem": u"Seminarium", "Stu": u"Studiebesök", "WS": u"Workshop",
-            "Ö": u"Övning", "TEN": u"Tentamen"}
+            "Ovn": u"Övning", "TEN": u"Tentamen"}
         self.lowercase_letters = u"abcdefghijklmnopqrstuvwxyzåäö"
         self.numbers = "1234567890"
 
-        self.rxcourse = re.compile("([A-Z0-9:/*]+?)\.")
-        self.rxtype = re.compile("\.([A-ZÅÄÖa-z]+)")
+        self.rxcourse = re.compile("(\d\D\d{4})(\.\D)?")
+        self.rxtype = re.compile("([a-zåäöA-ZÅÄÖ]{2,4})")
+        self.rxlocation = re.compile("([A-Z]\d+)")
 
     def parse(self, summary):
         data = {}
-        data["location"] = self.extractLocation(summary)
         data["course"] = self.extractCourse(summary)
         data["type"] = self.extractType(summary)
+        data["location"] = self.extractLocation(summary)
         data["seriesno"] = 0
         data["group"] = 0
         return data
     
     def extractLocation(self, text):
-        words = text.split(" ")
-        words.reverse()
+        words = text.split(",")
+        words.reverse() # söker från slutet
         locations = []
+
         for word in words:
-            if word[-1] in self.lowercase_letters or word[-1] in self.numbers:
-                locations.append(word)
-            elif word == "---" or word.endswith("..."):
-                continue
+            rx = self.rxlocation.search(word)
+            if rx:
+                locations.append(rx.group(1) + ",")
             else:
+                # Så fort orden inte längre är lokaler
+                # kommer det inga fler
                 break
 
-        locations.reverse()
         locationstring = ""
+        locations.reverse()
         for location in locations:
-            if locationstring:
-                locationstring += "," 
             locationstring += location
-                
-        return locationstring
+
+        return locationstring[:-1]
             
     def extractCourse(self, text):
-        course = "???"
-        rx = self.rxcourse.search(text)
-        if rx:
-            course = rx.group(1)
+        words = text.split(",")
+        coursestring = ""
+
+        for word in words:
+            rx = self.rxcourse.search(word)
+            if rx:
+                coursestring += rx.group(1) + ","
+            else:
+                # Så fort orden inte längre är kurser
+                # kommer det inga fler
+                break
         
-        return course
+        return coursestring[:-1]
 
     def extractType(self, text):
         typecode = ""

@@ -3,6 +3,9 @@
 
 # Skapat av Christian Davén 2004
 
+from i18n import *
+setLanguage("en")
+
 import timeedit
 import xunittest
 
@@ -11,29 +14,35 @@ class TimeEditSummaryParserTest(xunittest.TestCase):
     
     def setUp(self):
         self.parser = timeedit.SummaryParser()
-    
+        self.summary1 = "9E1300, Le, H21"
+        self.summary2 = "5B1101, 5B1108, 5B1109, 5B1110, 5B1128, 5B1139, 5B1307, TEN, V01, V11, V21, V22, V23, V32, V34"
+        self.summary3 = "5B1116, Frl, D1"
+        self.summary4 = "5B1116.c, Ovn, E35"
+        self.summary5 = "5B1116, Sem, D31, E32, E34, E35, E36"
+
     def testLocation(self):
-        self.failUnlessEqual(self.parser.extractLocation("M4MEK T4MEK V4BKO 5C1850.WS V26t ---"), "V26t")
-        self.failUnlessEqual(self.parser.extractLocation("2D1252.L D4D E4E F4F 5V5Vio"), "5V5Vio")
-        self.failUnlessEqual(self.parser.extractLocation("2C1224.F D4D E4E M4MSY T4MSY F3"), "F3")
-        self.failUnlessEqual(self.parser.extractLocation("4D1225.Sem X3X"), "")
-        self.failUnlessEqual(self.parser.extractLocation("D2D I2FIM I3KSI 5B1506.TEN E31 E32 E33 E34 E35 E36 V32 V33 V..."), "E31,E32,E33,E34,E35,E36,V32,V33")
-        self.failUnlessEqual(self.parser.extractLocation("D2D I2FIM I3KSI 5B1506.Ö Q31 Q32 Q33 Q34"), "Q31,Q32,Q33,Q34")
+        self.failUnlessEqual(self.parser.extractLocation(self.summary1), "H21")
+        self.failUnlessEqual(self.parser.extractLocation(self.summary2), "V01,V11,V21,V22,V23,V32,V34")
+        self.failUnlessEqual(self.parser.extractLocation(self.summary3), "D1")
+        self.failUnlessEqual(self.parser.extractLocation(self.summary4), "E35")
+        self.failUnlessEqual(self.parser.extractLocation(self.summary5), "D31,E32,E34,E35,E36")
 
     def testCourse(self):
-        self.failUnlessEqual(self.parser.extractCourse("M4MEK T4MEK V4BKO 5C1850.WS V26t ---"), "5C1850")
-        self.failUnlessEqual(self.parser.extractCourse("2D1252.L D4D E4E F4F 5V5Vio"), "2D1252")
-        self.failUnlessEqual(self.parser.extractCourse("*:59/2I1140.TEN D4D 5V5Vio"), "*:59/2I1140")
-        self.failUnlessEqual(self.parser.extractCourse("#4D1225.Sem X3X"), "4D1225")
-        self.failUnlessEqual(self.parser.extractCourse("D2D I2FIM I3KSI 5B1506.Ö Q31 Q32 Q33 Q34"), "5B1506")
+        self.failUnlessEqual(self.parser.extractCourse(self.summary1), "9E1300")
+        self.failUnlessEqual(self.parser.extractCourse(self.summary2), "5B1101,5B1108,5B1109,5B1110,5B1128,5B1139,5B1307")
+        self.failUnlessEqual(self.parser.extractCourse(self.summary3), "5B1116")
+        self.failUnlessEqual(self.parser.extractCourse(self.summary4), "5B1116")
+        self.failUnlessEqual(self.parser.extractCourse(self.summary5), "5B1116")
 
     def testType(self):
-        self.failUnlessEqual(self.parser.extractType("M4MEK T4MEK V4BKO 5C1850.WS V26t ---"), "Workshop")
-        self.failUnlessEqual(self.parser.extractType("2D1252.L D4D E4E F4F 5V5Vio"), "Laboration")
-        self.failUnlessEqual(self.parser.extractType("4D1225.Sem X3X"), "Seminarium")
-        self.failUnlessEqual(self.parser.extractType("D2D I2FIM I3KSI 5B1506.TEN E31 E32 E33 E34 E35 E36 V32 V33 V..."), "Tentamen")
-        self.failUnlessEqual(self.parser.extractType("D2D I2FIM I3KSI 5B1506.Ö Q31 Q32 Q33 Q34"), "Övning")
-        self.failUnlessEqual(self.parser.extractType("4D1225.QWERTY"), "QWERTY")
+        self.failUnlessEqual(self.parser.extractType(self.summary1), u"Lektion")
+        self.failUnlessEqual(self.parser.extractType(self.summary2), u"Tentamen")
+        self.failUnlessEqual(self.parser.extractType(self.summary3), u"Föreläsning")
+        self.failUnlessEqual(self.parser.extractType(self.summary4), u"Övning")
+        self.failUnlessEqual(self.parser.extractType(self.summary5), u"Seminarium")
+
+    def testGroup(self):
+        pass
 
 # -----------------------------------------------------------
 xunittest.run()

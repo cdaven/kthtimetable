@@ -197,6 +197,15 @@ class CachedCourseList(CourseList):
 
         return False
 
+    def getCourseByName(self, name):
+        course = None
+
+        for c in self.courses:
+            if c.name == name:
+                course = c
+
+        return course
+
 
 # -----------------------------------------------------------
 class TimeTable:
@@ -577,9 +586,19 @@ class Event:
             data = self.parser.parse(summary)
             self.type = data["type"]
             self.location = data["location"]
-            self.course = courselist.getCourse(data["course"])
             self.group = data["group"]
             self.seriesno = data["seriesno"]
+
+            try:
+                self.course = courselist.getCourse(data["course"])
+            except ValueError:
+                "Ser om kursnamn används som kurskod i Daisy"
+                daisycourses = CachedCourseList()
+                course = daisycourses.getCourseByName(data["course"])
+                if course:
+                    self.course = course
+                else:
+                    raise
         else:
             raise RuntimeError(U_("No parser has been initialized"))
     
@@ -600,18 +619,6 @@ class Event:
         if "location" in keys and other["location"]:
             self.location = other["location"]
         
-    def copy(self, other):
-        self.__id = other.getID()
-        self.date = other.date
-        self.begin = other.begin
-        self.end = other.end
-        self.location = other.location
-        self.type = other.type
-        self.group = other.group
-        self.seriesno = other.seriesno
-        self.course = other.course
-        self.active = other.active
-
     def getDescriptionWithoutLocation(self):
         global courselist
         
@@ -697,7 +704,7 @@ class SubscribedEvent(Event):
 
 # -----------------------------------------------------------
 class EventList:
-    def __init__(self, list=None):
+    def __init__(self, list = None):
         self.events = {}
         if list:
             self.addEvents(list)
@@ -712,6 +719,11 @@ class EventList:
         return self.events.values()
 
     def getAllPersistent(self):
+        """
+            Returnerar alla aktiviteter som hör till det
+            aktuella schemat; dvs. som inte är "prenumererade"
+        """
+
         events = []
         for event in self.getAll():
             if not isinstance(event, SubscribedEvent):
@@ -735,14 +747,16 @@ class EventList:
         else:
             try:
                 newevent = Event(event)
-                if not self.hasEvent(newevent.getID()):
-                    self.events[newevent.getID()] = newevent
             except ValueError, e:
                 # när en händelse skapas som inte hör till någon
                 # känd kurs avbryts inte all inläsning utan just
                 # den händelsen ignoreras
                 import sys
                 sys.stderr.write("\n" + str(e) + "\n")
+                return
+
+            if not self.hasEvent(newevent.getID()):
+                self.events[newevent.getID()] = newevent
 
     def addEvents(self, list):
         for event in list:

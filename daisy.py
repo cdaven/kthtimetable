@@ -44,13 +44,7 @@ class Conduit:
         url = urllib.urlopen("http://daisy.it.kth.se" + generated[start:end])
         if self.callback: self.callback()
 
-        data = url.readlines()
-
-        if settings.in_debug_mode:
-            file("dbg-daisydata", "w+").writelines(data)
-            print "skrev hämtad data till fil"
-
-        return data
+        return url.readlines()
 
     def getCourses(self, callback = None):
         """
