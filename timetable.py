@@ -36,18 +36,13 @@ class CourseList:
         """
 
         if isinstance(codeorcourse, Course):
-            try:
+            if self.hasCourse(codeorcourse):
                 self.courses.remove(codeorcourse)
-            except ValueError:
-                pass
-            
             self.courses.append(codeorcourse)
         else:
-            try:
+            if self.hasCourse(codeorcourse):
                 self.courses.remove(self.getCourse(codeorcourse))
-            except ValueError:
-                pass
-    
+
             self.courses.append(Course(codeorcourse, name, id, group))
         
     def removeCourse(self, code):
@@ -584,13 +579,13 @@ class Event:
         global courselist
         data = self.parser.parse(summary)
 
-        self.type = unicode(data["type"], "latin_1")
+        self.type = data["type"]
         self.group = data["group"]
         self.seriesno = data["seriesno"]
         if not self.location:
             # om inte copyFromDict redan satt lokalen,
             # som den gör för Daisy-aktiviteter
-            self.location = unicode(data["location"], "latin_1")
+            self.location = data["location"]
 
         try:
             if not self.course:
@@ -642,7 +637,7 @@ class Event:
         if "date" in keys: self.date = calendar.Date(other["date"])
         if "begin" in keys: self.begin = calendar.Time(other["begin"])
         if "end" in keys: self.end = calendar.Time(other["end"])
-        if "type" in keys: self.type = unicode(other["type"], "latin_1")
+        if "type" in keys: self.type = other["type"]
         if "group" in keys: self.group = other["group"]
         if "seriesno" in keys: self.seriesno = other["seriesno"]
         if "active" in keys: self.active = other["active"]

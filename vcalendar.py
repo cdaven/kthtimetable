@@ -39,15 +39,19 @@ class Reader:
             raise error.DataError(U_("Bad vCalendar data"))
 
         events = []
+        summarycontinues = False
         import encodings
 
         for line in input:
-            (key, value) = splitLine(line)
-
-            # får UTF-8-kodade värden från Daisy;
+            # får UTF8-kodade värden från Daisy
+            # och Latin1-ditto från TimeEdit;
             # gör om dem till unicode-strängar
-            if isUTF8(value):
-                value = unicode(value, "utf8")
+            if isUTF8(line):
+                line = unicode(line, "utf8")
+            else:
+                line = unicode(line, "latin_1")
+
+            (key, value) = splitLine(line)
 
             if key == "BEGIN" and value == "VEVENT":
                 id = date = begin = end = location = summary = ""
@@ -71,9 +75,16 @@ class Reader:
 
             elif key.startswith("SUMMARY"):
                 summary = value
+                if value[-1] == "=":
+                    # långa rader kan brytas med '='
+                    summarycontinues = True
 
             elif key.startswith("LOCATION"):
                 location = value
+
+            elif summarycontinues:
+                summary = summary[:-1] + line.strip()
+                summarycontinues = False
 
         return events
 

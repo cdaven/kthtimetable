@@ -199,7 +199,7 @@ class MainFrame(wx.Frame):
             self.days[weekday].clear()
 
             for event in timetable.timetable.getEventsForDate(date):
-                self.days[weekday].addEvent(event)
+                self.days[weekday].addEvent(event)                  
 
             self.days[weekday].showEvents()
             self.days[weekday].Thaw()
@@ -240,7 +240,7 @@ class MainFrame(wx.Frame):
             if timeeditcourses:
                 data += self.updateFromTimeEdit(timeeditcourses)
 
-            file("dbg-caldata", "w+").writelines(data)
+            #file("dbg-caldata", "w+").writelines(data)
 
             timetable.timetable.importVCalData(data)
             timetable.timetable.save()
@@ -1174,98 +1174,44 @@ class EventOrganiser:
     def clear(self):
         self.events = []
 
-    def fitsInColumn(self, column, event):
-        # jämför med varje händelse i aktuell kolumn
-        for columnevent in column:
-            if self.isClash(columnevent, event):
-                return False
-            
-        return True
-    
-    def countClashes(self, columns):
-        for event in self.events:
-            for c in columns:
-                for columnevent in c:
-                    if columnevent is event:
-                        continue
-
-                    # en kollision i en kolumn
-                    if self.isClash(columnevent, event):
-                        event.clashes += 1
-                        break
-
-        self.setMaxClashes()
-
-    def setMaxClashes(self):
-        """
-            Sätter alla händelsers antal kollisioner till det högsta värdet
-            bland händelserna i "kollisionsgruppen"
-        """
-        already = []
-        for event in self.events:
-            if event in already:
-                continue
-
-            clashes = []
-            self.getClashGroup(event, clashes)
-            already.extend(clashes)
-
-            # ingen "kollisionsgrupp", dvs. en händelse som inte kolliderar
-            if not clashes:
-                continue
-
-            maxclashes = 0
-            for clash in clashes:
-                maxclashes = max(clash.clashes, maxclashes)
-                
-            for clash in clashes:
-                clash.clashes = maxclashes
-                
     def showEvents(self):
         # den rena superklassen kan inte visa någon grafik,
         # däremot subklassen DayPanel
         if self.__class__ == EventOrganiser:
             return
 
+        self._countClashes()
+
+        for event in self.events: event.show()
+
+    def _countClashes(self):
+        already = []
+
         for event in self.events:
-            event.show()
+            if event in already: continue
+
+            clashingevents = []
+            self.getClashGroup(event, clashingevents)
+            clashes = len(clashingevents) - 1
+
+            columnno = 0
+            for event in clashingevents:
+                event.clashes = clashes
+                event.column = columnno
+                columnno += 1
+
+            already.extend(clashingevents)
 
     def addEvent(self, event):
         self.events.append(GraphicalEvent(self, event))
 
-        columns = [[]]
-
-        for event in self.events:
-            event.clashes = 0
-            foundspot = False
-
-            columnno = 0
-            # tittar igenom alla kolumner
-            for c in columns:
-                # om ej kollision i denna kolumn, addera händelse
-                if self.fitsInColumn(c, event):
-                    event.column = columnno
-                    c.append(event)
-                    foundspot = True
-                    break
-
-                columnno += 1
-                    
-            if not foundspot:
-                event.column = len(columns)
-                columns.append([event])
-
-        self.countClashes(columns)
-
-    def isClash(self, event1, event2):
-        if event1 == event2:
-            return False
-    
-        if (event1.begin <= event2.begin and event1.end > event2.begin) or \
-        (event2.begin <= event1.begin and event2.end > event1.begin):
+    def _isClash(self, event1, event2):
+        if event1.begin <= event2.begin and event1.end > event2.begin:
             return True
-        else:
-            return False
+        elif event2.begin <= event1.begin and event2.end > event1.begin:
+            return True
+
+        return False
 
     def getClashGroup(self, event, clashes):
         """
@@ -1278,7 +1224,7 @@ class EventOrganiser:
             if other is event or other in clashes:
                 continue
 
-            if self.isClash(event, other):
+            if self._isClash(event, other):
                 clashes.append(other)
                 self.getClashGroup(other, clashes)
 
@@ -1326,6 +1272,9 @@ class GraphicalEvent:
         self.panel = None
         self.clashes = 0
         self.column = 0
+
+    def __len__(self):
+        return self.clashes
 
     def getType(self):
         return self.event.type
