@@ -795,7 +795,7 @@ class ExportDialog(OKCancelDialog):
         filedialog = wx.FileDialog(self, U_("Export to file"),
             wildcard=U_("Outlook/Evolution compatible files") + " (vCalendar Unicode)|*.vcs|" +
                 U_("Palm Desktop compatible files") + " (vCalendar)|*.vcs|" +
-                U_("J-Pilot compatible files") + " (Comma Separated)|*.csv|" +
+                U_("J-Pilot compatible files") + " (" + U_("Comma Separated") + ")|*.csv|" +
                 U_("HTML files") + "|*.html", style=wx.SAVE|wx.OVERWRITE_PROMPT)
 
         if filedialog.ShowModal() == wx.ID_OK:
