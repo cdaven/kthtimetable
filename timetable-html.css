@@ -1,0 +1,18 @@
+div.week
+{
+    border-top: 2px solid #000;
+    clear: both;
+}
+div.day
+{
+    margin: 0px;
+    width: 150px;
+    float: left;
+}
+div.event
+{
+    margin-top: 3px;
+    margin-bottom: 3px;
+    font-size: 80%;
+}
+
