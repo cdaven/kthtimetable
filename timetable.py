@@ -277,7 +277,7 @@ class TimeTable:
 
         # ... och därefter alla händelser som beror på de inlästa kurserna
         for section in config.sections():
-            if section != "main" and section != "courses":
+            if section != "main" and section != "courses" and section != "settings":
                 event = Event()
 
                 event.setID(section)

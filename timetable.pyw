@@ -9,9 +9,11 @@
 
 import sys
 import os, os.path
-import settings
 from i18n import *
 
+setLanguage("sv")
+
+import settings
 settings.load()
 
 # Raderar alla tmpXXXXXX-filer som skapats av PyInformationalMessagesFrame
