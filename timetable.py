@@ -248,7 +248,7 @@ class TimeTable:
         return self.eventlist.isEmpty()
 
     def importData(self, input, source):
-        "Importerar data från fil eller lista -- ersätter aktuellt schema"
+        "Importerar data från fil eller lista"
         import vcalendar
         newevents = vcalendar.Reader().read(input)
         if newevents:

@@ -38,7 +38,7 @@ class ConfigParserX(ConfigParser.SafeConfigParser):
         try:
             return unicode(ConfigParser.SafeConfigParser.get(self, section, key), "latin_1")
         except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
-            raise error.DataError(U_("Missing data in timetable file"))
+            raise error.DataError("Missing data in timetable file")
 
     def getintorzero(self, section, key):
         val = 0

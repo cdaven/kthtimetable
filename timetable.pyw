@@ -11,8 +11,6 @@ import sys
 import os, os.path
 from i18n import *
 
-setLanguage("sv")
-
 import settings
 settings.load()
 
@@ -58,8 +56,7 @@ else:
         
     app = Application(0)
     app.MainLoop()
-
-settings.save()
+    settings.save()
 
 # -----------------------------------------------------------
 # The GNU General Public License is a Free Software license. Like any Free
