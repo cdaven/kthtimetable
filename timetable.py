@@ -297,20 +297,10 @@ class TimeTable:
                 except ConfigParser.NoOptionError:
                     raise error.DataError(U_("Felaktig data i fil") + " " + filename)
 
-                try:
-                    event.group = config.getint(section, "group")
-                except ConfigParser.NoOptionError:
-                    event.group = 0
-                    
-                try:
-                    event.seriesno = config.getint(section, "seriesno")
-                except ConfigParser.NoOptionError:
-                    event.seriesno = 0
-                
-                try:
-                    if not config.getint(section, "active"):
-                        event.active = False
-                except ConfigParser.NoOptionError:
+                event.group = config.getintorzero(section, "group")
+                event.seriesno = config.getintorzero(section, "seriesno")
+                event.active = False
+                if config.getintorzero(section, "active") == 1:
                     event.active = True
 
                 self.addEvent(event)

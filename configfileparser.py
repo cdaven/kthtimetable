@@ -34,6 +34,13 @@ class ConfigParserX(ConfigParser.SafeConfigParser):
     def get(self, section, key):
         return unicode(ConfigParser.SafeConfigParser.get(self, section, key), "latin_1")
 
+    def getintorzero(self, section, key):
+        val = 0
+        if ConfigParser.SafeConfigParser.has_option(self, section, key):
+            val = ConfigParser.SafeConfigParser.getint(self, section, key)
+
+        return val
+
     # en wrapper-metod som sparar Unicode-värdet som Latin-1
     def set(self, section, key, value):
         if isinstance(value, unicode):

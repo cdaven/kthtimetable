@@ -40,7 +40,7 @@ class Conduit:
             raise error.ReadError(_("Kunde inte lasa fran") + " " + _("schemaservern"))
     
     def getFromYearAndWeek(self):
-        week = str(calendar.Date().getWeek())
+        week = str((calendar.Date() - 14).getWeek())
         if len(week) == 1: week = "0" + week
         return str(calendar.Date().getYear() - 2000) + week
     
