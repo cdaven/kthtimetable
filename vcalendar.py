@@ -103,8 +103,8 @@ class Writer:
 
             data.append("\nDTSTART:" + str(event.date) + "T" + str(begin) + "Z")
             data.append("\nDTEND:" + str(event.date) + "T" + str(end) + "Z")
-            data.append("\nSUMMARY:" + event.getDescriptionWithoutLocation().encode("latin_1"))
-            data.append("\nLOCATION:" + event.location.encode("latin_1"))
+            data.append("\nSUMMARY:" + event.getDescriptionWithoutLocation().encode("utf8"))
+            data.append("\nLOCATION:" + event.location.encode("utf8"))
             data.append("\nCATEGORIES:KTHTimeTable")
             data.append("\nEND:VEVENT\n")
 
