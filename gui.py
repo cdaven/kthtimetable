@@ -11,7 +11,7 @@ import error
 from i18n import *
 
 applicationname = u"KTH TimeTable"
-applicationversion = u"2.4?"
+applicationversion = u"2.3.2"
 
 # -----------------------------------------------------------
 class MainFrame(wx.Frame):
@@ -118,8 +118,8 @@ class MainFrame(wx.Frame):
         menu = wx.Menu()
         menu.Append(210, U_("Choose &courses..."))
         menu.Append(220, U_("&Fetch timetable...\tF5"))
-        menu.AppendSeparator()
-        menu.Append(230, U_("Export"))
+        #menu.AppendSeparator()
+        #menu.Append(230, U_("Export"))
         #menu.Append(240, U_("Import"))
         menu.AppendSeparator()
         menu.Append(250, U_("Choose &groups..."))
@@ -561,14 +561,21 @@ class ChooseCoursesDialog(OKCancelDialog):
         layout = wx.BoxSizer(wx.VERTICAL)
         newcourse = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.courseedit = TextCtrl(self, callback=self.addCourse, size=(250, -1))
-        newcourse.Add(StaticText(self, U_("Enter one course code at a time:"), size=(200,-1), style=wx.ST_NO_AUTORESIZE), 0, wx.TOP, 5)
+        self.courseedit = wx.TextCtrl(self, -1, size=(150, -1))
+        addbtn = wx.Button(self, 90, U_("&Add"))
+        addbtn.SetDefault()
+
+        newcourse.Add(StaticText(self, U_("Enter one course code at a time:"), size=(200,-1),
+            style=wx.ST_NO_AUTORESIZE), 0, wx.TOP, 5)
         newcourse.Add(self.courseedit, 0)
+        newcourse.Add(wx.Window(self, -1), 1)
+        newcourse.Add(addbtn, 0)
 
         self.chosencourses = []
         self.courselist = CourseListBox(self, timetable.courselist.getAllPersistentCourses(), size=(450,250))
 
         wx.EVT_BUTTON(self, 20, self.RemoveCourse)
+        wx.EVT_BUTTON(self, 90, self.addCourse)
         
         layout.Add(StaticText(self, U_("Choose the courses you want included in your timetable. Both TimeEdit and Daisy courses can be added. The course code may be incomplete for Daisy courses; all matching courses will then be added."), size=(450,60), wordwrap=True, style=wx.ST_NO_AUTORESIZE), 0, wx.LEFT|wx.TOP, 10)
         layout.Add(newcourse, 0, wx.LEFT|wx.TOP|wx.RIGHT, 10)
@@ -618,10 +625,13 @@ class ChooseCoursesDialog(OKCancelDialog):
         progressdialog.stopProgress()
         return courses
 
-    def addCourse(self):
+    def addCourse(self, evt = None):
         code = self.courseedit.GetValue()
         if not code:
-            return # tom sträng; gör inget
+            # ingen angiven kod, vill förmodligen
+            # stänga dialogrutan
+            self.SaveAndClose(evt)
+            return
 
         if self.radiotimeedit.GetValue():
             # letar i TimeEdit först
@@ -644,7 +654,7 @@ class ChooseCoursesDialog(OKCancelDialog):
 
             self.courseedit.SetValue("")
         else:
-            msg = U_("The course") + " " + U_("does not exist") + " " + U_("in Daisy or TimeEdit.")
+            msg = U_("The course") + " " + code + " " + U_("does not exist") + " " + U_("in Daisy or TimeEdit.")
             wx.MessageDialog(self, msg, U_("The course") + " " + U_("does not exist"),
                 style=wx.ICON_WARNING).ShowModal()
 
@@ -1368,18 +1378,3 @@ class EventPanel(Panel):
         self.SetToolTip(wx.ToolTip(self.event.getNiceString()))
         self.paint()
 
-
-# -----------------------------------------------------------
-class TextCtrl(wx.TextCtrl):
-
-    def __init__(self, parent, callback=None, size=(-1,-1)):
-        wx.TextCtrl.__init__(self, parent, -1, size=size)
-        self.callback = callback
-        wx.EVT_KEY_DOWN(self, self.OnKeyDown)
-
-    def OnKeyDown(self, evt):
-        "Anropar callback om ENTER trycks ned (dock ej om CTRL eller ALT hålls nere)"
-        if evt.GetKeyCode() == wx.WXK_RETURN and self.callback and not evt.HasModifiers():
-            self.callback()
-        else:
-            evt.Skip()
