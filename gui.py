@@ -364,7 +364,7 @@ class GroupsDialog(OKCancelDialog):
 
             if groups:
                 groups.sort()
-                groups.append(self.nogroup)
+                groups.append(self.nogroup.encode("latin_1"))
                 rightcomponent = Choice(self, (70, -1), groups, course.code)
 
                 if selectedgroup:

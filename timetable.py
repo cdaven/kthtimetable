@@ -196,8 +196,8 @@ class TimeTable:
         groups = []
         events = self.getAllEventsForCourse(code)
         for event in events:
-            if event.group and event.group not in groups:
-                groups.append(event.group)
+            if event.group and str(event.group) not in groups:
+                groups.append(str(event.group))
 
         return groups
 
