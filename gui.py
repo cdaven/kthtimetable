@@ -913,13 +913,7 @@ class ChooseCoursesDialog(OKCancelDialog):
                 courses = self.lookForCourseInTimeEdit(code)
 
         if courses:
-            try:
-                self.courselist.InsertItems(courses)
-            except ValueError:
-                msg = U_("The course ") + U_("is already chosen.")
-                wx.MessageDialog(self, msg, U_("Already chosen"),
-                    style=wx.ICON_INFORMATION).ShowModal()
-
+            self.courselist.InsertItems(courses)
             self.courseedit.SetValue("")
         else:
             msg = U_("No course matching ") + code + U_(" exists in Daisy or TimeEdit.")
@@ -1207,11 +1201,13 @@ class CourseListBox(wx.ListBox):
         self.Freeze()
 
         for course in courses:
+            already = False
             for i in range(self.GetCount()):
-                if course is self.GetClientData(i):
-                    raise ValueError("Course already in list")
+                if course == self.GetClientData(i):
+                    already = True
 
-            self.Append(self.__courseToString(course), course)
+            if not already:
+                self.Append(self.__courseToString(course), course)
 
         self.Thaw()
 
