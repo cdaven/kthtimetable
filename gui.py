@@ -7,7 +7,6 @@ import settings
 import guisettings
 import calendar
 import timetable
-import daisy
 import error
 from i18n import *
 
@@ -251,6 +250,7 @@ class MainFrame(wx.Frame):
         timetable.timetable.importData(data, "TimeEdit")
 
     def updateFromDaisy(self, ids):
+        import daisy
         progressdialog = ProgressDialog(self, U_("Fetching the timetable from") + " Daisy", [U_("Connecting to") + " it.kth.se...", U_("Receiving data..."), U_("Generating timetable..."), U_("Receiving timetable...")])
         progressdialog.startProgress()
         try:
@@ -678,12 +678,13 @@ class ChooseITUCoursesDialog(OKCancelDialog):
         self.list_all.InsertItems(courses)
 
     def getCourses(self):
+        import daisy
         global cachedcourselist
         self.progressdialog.startProgress()
 
         courses = []
         try:
-            courses = daisy.getITUCourses(callback=self.progressdialog.increaseProgress)
+            courses = daisy.Conduit().getCourses() # callback=self.progressdialog.increaseProgress)
             cachedcourselist = courses
         except error.ReadError:
             msg = U_("Could not read from") + " " + U_("the IT University web site.") + "\n" + U_("Make sure you have access to the Internet.")

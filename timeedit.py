@@ -7,6 +7,7 @@ import calendar
 import re
 import error
 import settings
+import timetable
 from i18n import *
 
 # -----------------------------------------------------------
@@ -21,7 +22,7 @@ class Conduit:
         url = "http://schema.sys.kth.se/4DACTION/iCalGetEntries/"
         url += self.getFromYearAndWeek() + "/"
         url += self.getToYearAndWeek()
-        
+
         for code in coursecodes:
             url += "/" + code
             
@@ -46,20 +47,24 @@ class Conduit:
         return str(calendar.Date().getYear() - 2000) + week
     
     def getToYearAndWeek(self):
-        year = calendar.Date().getYear() - 2000
-        week = calendar.Date().getWeek()
+        today = calendar.Date()
+        year = today.getYear() - 2000
 
-        endweek = "30" # vårtermin
-        if week > 30:
-            # hösttermin, hämtar fram till årets sista vecka
-            endweek = str(calendar.Date(str(calendar.Date().getYear()) + "1228").getWeek())
+        if today.getMonth() > 9:
+            year = str(year + 1)
+            week = "35" # sista tänkbara omtentavecka i augusti (?)
+        elif today.getMonth() < 3:
+            year = str(year)
+            week = "35"
+        else:
+            year = str(year)
+            week = "51"
 
-        if len(endweek) == 1: endweek = "0" + endweek
-        return str(year) + endweek
+        return year + week
 
     def getCourseInfo(self, code):
         url = "http://schema.sys.kth.se/4DACTION/WebShowSearch/1/1-3"
-        getdata = urllib.urlencode({"wv_search": code, "wv_bSearch": "Sök", "wv_type": 3})
+        getdata = urllib.urlencode({"wv_search": code, "wv_bSearch": "Sök", "wv_type": 4})
 
         try:
             data = self.urlopener.open(url, getdata).read()
@@ -71,16 +76,16 @@ class Conduit:
         if not rx:
             raise ValueError(U_("The course") + " " + code + " " + U_("does not exist"))
         
-        import timetable
         return timetable.Course(code.upper(), rx.group(1))
 
 # -----------------------------------------------------------
 class SummaryParser:
 
     def __init__(self):
-        self.types = {"F": u"Föreläsning", "L": u"Laboration", "Le": u"Lektion",
-            "Ö": u"Övning", "Sem": u"Seminarium", "WS": u"Workshop",
-            "TEN": u"Tentamen"}
+        self.types = {"DL": u"Datalaboration", "F": u"Föreläsning", "FÖ": u"Fältövning",
+            "L": u"Laboration", "Le": u"Lektion", "Proj": u"Projekt", "RS": u"Räknestuga",
+            "Sem": u"Seminarium", "Stu": u"Studiebesök", "WS": u"Workshop",
+            "Ö": u"Övning", "TEN": u"Tentamen"}
         self.lowercase_letters = u"abcdefghijklmnopqrstuvwxyzåäö"
         self.numbers = "1234567890"
 
