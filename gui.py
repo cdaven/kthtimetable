@@ -506,7 +506,7 @@ class SettingsDialog(OKCancelDialog):
         size = (150,-1)
 
         setting1.Add(StaticText(self, U_("Days in week:"), size=size, style=wx.ST_NO_AUTORESIZE), 0, wx.ALL, 10)
-        self.daysinweek = wx.Choice(self, -1, size=(70,-1), choices=["5", "6", "7"])
+        self.daysinweek = wx.Choice(self, -1, size=(100,-1), choices=["5", "6", "7"])
         self.daysinweek.SetSelection(settings.lastweekday - 4)
         setting1.Add(self.daysinweek, 0, wx.LEFT|wx.RIGHT, 10)
 
@@ -517,14 +517,14 @@ class SettingsDialog(OKCancelDialog):
         setting2.Add(self.language, 0, wx.LEFT|wx.RIGHT, 10)
 
         setting3.Add(StaticText(self, U_("Start of day:"), size=size, style=wx.ST_NO_AUTORESIZE), 0, wx.ALL, 10)
-        self.daybegin = wx.Choice(self, -1, size=(80,-1), choices=["08:00", "09:00", "10:00"])
+        self.daybegin = wx.Choice(self, -1, size=(100,-1), choices=["08:00", "09:00", "10:00"])
         if settings.daybegin <= calendar.Time("080000"): self.daybegin.SetSelection(0)
         elif settings.daybegin <= calendar.Time("090000"): self.daybegin.SetSelection(1)
         else: self.daybegin.SetSelection(2)
         setting3.Add(self.daybegin, 0, wx.LEFT|wx.RIGHT, 10)
 
         setting4.Add(StaticText(self, U_("End of day:"), size=size, style=wx.ST_NO_AUTORESIZE), 0, wx.ALL, 10)
-        self.dayend = wx.Choice(self, -1, size=(80,-1), choices=["17:00", "18:00", "19:00", "20:00", "21:00"])
+        self.dayend = wx.Choice(self, -1, size=(100,-1), choices=["17:00", "18:00", "19:00", "20:00", "21:00"])
         if settings.dayend <= calendar.Time("170000"): self.dayend.SetSelection(0)
         elif settings.dayend <= calendar.Time("180000"): self.dayend.SetSelection(1)
         elif settings.dayend <= calendar.Time("190000"): self.dayend.SetSelection(2)
@@ -532,11 +532,12 @@ class SettingsDialog(OKCancelDialog):
         else: self.dayend.SetSelection(4)
         setting4.Add(self.dayend, 0, wx.LEFT|wx.RIGHT, 10)
 
-        layout.Add(StaticText(self, U_("The settings will need a\nprogram restart to take effect.")), 0, wx.EXPAND|wx.ALL, 10)
-        layout.Add(setting1, 0, wx.EXPAND|wx.ALL, 10)
-        layout.Add(setting3, 0, wx.EXPAND|wx.ALL, 10)
-        layout.Add(setting4, 0, wx.EXPAND|wx.ALL, 10)
-        layout.Add(setting2, 0, wx.EXPAND|wx.ALL, 10)
+        layout.Add(StaticText(self, U_("The settings will need a\nprogram restart to take effect.")), 0,
+            wx.EXPAND|wx.ALL, 10)
+        layout.Add(setting1, 0, wx.TOP|wx.LEFT|wx.RIGHT, 10)
+        layout.Add(setting3, 0, wx.TOP|wx.LEFT|wx.RIGHT, 10)
+        layout.Add(setting4, 0, wx.TOP|wx.LEFT|wx.RIGHT, 10)
+        layout.Add(setting2, 0, wx.ALL, 10)
         layout.Add(self.buttons, 0, wx.EXPAND|wx.ALL, 10)
 
         self.SetSizerAndFit(layout)
@@ -559,7 +560,6 @@ class ChooseCoursesDialog(OKCancelDialog):
 
         layout = wx.BoxSizer(wx.VERTICAL)
         newcourse = wx.BoxSizer(wx.HORIZONTAL)
-        list = wx.BoxSizer(wx.HORIZONTAL)
 
         self.courseedit = TextCtrl(self, callback=self.addCourse, size=(250, -1))
         newcourse.Add(StaticText(self, U_("Enter one course code at a time:"), size=(200,-1), style=wx.ST_NO_AUTORESIZE), 0, wx.TOP, 5)
@@ -567,12 +567,10 @@ class ChooseCoursesDialog(OKCancelDialog):
 
         self.chosencourses = []
         self.courselist = CourseListBox(self, timetable.courselist.getAllPersistentCourses(), size=(450,250))
-        list.Add(self.courselist)
-        list.Add(wx.Button(self, 20, U_("&Remove")), 0, wx.LEFT, 10)
 
         wx.EVT_BUTTON(self, 20, self.RemoveCourse)
         
-        layout.Add(StaticText(self, U_("Choose the courses you want included in your timetable. Both TimeEdit and Daisy courses can be added. The course code may be incomplete for Daisy courses; all matching courses will then be added."), size=(500,60), wordwrap=True, style=wx.ST_NO_AUTORESIZE), 0, wx.LEFT|wx.TOP, 10)
+        layout.Add(StaticText(self, U_("Choose the courses you want included in your timetable. Both TimeEdit and Daisy courses can be added. The course code may be incomplete for Daisy courses; all matching courses will then be added."), size=(450,60), wordwrap=True, style=wx.ST_NO_AUTORESIZE), 0, wx.LEFT|wx.TOP, 10)
         layout.Add(newcourse, 0, wx.LEFT|wx.TOP|wx.RIGHT, 10)
 
         self.radiodaisy = wx.RadioButton(self, -1, "Daisy")
@@ -586,7 +584,11 @@ class ChooseCoursesDialog(OKCancelDialog):
         layout.Add(self.radiodaisy, 0, wx.LEFT|wx.TOP, 10)
         layout.Add(self.radiotimeedit, 0, wx.LEFT, 10)
 
-        layout.Add(list, 0, wx.LEFT|wx.TOP|wx.RIGHT, 10)
+        # "Ta bort"-knappen högerjusteras
+        self.buttons.Add(wx.Window(self, -1), 1)
+        self.buttons.Add(wx.Button(self, 20, U_("&Remove course")))
+
+        layout.Add(self.courselist, 0, wx.LEFT|wx.TOP|wx.RIGHT, 10)
         layout.Add(self.buttons, 0, wx.EXPAND|wx.ALL, 10)
 
         self.SetSizerAndFit(layout)

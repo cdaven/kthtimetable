@@ -19,7 +19,7 @@ class Conduit:
         self.callback = callback
         
     def getTimeTableURL(self, coursecodes):
-        url = "http://schema.sys.kth.se/4DACTION/iCalGetReservations/"
+        url = "http://schema.sys.kth.se/4DACTION/iCal_GetReservations/"
         url += self.getFromYearAndWeek() + "/"
         url += self.getToYearAndWeek()
 
