@@ -214,16 +214,8 @@ class TimeTable:
         self.courselist.clear()
         self.updated = None
         
-    def importOneCourse(self, input, course):
-        "Importerar händelser för EN kurs från vCalendar-data."
-
-        import vcalendar
-        events = vcalendar.Reader().read(input)
-        if events:
-            self.eventlist.addEvents(events, course)
-
-    def importCourses(self, input):
-        "Importerar händelser från vCalendar-data."
+    def importVCalendarData(self, input, courses = []):
+        "Importerar händelser från vCalendar-data"
 
         import vcalendar
         events = vcalendar.Reader().read(input)
@@ -233,9 +225,13 @@ class TimeTable:
             cleaner = EventCleaner()
             cleaner.reset()
 
-            self.eventlist.addEvents(events)
+            course = None
+            if len(courses) == 1:
+                course = courses[0]
 
-            cleaner.sweep(self)
+            self.eventlist.addEvents(events, course)
+
+            cleaner.sweep(self, courses)
             self.updated = calendar.Date()
 
     def getAllChosenEvents(self):
@@ -533,15 +529,7 @@ class Course:
         return self.id == other
 
     def hasCode(self, code):
-        if " " in self.code or " " in code:
-            # Vissa kurser i Daisy heter ex. "5B1506 IT"
-            # men exporteras bara som 5B1506
-            return self.code.split(" ")[0] == code.split(" ")[0]
-        elif len(self.code) >= 20 or len(code) >= 20:
-            # Daisy exporterar endast de 20 första tecknen i kurskoden
-            return self.code[:20] == code[:20]
-        else:
-            return self.code == code
+        return self.code == code
 
     def __ne__(self, other):
         return not self == other
@@ -947,8 +935,16 @@ class EventCleaner:
     def mark(self, event):
         event.flag = self.okflag
 
-    def sweep(self, timetable):
-        for event in timetable.getAllEvents():
+    def sweep(self, timetable, courses = []):
+        "Tar endast bort angivna kurshändelser"
+
+        events = timetable.getAllEvents()
+        if courses:
+            events = []
+            for course in courses:
+                events.extend(timetable.getAllEventsForCourse(course))
+
+        for event in events:
             if not isinstance(event, subscription.SubscribedEvent)\
             and not event.flag == self.okflag:
                 timetable.removeEvent(event.getID())

@@ -11,7 +11,7 @@ import error
 from i18n import *
 
 applicationname = u"KTH TimeTable"
-applicationversion = u"2.6"
+applicationversion = u"2.7"
 
 # -----------------------------------------------------------
 class MainFrame(wx.Frame):
@@ -226,8 +226,8 @@ class MainFrame(wx.Frame):
         self.SetFocus()
 
     def Update(self, evt):
-        daisycourses = self.timetable.getAllDaisyCourseIDs()
-        timeeditcourses = self.timetable.getAllTimeEditCourseIDs()
+        daisycourses = self.timetable.getAllDaisyCourses()
+        timeeditcourses = self.timetable.getAllTimeEditCourses()
         
         if not daisycourses and not timeeditcourses:
             msg = U_("First you must choose which courses to fetch.")
@@ -235,16 +235,10 @@ class MainFrame(wx.Frame):
             return
         
         try:
-            data = []
-
             if daisycourses:
-                data = self.updateFromDaisy(daisycourses)
+                self.updateFromDaisy(daisycourses)
             if timeeditcourses:
-                data += self.updateFromTimeEdit(timeeditcourses)
-
-            file("dbg-caldata", "w+").writelines(data)
-
-            self.timetable.importCourses(data)
+                self.updateFromTimeEdit(timeeditcourses)
             self.timetable.save()
         except error.ReadError:
             msg = U_("Could not read from") + " " + U_("the timetable server") + ". " + U_("Make sure you have access to the Internet.")
@@ -259,7 +253,6 @@ class MainFrame(wx.Frame):
             wx.MessageDialog(self, msg, U_("File error"), style=wx.OK|wx.ICON_ERROR).ShowModal()
             return
 
-
         self.updateView()
 
         #if settings.publish:
@@ -270,31 +263,49 @@ class MainFrame(wx.Frame):
         #    # TODO: Visa fel om det inte gick
         #    progressdialog.stopProgress()
 
-    def updateFromTimeEdit(self, codes):
+    def updateFromTimeEdit(self, courses):
         import timeedit
-        progressdialog = ProgressDialog(self, U_("Fetching the timetable from") + " TimeEdit", [U_("Connecting to") + " schema.sys.kth.se...", U_("Receiving timetable...")])
+
+        ids = []
+        for course in courses:
+            ids.append(course.id)
+
+        progressdialog = ProgressDialog(self, U_("Fetching TimeEdit timetable"), [U_("Connecting to") + " schema.sys.kth.se...", U_("Receiving timetable...")])
         progressdialog.startProgress()
         try:
-            data = timeedit.Conduit(progressdialog.increaseProgress).getvCalendarData(codes)
+            data = timeedit.Conduit(progressdialog.increaseProgress).getvCalendarData(ids)
         except:
             progressdialog.stopProgress()
             raise
 
+        file("dbg-timeedit-vcal", "w+").writelines(data)
+        self.timetable.importVCalendarData(data, courses)
         progressdialog.stopProgress()
-        return data
 
-    def updateFromDaisy(self, ids):
+    def updateFromDaisy(self, courses):
         import daisy
-        progressdialog = ProgressDialog(self, U_("Fetching the timetable from") + " Daisy", [U_("Connecting to") + " it.kth.se...", U_("Receiving timetable..."), U_("Receiving timetable..."), U_("Receiving timetable...")])
-        progressdialog.startProgress()
+
+        ids = []
+        for course in courses:
+            ids.append(course.id)
+
+        data = []
+        progressdialog = ProgressDialog(self, U_("Fetching Daisy timetable"))
         try:
-            data = daisy.Conduit(progressdialog.increaseProgress).getvCalendarData(ids)
+            for id in ids:
+                course = self.timetable.getCourse(id)
+                progressdialog.setMessages([U_("Connecting to") + " it.kth.se...",
+                    U_("Receiving ") + course.code, U_("Importing ") + course.code])
+                progressdialog.startProgress()
+                data += daisy.Conduit(progressdialog.increaseProgress).getvCalendarData([id])
+                self.timetable.importVCalendarData(data, [course])
+                progressdialog.stopProgress()
         except:
             progressdialog.stopProgress()
             raise
         
+        file("dbg-daisy-vcal", "w+").writelines(data)
         progressdialog.stopProgress()
-        return data
 
     def About(self, evt):
         AboutDialog(self).ShowModal()
@@ -1127,8 +1138,11 @@ class ProgressDialog:
     
     def startProgress(self):
         self.progress = 0
+        if self.progressdialog: self.progressdialog.Destroy()
         self.progressdialog = wx.ProgressDialog(self.caption, self.messages[0],
             maximum=len(self.messages), parent=self.parent, style=wx.PD_AUTO_HIDE)
+        self.progressdialog.UpdateWindowUI()
+        self.parent.UpdateWindowUI()
     
     def increaseProgress(self):
         self.progress += 1
@@ -1137,9 +1151,10 @@ class ProgressDialog:
         self.parent.UpdateWindowUI()
 
     def stopProgress(self):
-        self.progressdialog.Update(self.progress + 1, self.messages[self.progress])
-        self.progressdialog.UpdateWindowUI()
-        self.progressdialog.Destroy()
+        if self.progressdialog:
+            #self.progressdialog.Update(len(self.messages), self.messages[-1])
+            self.progressdialog.UpdateWindowUI()
+            self.progressdialog.Destroy()
 
 
 # -----------------------------------------------------------
