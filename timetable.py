@@ -17,50 +17,55 @@ class CourseList:
         self.courses = []
 
     def clearDaisyCourses(self):
-        for course in self.getAllDaisyCourseCodes():
+        for course in self.getAllDaisyCourseIDs():
             self.removeCourse(course)
         
     def clearTimeEditCourses(self):
-        for course in self.getAllTimeEditCourseCodes():
+        for course in self.getAllTimeEditCourseIDs():
             self.removeCourse(course)
 
     def isEmpty(self):
         return self.courses == []
     
-    def addCourse(self, codeorcourse, name = "", id = 0, group = ""):
+    def addCourse(self, idorcourse, name = "", id = "", group = ""):
         """
-            Lägger till en kurs eller skriver över befintlig om samma kod
+            Lägger till en kurs eller skriver över befintlig om samma id
 
-            Det kan alltså finnas flera kurser med samma kurs/moment-ID,
-            men inte med samma kurskod.
+            Det kan alltså finnas flera kurser med samma kod,
+            men inte med samma kurs/moment-id.
         """
 
-        if isinstance(codeorcourse, Course):
-            if self.hasCourse(codeorcourse):
-                self.courses.remove(codeorcourse)
-            self.courses.append(codeorcourse)
+        if isinstance(idorcourse, Course):
+            if self.hasCourse(idorcourse):
+                self.courses.remove(idorcourse)
+            self.courses.append(idorcourse)
         else:
-            if self.hasCourse(codeorcourse):
-                self.courses.remove(self.getCourse(codeorcourse))
-
-            self.courses.append(Course(codeorcourse, name, id, group))
+            if self.hasCourse(idorcourse):
+                self.courses.remove(self.getCourse(idorcourse))
+            self.courses.append(Course(idorcourse, name, id, group))
         
-    def removeCourse(self, code):
+    def removeCourse(self, id):
         "Tar bort en kurs ur listan"
-        self.courses.remove(self.getCourse(code))
+        self.courses.remove(self.getCourse(id))
 
     def hasCourse(self, course):
         for c in self.courses:
             if c == course: return True
         return False
 
-    def getCourse(self, code):
-        "Returnerar en kurs definierad av kod"
-
+    def getCourse(self, id):
+        "Returnerar en kurs definierad av id (kurskod eller Daisy-id)"
         for course in self.courses:
-            if course == code: return course
+            if course == id: return course
 
-        raise ValueError(U_("The course") + " " + U_("does not exist") + " (" + U_("code") + " " + str(code) + ")")
+        raise ValueError(U_("The course") + " " + U_("does not exist") + " (" + U_("code") + " " + str(id) + ")")
+
+    def getCourseByCode(self, code):
+        "Returnerar en kurs definierad av kurskod"
+        for course in self.courses:
+            if course.hasCode(code): return course
+
+        raise ValueError(U_("The course") + " " + U_("does not exist") + " (" + U_("code") + " " + str(id) + ")")
 
     def getCourseName(self, code):
         "Returnerar namnet (ev. användardefinierat) på en kurs"
@@ -81,36 +86,29 @@ class CourseList:
         return self.getCourse(code).id
 
     def setCourseID(self, code, id):
-        self.getCourse(code).id = int(id)
-
-    def getAllDaisyCourseIDs(self):
-        ids = []
-        map(ids.append, map(self.getCourseID, self.getAllDaisyCourseCodes()))
-        return ids
-
-    def getAllDaisyCourseCodes(self):
-        codes = []
-        for course in self.courses:
-            if course.isDaisy(): codes.append(course.code)
-
-        return codes
-
-    def getAllTimeEditCourseCodes(self):
-        codes = []
-        for course in self.courses:
-            if course.isTimeEdit(): codes.append(course.code)
-
-        return codes
+        self.getCourse(code).id = id
 
     def getAllDaisyCourses(self):
         courses = []
-        map(courses.append, map(self.getCourse, self.getAllDaisyCourseCodes()))
+        map(courses.append, map(self.getCourse, self.getAllDaisyCourseIDs()))
         return courses
 
     def getAllTimeEditCourses(self):
         courses = []
-        map(courses.append, map(self.getCourse, self.getAllTimeEditCourseCodes()))
+        map(courses.append, map(self.getCourse, self.getAllTimeEditCourseIDs()))
         return courses
+
+    def getAllDaisyCourseIDs(self):
+        ids = []
+        for course in self.courses:
+            if course.isDaisy(): ids.append(course.id)
+        return ids
+
+    def getAllTimeEditCourseIDs(self):
+        ids = []
+        for course in self.courses:
+            if course.isTimeEdit(): ids.append(course.id)
+        return ids
 
     def getAllPersistent(self):
         courses = []
@@ -126,6 +124,15 @@ class CourseList:
                 courses.append(course)
         return courses
 
+    def getAllMatchingCode(self, code):
+        courses = []
+        code = code.upper()
+        for course in self.courses:
+            if code in course.code:
+                courses.append(course)
+
+        return courses
+
     def pickle(self):
         import StringIO
         import pickle
@@ -138,6 +145,7 @@ class CourseList:
         import pickle
         string = StringIO.StringIO(data)
         self.courses = pickle.load(string)
+
 
 # -----------------------------------------------------------
 class CachedCourseList(CourseList):
@@ -168,7 +176,7 @@ class CachedCourseList(CourseList):
                         if course.group == "0": course.group = ""
                     courses.append(course)
                 self.courses = courses
-        except IOError:
+        except (IOError, EOFError):
             self.courses = []
 
     def isEmpty(self):
@@ -192,24 +200,6 @@ class CachedCourseList(CourseList):
     def setCourses(self, courselist):
         self.courses = courselist
 
-    def getCourses(self, code):
-        courses = []
-        code = code.upper()
-        for course in self.courses:
-            if self.isMatch(code, course):
-                courses.append(course)
-
-        return courses
-
-    def isMatch(self, code, course):
-        codes = course.code.split("/")
-        for c in codes:
-            if code in c:
-                return True
-
-        return False
-
-
 # -----------------------------------------------------------
 class TimeTable:
     "Ett schema (dvs en samling schemalagda händelser)"
@@ -225,9 +215,6 @@ class TimeTable:
         self.courselist.clear()
         self.updated = None
         
-    def isEmpty(self):
-        return self.eventlist.isEmpty()
-
     def importOneCourse(self, input, course):
         "Importerar händelser för EN kurs från vCalendar-data."
 
@@ -347,7 +334,7 @@ class TimeTable:
                 for pair in pairs:
                     code = pair[0]
                     data = pair[1].split("|")
-                    self.addCourse(code, data[0], int(data[1]), data[2])
+                    self.addCourse(code, name=data[0], id=data[1], group=data[2])
 
             elif section == "groups":
                 pairs = config.items(section)
@@ -366,7 +353,7 @@ class TimeTable:
                 event.date = calendar.Date(config.get(section, "date"))
                 event.begin = calendar.Time(config.get(section, "begin"))
                 event.end = calendar.Time(config.get(section, "end"))
-                event.course = self.getCourse(config.get(section, "course"))
+                event.course = self.getCourseByCode(config.get(section, "course"))
                 event.type = config.get(section, "type")
 
                 event.group = config.getstrorempty(section, "group")
@@ -403,7 +390,7 @@ class TimeTable:
                 if event.seriesno: config.set(event.getID(), "seriesno", event.seriesno)
                 if not event.active: config.set(event.getID(), "active", "false")
         
-        if not self.isCourselistEmpty():
+        if self.hasCourses():
             config.add_section("courses")
             for course in self.getAllPersistentCourses():
                 value = course.name + "|" + str(course.id) + "|" + course.group
@@ -412,7 +399,7 @@ class TimeTable:
         if self.groups:
             config.add_section("groups")
             for name in self.getAllSubscriptionGroupNames():
-                config.set("groups", name.encode("latin_1"), str(self.getSubscriptionGroup(name)))
+                config.set("groups", name, str(self.getSubscriptionGroup(name)))
 
         try:
             config.write(file(filename, "w+"))
@@ -420,6 +407,9 @@ class TimeTable:
             raise error.WriteError(U_("Could not write to"), filename)
 
     # -- delegeringar till EventList
+
+    def isEmpty(self):
+        return self.eventlist.isEmpty()
 
     def addEvent(self, event):
         self.eventlist.addEvent(event)
@@ -447,6 +437,9 @@ class TimeTable:
 
     # -- delegeringar till CourseList
 
+    def hasCourses(self):
+        return not self.courselist.isEmpty()
+
     def clearCourses(self):
         self.courselist.clear()
 
@@ -456,9 +449,6 @@ class TimeTable:
     def clearTimeEditCourses(self):
         self.courselist.clearTimeEditCourses()
 
-    def isCourselistEmpty(self):
-        return self.courselist.isEmpty()
-    
     def addCourse(self, codeorcourse, name = "", id = 0, group = ""):
         self.courselist.addCourse(codeorcourse, name, id, group)
         
@@ -470,6 +460,9 @@ class TimeTable:
 
     def getCourse(self, code):
         return self.courselist.getCourse(code)
+
+    def getCourseByCode(self, code):
+        return self.courselist.getCourseByCode(code)
 
     def getCourseName(self, code):
         return self.courselist.getCourseName(code)
@@ -489,17 +482,17 @@ class TimeTable:
     def setCourseID(self, code, id):
         self.courselist.setCourseID(code, id)
 
-    def getAllDaisyCourseIDs(self):
-        return self.courselist.getAllDaisyCourseIDs()
-
     def getAllDaisyCourses(self):
         return self.courselist.getAllDaisyCourses()
 
-    def getAllTimeEditCourseCodes(self):
-        return self.courselist.getAllTimeEditCourseCodes()
-
     def getAllTimeEditCourses(self):
         return self.courselist.getAllTimeEditCourses()
+
+    def getAllDaisyCourseIDs(self):
+        return self.courselist.getAllDaisyCourseIDs()
+
+    def getAllTimeEditCourseIDs(self):
+        return self.courselist.getAllTimeEditCourseIDs()
 
     def getAllPersistentCourses(self):
         return self.courselist.getAllPersistent()
@@ -517,36 +510,42 @@ class TimeTable:
 class Course:
     "En kurs"
     
-    def __init__(self, code, name, id = 0, group = ""):
+    def __init__(self, code, name, id = "", group = "", term = ""):
         if not isinstance(code, unicode):
             code = unicode(code, "latin_1")
         if not isinstance(name, unicode):
             name = unicode(name, "latin_1")
 
-        self.code = code
-        self.name = name
-        self.id = id
+        self.code = code    # kurskod
+        self.name = name    # kursnamn eller beteckning
+        self.id = id        # Daisys kurs-id eller TimeEdits kurskod
+        if not id:
+            self.id = code
+        self.term = term    # starttermin för kursen (endast Daisy)
 
         group = str(group)
         if group == "0": group = ""
         self.group = group
 
     def __eq__(self, other):
-        othercode = other
+        "Jämför kurskod för TimeEdit-kurser (=id) eller Daisy-id"
         if isinstance(other, Course):
-            othercode = other.code
-        
-        if " " in self.code or " " in othercode:
-            # Vissa kurser heter ex. "5B1506 IT" men exporteras bara som 5B1506
-            return self.code.split(" ")[0] == othercode.split(" ")[0]
-        elif len(self.code) >= 20 or len(othercode) >= 20:
+            other = other.id
+        return self.id == other
+
+    def hasCode(self, code):
+        if " " in self.code or " " in code:
+            # Vissa kurser i Daisy heter ex. "5B1506 IT"
+            # men exporteras bara som 5B1506
+            return self.code.split(" ")[0] == code.split(" ")[0]
+        elif len(self.code) >= 20 or len(code) >= 20:
             # Daisy exporterar endast de 20 första tecknen i kurskoden
-            return self.code[:20] == othercode[:20]
+            return self.code[:20] == code[:20]
         else:
-            return self.code == othercode
+            return self.code == code
 
     def __ne__(self, other):
-        return False == self.__eq__(other)
+        return not self == other
    
     def __str__(self):
         return unicode(self).encode("latin_1")
@@ -559,12 +558,19 @@ class Course:
         return self.code + self.name + str(self.id) + self.group
 
     def isDaisy(self):
-        val = False
-        if self.id: val = True
-        return val
+        return not self.isTimeEdit()
     
     def isTimeEdit(self):
-        return False == self.isDaisy()
+        val = False
+        if self.code == self.id: val = True
+        return val
+
+    def getTerm(self):
+        "Returnerar terminen för kursen, ex. 'VT05'"
+        if self.term == "": return "?"
+        term = "HT"
+        if self.term[-1] == "1": term = "VT"
+        return term + self.term[2:4]
 
 
 # -----------------------------------------------------------
@@ -687,7 +693,7 @@ class Event:
             if not self.course:
                 # om inte copyFromDict redan satt kursen,
                 # som den gör om kursen anges explicit
-                self.course = self.timetable.getCourse(data["course"])
+                self.course = self.timetable.getCourseByCode(data["course"])
         except ValueError:
             "Testar alternativa sätt att hitta rätt kurs för aktivitet"
 
@@ -712,7 +718,7 @@ class Event:
 
         for course in self.cachedcourselist.getAllMatchingName(name):
             if self.timetable.hasCourse(course):
-                return self.timetable.getCourse(course)
+                return self.timetable.getCourseByCode(course)
 
         return None
 
@@ -721,7 +727,7 @@ class Event:
 
         for code in codes.split(","):
             if self.timetable.hasCourse(code):
-                return self.timetable.getCourse(code)
+                return self.timetable.getCourseByCode(code)
 
         return None
 
@@ -757,10 +763,7 @@ class Event:
     def getDescriptionWithoutLocation(self):
         description = ""
         if self.course:
-            try:
-                description = self.timetable.getCourseName(self.course) + " "
-            except ValueError:
-                description = unicode(self.course) + " "
+            description = self.course.name + " "
 
         if self.type == u"Föreläsning": description += U_("Lect")
         elif self.type == u"Övning": description += U_("Tut")

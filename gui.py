@@ -221,7 +221,7 @@ class MainFrame(wx.Frame):
 
     def Update(self, evt):
         daisycourses = self.timetable.getAllDaisyCourseIDs()
-        timeeditcourses = self.timetable.getAllTimeEditCourseCodes()
+        timeeditcourses = self.timetable.getAllTimeEditCourseIDs()
         
         if not daisycourses and not timeeditcourses:
             msg = U_("First you must choose which courses to fetch.")
@@ -245,9 +245,10 @@ class MainFrame(wx.Frame):
             wx.MessageDialog(self, msg, U_("Server error"), style=wx.OK|wx.ICON_ERROR).ShowModal()
             return
         except ValueError, e:
-            msg = U_("The timetable fetched from the server is corrupt and unusable.")
-            wx.MessageDialog(self, msg, U_("Server error"), style=wx.OK|wx.ICON_ERROR).ShowModal()
-            return
+            raise
+            #msg = U_("The timetable fetched from the server is corrupt and unusable.")
+            #wx.MessageDialog(self, msg, U_("Server error"), style=wx.OK|wx.ICON_ERROR).ShowModal()
+            #return
         except error.WriteError:
             msg = U_("Could not save the timetable. The file may be write-protected.")
             wx.MessageDialog(self, msg, U_("File error"), style=wx.OK|wx.ICON_ERROR).ShowModal()
@@ -306,10 +307,11 @@ class MainFrame(wx.Frame):
     def ChooseCourses(self, evt):
         if ChooseCoursesDialog(self, self.timetable).ShowModal() == wx.ID_OK:
             self.updateView()
-            msg = U_("Do you want to fetch the timetable now?")
-            dialog = wx.MessageDialog(self, msg, U_("Fetch timetable?"), style=wx.YES_NO|wx.ICON_QUESTION)
-            if dialog.ShowModal() == wx.ID_YES:
-                self.Update(None)
+            if self.timetable.hasCourses():
+                msg = U_("Do you want to fetch the timetable now?")
+                dialog = wx.MessageDialog(self, msg, U_("Fetch timetable?"), style=wx.YES_NO|wx.ICON_QUESTION)
+                if dialog.ShowModal() == wx.ID_YES:
+                    self.Update(None)
         self.SetFocus()
 
     def MakeSettings(self, evt):
@@ -896,7 +898,7 @@ class ChooseCoursesDialog(OKCancelDialog):
     def lookForCourseInDaisy(self, code):
         courses = []
         try:
-            courses = self.daisycourses.getCourses(code)
+            courses = self.daisycourses.getAllMatchingCode(code)
         except ValueError:
             pass
 
@@ -1159,6 +1161,7 @@ class CourseListBox(wx.ListBox):
         for course in courses:
             for i in range(self.GetCount()):
                 if course is self.GetClientData(i):
+                    print course
                     raise ValueError("Course already in list")
 
             self.Append(self.__courseToString(course), course)

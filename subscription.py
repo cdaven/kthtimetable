@@ -159,6 +159,9 @@ class SubscribedCourse(timetable.Course):
     def __unicode__(self):
         return self.name
 
+    def isDaisy(self):
+        return False
+
     def isTimeEdit(self):
         return False
 

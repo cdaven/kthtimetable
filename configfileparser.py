@@ -63,7 +63,12 @@ class ConfigParserX(ConfigParser.SafeConfigParser):
 
     # en wrapper-metod som sparar Unicode-värdet som Latin-1
     def set(self, section, key, value):
+        if isinstance(section, unicode):
+            section = section.encode("latin_1")
+        if isinstance(key, unicode):
+            key = key.encode("latin_1")
         if isinstance(value, unicode):
             value = value.encode("latin_1")
+
         ConfigParser.SafeConfigParser.set(self, section, key, str(value))
 

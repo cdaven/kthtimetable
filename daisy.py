@@ -86,7 +86,7 @@ class Conduit:
         all = re.findall("value=\"(\d{3,})\"[^a-zåäöA-ZÅÄÖ0-9]*(.*?) \((.*?)\)", self.descape(input))
         courses = []
         for a in all:
-            courses.append(timetable.Course(a[2].strip(), a[1].strip(), int(a[0])))
+            courses.append(timetable.Course(code=a[2].strip(), name=a[1].strip(), id=a[0], term=period))
 
         if callback: callback()
         return courses
@@ -195,5 +195,5 @@ class SummaryParser:
         rx = self.rxcourse.search(text)
         if rx:
             code = rx.group(1)
-            
+        
         return code

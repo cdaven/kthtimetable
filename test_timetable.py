@@ -3,26 +3,81 @@
 
 # Skapat av Christian Davén 2004
 
+from i18n import *
+setLanguage("en")
+
 import timetable
 import calendar
 import xunittest
 
 # -----------------------------------------------------------
+class CourseTest(xunittest.TestCase):
+    def testInit(self):
+        c = timetable.Course("*:59/2I1140", "Artificiell intelligens", 934, 1, "20051")
+        self.failUnlessEqual(c.code, "*:59/2I1140")
+        self.failUnlessEqual(c.name, "Artificiell intelligens")
+        self.failUnlessEqual(c.id, 934)
+        self.failUnlessEqual(c.group, "1")
+        self.failUnlessEqual(c.getTerm(), "VT05")
+
+        c = timetable.Course("2C1224", "Projektstyrning")
+        self.failUnlessEqual(c.code, "2C1224")
+        self.failUnlessEqual(c.id, "2C1224")
+        self.failUnlessEqual(c.name, "Projektstyrning")
+        self.failUnlessEqual(c.group, "")
+        
+    def testEqual(self):
+        c1 = timetable.Course("*:59/2I1140", "Artificiell intelligens", 934)
+        c2 = timetable.Course("*:59/2I1140", "Artificiell intelligens", 809)
+        c3 = timetable.Course("5B1116", "Matematisk statistik", group="a")
+        c4 = timetable.Course("5B1116", "MatStat", group="c")
+        self.failIfEqual(c1, c3)
+        self.failIfEqual(c1, c2)
+        self.failUnlessEqual(c3, c4)
+        
+    def testHasCode(self):
+        c = timetable.Course("*:36/2I1225/2I1374/2I1190", "DSV-kurs")
+        self.failUnless(c.hasCode("*:36/2I1225/2I1374/2"))
+
+        c = timetable.Course("5B1506 IT", "Matte nånting")
+        self.failUnless(c.hasCode("5B1506 ME"))
+
+        c = timetable.Course("*:59/2I1140", "Artificiell intelligens")
+        self.failIf(c.hasCode("6B3023"))
+
+    def testIsDaisyOrTimeEdit(self):
+        c = timetable.Course("*:59/2I1140", "Artificiell intelligens", 809)
+        self.failIf(c.isTimeEdit())
+        self.failUnless(c.isDaisy())
+
+        c = timetable.Course("5B1116", "Matematisk statistik")
+        self.failIf(c.isDaisy())
+        self.failUnless(c.isTimeEdit())
+
+    def testGetTerm(self):
+        c = timetable.Course("*:59/2I1140", "Artificiell intelligens", term="20051")
+        self.failUnlessEqual(c.getTerm(), "VT05")
+
+        c = timetable.Course("*:59/2I1140", "Artificiell intelligens", term="20042")
+        self.failUnlessEqual(c.getTerm(), "HT04")
+
+# -----------------------------------------------------------
 class CourseListTest(xunittest.TestCase):
+
     courselist = None
     courses = []
 
     def setUp(self):
         self.courses = []
-        self.courses.append(timetable.Course("2B1345", "DigEl", group=3))
+        self.courses.append(timetable.Course("2B1345", "DigEl", group="3"))
         self.courses.append(timetable.Course("*:59", "DSV-mysko", 931))
-        self.courses.append(timetable.Course("DSV:L/9E1363", "Kommunikation", 429, 5))
+        self.courses.append(timetable.Course("DSV:L/9E1363", "Kommunikation", 429, group="5"))
         self.courses.append(timetable.Course("5B1113 IT", "Matte"))
 
         self.courselist = timetable.CourseList()
-        self.courselist.courses.append(timetable.Course("2B1345", "DigEl", group=3))
+        self.courselist.courses.append(timetable.Course("2B1345", "DigEl"))
         self.courselist.courses.append(timetable.Course("*:59", "DSV-mysko", 931))
-        self.courselist.courses.append(timetable.Course("DSV:L/9E1363", "Kommunikation", 429, 5))
+        self.courselist.courses.append(timetable.Course("DSV:L/9E1363", "Kommunikation", 429))
         self.courselist.courses.append(timetable.Course("5B1113 IT", "Matte"))
 
     def testClearAndEmpty(self):
@@ -33,17 +88,26 @@ class CourseListTest(xunittest.TestCase):
     def testDaisyCourseIDs(self):
         self.failUnlessListsEqual([931,429], self.courselist.getAllDaisyCourseIDs())
 
-    def testTimeEditCourseCodes(self):
-        self.failUnlessListsEqual(["2B1345", "5B1113 IT"], self.courselist.getAllTimeEditCourseCodes())
+    def testTimeEditCourseIDs(self):
+        self.failUnlessListsEqual(["2B1345", "5B1113 IT"], self.courselist.getAllTimeEditCourseIDs())
 
-    def testLongCourseCodes(self):
-        self.courselist.clear()
-        self.courselist.addCourse("*:62/2I1056/2I1071/2I1375", "Lång", 3)
-        self.courselist.addCourse("2I1071", "Kort", 7)
-        
-        self.failUnlessEqual(self.courselist.getCourseName("*:62/2I1056/2I1071/2"), "Lång")
+    def testGetAllMatchingName(self):
+        courses = self.courselist.getAllMatchingName("DSV")
+        self.failUnlessEqual(len(courses), 1)
+        self.failUnlessEqual(courses[0].code, "*:59")
 
-    def testAddCourses(self):
+        courses = self.courselist.getAllMatchingName("qwerty")
+        self.failIf(len(courses))
+
+    def testGetAllMatchingCode(self):
+        courses = self.courselist.getAllMatchingCode("DSV")
+        self.failUnlessEqual(len(courses), 1)
+        self.failUnlessEqual(courses[0].code, "DSV:L/9E1363")
+
+        courses = self.courselist.getAllMatchingCode("qwerty")
+        self.failIf(len(courses))
+
+    def tstAddCourses(self):
         self.courselist.clear()
         for course in self.courses:
             code = course.code
@@ -63,46 +127,23 @@ class CourseListTest(xunittest.TestCase):
         self.courselist.addCourse(timetable.Course("9B1111", "X"))
         self.failUnlessEqual(self.courses, self.courselist.courses)
 
-    def testRemoveCourse(self):
+    def tstRemoveCourse(self):
         self.courselist.removeCourse("DSV:L/9E1363")
         self.courses.remove(timetable.Course("DSV:L/9E1363", "Kommunikation", 429, 5))
 
         self.failUnlessListsEqual(self.courselist.courses, self.courses)
         self.failUnlessRaises(ValueError, self.courselist.removeCourse, "abc")
 
-    def testCourse(self):
+    def testGetCourse(self):
         course5B1113 = timetable.Course("5B1113 IT", "Matte")
-        course9E1363 = timetable.Course("DSV:L/9E1363", "Kommunikation", 429, 5)
+        course9E1363 = timetable.Course("DSV:L/9E1363", "Kommunikation", 429)
 
-        self.failUnlessEqual(self.courselist.getCourse("DSV:L/9E1363"), course9E1363)
+        self.failUnlessEqual(self.courselist.getCourse(429), course9E1363)
         self.failUnlessEqual(self.courselist.getCourse("5B1113 IT"), course5B1113)
-        self.failUnlessEqual(self.courselist.getCourse("5B1113"), course5B1113)
         self.failUnlessRaises(ValueError, self.courselist.getCourse, "abc")
 
-    def testCourseGroup(self):
-        self.failUnlessEqual(self.courselist.getCourseGroup("DSV:L/9E1363"), 5)
-        self.courselist.setCourseGroup("DSV:L/9E1363", 3)
-        self.failUnlessEqual(self.courselist.getCourseGroup("DSV:L/9E1363"), 3)
-        self.failUnlessRaises(ValueError, self.courselist.getCourseGroup, "abc")
-        self.failUnlessRaises(ValueError, self.courselist.setCourseGroup, "2B1345", "abc")
-
-    def testCourseName(self):
-        self.failUnlessEqual(self.courselist.getCourseName("DSV:L/9E1363"), "Kommunikation")
-        self.courselist.setCourseName("DSV:L/9E1363", "Svenska")
-        self.failUnlessEqual(self.courselist.getCourseName("DSV:L/9E1363"), "Svenska")
-
-        self.failUnlessRaises(ValueError, self.courselist.getCourseName, "DSV")
-        self.failUnlessRaises(ValueError, self.courselist.setCourseName, "abc", "123")
-
-    def testCourseID(self):
-        self.failUnlessEqual(self.courselist.getCourseID("*:59"), 931)
-        self.courselist.setCourseID("*:59", 999)
-        self.failUnlessEqual(self.courselist.getCourseID("*:59"), 999)
-        self.failUnlessRaises(ValueError, self.courselist.getCourseID, "abc")
-        self.failUnlessRaises(ValueError, self.courselist.setCourseID, "5B1113 IT", "abc")
-
 # -----------------------------------------------------------
-class TimeTableTest(xunittest.TestCase):
+class TimeTableTest: #(xunittest.TestCase):
     def setUp(self):
         self.events = {}
         self.timetable = timetable.TimeTable()
@@ -204,7 +245,7 @@ class TimeTableTest(xunittest.TestCase):
         self.failUnlessEqual(self.timetable.updated, updated)
         
 # -----------------------------------------------------------
-class EventTest(xunittest.TestCase):
+class EventTest: #(xunittest.TestCase):
     def setUp(self):
         timetable.courselist.clear()
         timetable.courselist.addCourse("5B1506 IT", "MatStat", 123)
@@ -289,35 +330,7 @@ class EventTest(xunittest.TestCase):
         self.failUnlessEqual(event, copy)
 
 # -----------------------------------------------------------
-class CourseTest(xunittest.TestCase):
-    def testInit(self):
-        c = timetable.Course("5B1116", "Matematisk statistik")
-        self.failUnlessEqual(c.code, "5B1116")
-        self.failUnlessEqual(c.name, "Matematisk statistik")
-        self.failUnlessEqual(c.id, 0)
-        self.failUnlessEqual(c.group, 0)
-
-        c = timetable.Course("*:59/2I1140", "Artificiell intelligens", 934, 1)
-        self.failUnlessEqual(c.code, "*:59/2I1140")
-        self.failUnlessEqual(c.name, "Artificiell intelligens")
-        self.failUnlessEqual(c.id, 934)
-        self.failUnlessEqual(c.group, 1)
-        
-    def testEqual(self):
-        c1 = timetable.Course("5B1116", "Matematisk statistik")
-        c2 = timetable.Course("*:59/2I1140", "Artificiell intelligens", 934, 1)
-        self.failUnless(c1 != c2)
-
-        c2 = timetable.Course("5B1116 IT", "MatStat IT", 897)
-        self.failUnlessEqual(c1, c2)
-        self.failUnlessEqual(c1, "5B1116")
-        
-        c1 = timetable.Course("*:36/2I1225/2I1374/2I1190", "DSV")
-        c2 = timetable.Course("*:36/2I1225/2I1374/2", "DSV ?")
-        self.failUnlessEqual(c1, c2)
-
-# -----------------------------------------------------------
-class EventListTest(xunittest.TestCase):
+class EventListTest: #(xunittest.TestCase):
     def setUp(self):
         self.eventlist = timetable.EventList([{"id": 1, "location": "1"},
             {"id": 2, "location": "2"}, {"id": 3, "location": "3"}])
@@ -392,7 +405,7 @@ class TimeTableComparatorTest: #(xunittest.TestCase):
             ["DAISYKTH1002", "DAISYKTH1003"])
 
 # -----------------------------------------------------------
-class HTMLExporterTest(xunittest.TestCase):
+class HTMLExporterTest: #(xunittest.TestCase):
     def testExport(self):
         timetable.courselist.clear()
         timetable.courselist.addCourse("5B1506", "MatStat", 123)
@@ -486,7 +499,7 @@ class HTMLExporterTest(xunittest.TestCase):
         os.remove("_test")
 
 # -----------------------------------------------------------
-class VCalendarExporterTest(xunittest.TestCase):
+class VCalendarExporterTest: #(xunittest.TestCase):
     def testExport(self):
         timetable.courselist.clear()
         timetable.courselist.addCourse("5B1506", "MatStat", 123)
