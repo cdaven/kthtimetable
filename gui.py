@@ -8,12 +8,10 @@ import guisettings
 import calendar
 import timetable
 import error
+from i18n import *
 
 applicationname = "KTH TimeTable"
-applicationversion = "2.?"
-
-# center(width)
-# Return centered in a string of length width. Padding is done using spaces. 
+applicationversion = "2.1pre"
 
 # -----------------------------------------------------------
 class MainFrame(wx.Frame):
@@ -56,8 +54,8 @@ class MainFrame(wx.Frame):
         self.GoToday(None)
         
         if calendar.Date() - timetable.timetable.updated > 7:
-            msg = _("Det var over en vecka sedan du uppdaterade schemat senast. Det kan ha\nforandrats sedan dess. Vill du uppdatera schemat nu?")
-            if wx.MessageDialog(self, msg, _("Gammalt schema"),
+            msg = U_("Det var over en vecka sedan du uppdaterade schemat senast. Det kan ha\nforandrats sedan dess. Vill du uppdatera schemat nu?")
+            if wx.MessageDialog(self, msg, U_("Gammalt schema"),
                style=wx.YES_NO|wx.ICON_QUESTION).ShowModal() == wx.ID_YES:
                 self.Update(None)
 
@@ -95,7 +93,7 @@ class MainFrame(wx.Frame):
         guisettings.font_default.SetWeight(wx.NORMAL)
 
         buttons = wx.BoxSizer(wx.HORIZONTAL)
-        buttons.Add(wx.Button(self, 1, _("Idag"), size=(60, -1)), 0)
+        buttons.Add(wx.Button(self, 1, U_("Idag"), size=(60, -1)), 0)
         buttons.Add(wx.Button(self, 2, "<-", size=(30, -1)), 0, wx.LEFT|wx.RIGHT, 10)
         buttons.Add(self.weeklabel, 0, wx.TOP, 5)
         buttons.Add(wx.Button(self, 3, "->", size=(30, -1)), 0, wx.LEFT|wx.RIGHT, 10)
@@ -110,22 +108,22 @@ class MainFrame(wx.Frame):
         menubar = wx.MenuBar()
         
         menu = wx.Menu()
-        menu.Append(120, _("&Exportera..."))
+        menu.Append(120, U_("&Exportera..."))
         menu.AppendSeparator()
-        menu.Append(999, _("&Avsluta"))
-        menubar.Append(menu, _("&Arkiv"))
+        menu.Append(999, U_("&Avsluta"))
+        menubar.Append(menu, U_("&Arkiv"))
 
         menu = wx.Menu()
-        menu.Append(210, _("Valj &kurser..."))
-        menu.Append(220, _("&Uppdatera schema...\tF5"))
+        menu.Append(210, U_("Valj &kurser..."))
+        menu.Append(220, U_("&Uppdatera schema...\tF5"))
         menu.AppendSeparator()
-        menu.Append(250, _("Valj &grupper..."))
-        menu.Append(260, _("&Namnge kurser..."))
-        menubar.Append(menu, _("&Verktyg"))
+        menu.Append(250, U_("Valj &grupper..."))
+        menu.Append(260, U_("&Namnge kurser..."))
+        menubar.Append(menu, U_("&Verktyg"))
 
         menu = wx.Menu()
-        menu.Append(310, _("&Om..."))
-        menubar.Append(menu, _("&Hjalp"))
+        menu.Append(310, U_("&Om..."))
+        menubar.Append(menu, U_("&Hjalp"))
 
         wx.EVT_MENU(self, 999, self.OnClose)
         wx.EVT_MENU(self, 120, self.ExportEvents)
@@ -142,8 +140,8 @@ class MainFrame(wx.Frame):
             timetable.timetable.save()
             settings.save()
         except error.WriteError, e:
-            msg = _("Kan inte spara installningar eller schemadata till fil.\nDen kan vara skrivskyddad eller sa tillats inte programmet skriva dar.\nFilen ar: ") + e.filename
-            wx.MessageDialog(self, msg, _("Filfel"), style=wx.OK|wx.ICON_ERROR).ShowModal()
+            msg = U_("Kan inte spara installningar eller schemadata till fil.\nDen kan vara skrivskyddad eller sa tillats inte programmet skriva dar.\nFilen ar: ") + e.filename
+            wx.MessageDialog(self, msg, U_("Filfel"), style=wx.OK|wx.ICON_ERROR).ShowModal()
 
         self.Destroy()
 
@@ -162,18 +160,18 @@ class MainFrame(wx.Frame):
     def updateView(self):
         date = calendar.Date(self.currentmonday)
 
-        self.weeklabel.SetLabel(_("Vecka") + " " + str(date.getWeek()))
+        self.weeklabel.SetLabel(U_("Vecka") + " " + str(date.getWeek()))
         self.datelabel.SetLabel(date.getMonthName() + " " + str(date.getYear()))
 
         if timetable.timetable.isEmpty():
-            statusmsg = _("Schemat ar tomt")
+            statusmsg = U_("Schemat ar tomt")
         else:
             diff = calendar.Date() - timetable.timetable.updated
-            statusmsg = _("Schemat uppdaterades for") + " " + str(diff) + " " + _("dagar sedan")
+            statusmsg = U_("Schemat uppdaterades for") + " " + str(diff) + " " + U_("dagar sedan")
             if diff == 0:
-                statusmsg = _("Schemat har uppdaterats idag")
+                statusmsg = U_("Schemat har uppdaterats idag")
             elif diff == 1:
-                statusmsg = _("Schemat uppdaterades igar")
+                statusmsg = U_("Schemat uppdaterades igar")
 
         self.statusbar.SetStatusText(statusmsg)
 
@@ -208,8 +206,8 @@ class MainFrame(wx.Frame):
         timeeditcourses = timetable.courselist.getAllTimeEditCourseCodes()
         
         if not daisycourses and not timeeditcourses:
-            msg = _("Du maste forst valja vilka kurser du vill uppdatera.")
-            wx.MessageDialog(self, msg, _("Inga kurser valda"), style=wx.OK|wx.ICON_INFORMATION).ShowModal()
+            msg = U_("Du maste forst valja vilka kurser du vill uppdatera.")
+            wx.MessageDialog(self, msg, U_("Inga kurser valda"), style=wx.OK|wx.ICON_INFORMATION).ShowModal()
             return
         
         try:
@@ -218,12 +216,12 @@ class MainFrame(wx.Frame):
             if timeeditcourses:
                 self.updateFromTimeEdit(timeeditcourses)
         except error.ReadError:
-            msg = _("Kunde inte lasa fran") + " " + _("servern") + ". " + _("Kontrollera att du har tillgang till Internet och forsok igen.")
-            wx.MessageDialog(self, msg, _("Serverfel"), style=wx.OK|wx.ICON_ERROR).ShowModal()
+            msg = U_("Kunde inte lasa fran") + " " + U_("servern") + ". " + U_("Kontrollera att du har tillgang till Internet.")
+            wx.MessageDialog(self, msg, U_("Serverfel"), style=wx.OK|wx.ICON_ERROR).ShowModal()
             return
         except ValueError, e:
-            msg = _("Servern returnerade ogiltig data.\nSchemat gar inte att anvanda; uppdaterar inte.")
-            wx.MessageDialog(self, msg, _("Serverfel"), style=wx.OK|wx.ICON_ERROR).ShowModal()
+            msg = U_("Servern returnerade ogiltig data.\nSchemat gar inte att anvanda; uppdaterar inte.")
+            wx.MessageDialog(self, msg, U_("Serverfel"), style=wx.OK|wx.ICON_ERROR).ShowModal()
             return
 
 #        msg = str(len(difference["changed"])) + " händelser uppdaterades\n"
@@ -236,7 +234,7 @@ class MainFrame(wx.Frame):
 
     def updateFromTimeEdit(self, codes):
         import timeedit
-        progressdialog = ProgressDialog(self, _("Uppdaterar schema fran") + " TimeEdit", [_("Ansluter till schema.sys.kth.se..."), _("Hamtar dokument...")])
+        progressdialog = ProgressDialog(self, U_("Uppdaterar schema fran") + " TimeEdit", [U_("Ansluter till schema.sys.kth.se..."), U_("Hamtar dokument...")])
         progressdialog.startProgress()
         try:
             data = timeedit.Conduit(progressdialog.increaseProgress).getvCalendarData(codes)
@@ -249,7 +247,7 @@ class MainFrame(wx.Frame):
 
     def updateFromDaisy(self, ids):
         import daisy
-        progressdialog = ProgressDialog(self, _("Uppdaterar schema fran") + " Daisy", [_("Ansluter till it.kth.se..."), _("Hamtar dokument..."), _("Genererar schema..."), _("Hamtar genererat schema...")])
+        progressdialog = ProgressDialog(self, U_("Uppdaterar schema fran") + " Daisy", [U_("Ansluter till it.kth.se..."), U_("Hamtar dokument..."), U_("Genererar schema..."), U_("Hamtar genererat schema...")])
         progressdialog.startProgress()
         try:
             data = daisy.Conduit(progressdialog.increaseProgress).getvCalendarData(ids)
@@ -260,11 +258,6 @@ class MainFrame(wx.Frame):
         progressdialog.stopProgress()
         timetable.timetable.importData(data, "Daisy")
 
-#        daisydialog = DaisyLoginDialog(self, ids)
-#        daisydialog.ShowModal()
-#        if daisydialog.daisydata:
-#            timetable.timetable.importData(daisydialog.daisydata, "Daisy")
-            
     def NewEvent(self, evt):
         pass
 
@@ -285,8 +278,8 @@ class MainFrame(wx.Frame):
     def ChooseCourses(self, evt):
         if ChooseCoursesDialog(self).ShowModal() == wx.ID_OK:
             self.updateView()
-            msg = _("Vill du uppdatera schemat nu?")
-            dialog = wx.MessageDialog(self, msg, _("Uppdatera?"), style=wx.YES_NO|wx.ICON_QUESTION)
+            msg = U_("Vill du uppdatera schemat nu?")
+            dialog = wx.MessageDialog(self, msg, U_("Uppdatera?"), style=wx.YES_NO|wx.ICON_QUESTION)
             if dialog.ShowModal() == wx.ID_YES:
                 self.Update(None)
 
@@ -301,12 +294,12 @@ class OKCancelDialog(wx.Dialog):
         self.parent = parent
         self.buttons = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.okbtn = wx.Button(self, wx.OK, _("&OK"))
+        self.okbtn = wx.Button(self, wx.OK, U_("&OK"))
         self.okbtn.SetDefault()
 
         self.buttons.Add(self.okbtn)
         self.buttons.Add((10, 0), 0)
-        self.buttons.Add(wx.Button(self, wx.CANCEL, _("&Avbryt")))
+        self.buttons.Add(wx.Button(self, wx.CANCEL, U_("&Avbryt")))
 
         wx.EVT_BUTTON(self, wx.OK, self.SaveAndClose)
         wx.EVT_BUTTON(self, wx.CANCEL, self.Cancel)
@@ -337,14 +330,14 @@ class GroupsDialog(OKCancelDialog):
     "Dialogruta för val av gruppdeltagande i kurser"
 
     def __init__(self, parent):
-        OKCancelDialog.__init__(self, parent, _("Valj grupper"))
+        OKCancelDialog.__init__(self, parent, U_("Valj grupper"))
 
         self.choices = []
-        self.nogroup = _("alla")
+        self.nogroup = U_("alla")
         self.courses = timetable.courselist.getAllDaisyCourses()
         if not self.courses:
-            msg = _("Det finns inga Daisy-kurser att valja grupp for.")
-            wx.MessageDialog(self, msg, _("Inga kurser"), style=wx.OK|wx.ICON_INFORMATION).ShowModal()
+            msg = U_("Det finns inga Daisy-kurser att valja grupp for.")
+            wx.MessageDialog(self, msg, U_("Inga kurser"), style=wx.OK|wx.ICON_INFORMATION).ShowModal()
             self.Cancel(None)
             return
 
@@ -360,8 +353,8 @@ class GroupsDialog(OKCancelDialog):
                 groups = timetable.timetable.getAllGroups(course.code)
             except ValueError:
                 groups = []
-                msg = _("Det finns ingen information om vilka grupper") + " " + course.name + "\n" + _("ar indelad i. Du maste uppdatera fran Daisy.")
-                wx.MessageDialog(self, msg, _("Gruppinformation saknas"), style=wx.OK|wx.ICON_INFORMATION).ShowModal()
+                msg = U_("Det finns ingen information om vilka grupper") + " " + course.name + "\n" + U_("ar indelad i. Du maste uppdatera fran Daisy.")
+                wx.MessageDialog(self, msg, U_("Gruppinformation saknas"), style=wx.OK|wx.ICON_INFORMATION).ShowModal()
 
             text = StaticText(self, course.name, size=(100, -1), style=wx.ST_NO_AUTORESIZE)
 
@@ -379,14 +372,14 @@ class GroupsDialog(OKCancelDialog):
                     
                 self.choices.append(rightcomponent)
             else:
-                rightcomponent = StaticText(self, _("(inget val mojligt)"))
+                rightcomponent = StaticText(self, U_("(inget val mojligt)"))
 
             coursesizer = wx.BoxSizer(wx.HORIZONTAL)
             coursesizer.Add(text, 0, wx.RIGHT, 10)
             coursesizer.Add(rightcomponent)
             allcourses.Add(coursesizer, 0, wx.ALL, 10)
 
-        noticetext = _("Observera att de\ngruppval du gor har inte\naterspeglas i Daisy.\n\nDu kommer alltsa inte\nanmalas till nagon grupp\nautomatiskt utan maste\ngora det manuellt (precis\nsom forut).")
+        noticetext = U_("Observera att de\ngruppval du gor har inte\naterspeglas i Daisy.\n\nDu kommer alltsa inte\nanmalas till nagon grupp\nautomatiskt utan maste\ngora det manuellt (precis\nsom forut).")
 
         centeredtext.Add((0, 10), 1)
         centeredtext.Add(StaticText(self, noticetext), 0, wx.ALL, 10)
@@ -419,15 +412,15 @@ class CourseNamesDialog(OKCancelDialog):
     "Dialogruta för egen namngivning av kurser"
 
     def __init__(self, parent):
-        OKCancelDialog.__init__(self, parent, _("Valj namn pa kurser"))
+        OKCancelDialog.__init__(self, parent, U_("Valj namn pa kurser"))
 
         self.coursecodes = []
         self.edits = []
 
         courses = timetable.courselist.courses
         if not courses:
-            msg = _("Det finns inga kurser att namnge. Valj nya kurser.")
-            wx.MessageDialog(self, msg, _("Inga kurser"), style=wx.OK|wx.ICON_INFORMATION).ShowModal()
+            msg = U_("Det finns inga kurser att namnge. Valj nya kurser.")
+            wx.MessageDialog(self, msg, U_("Inga kurser"), style=wx.OK|wx.ICON_INFORMATION).ShowModal()
             self.Cancel(None)
             return
 
@@ -458,8 +451,8 @@ class CourseNamesDialog(OKCancelDialog):
             name = self.edits[i].GetValue()
 
             if not name:
-                msg = _("Du har angett en tom strang. Programmet kommer da anvanda\nkursbeteckningen som kursnamn.")
-                dialog = wx.MessageDialog(self, msg, _("Inget namn"), style=wx.OK|wx.CANCEL|wx.ICON_INFORMATION)
+                msg = U_("Du har angett en tom strang. Programmet kommer da anvanda\nkursbeteckningen som kursnamn.")
+                dialog = wx.MessageDialog(self, msg, U_("Inget namn"), style=wx.OK|wx.CANCEL|wx.ICON_INFORMATION)
                 if dialog.ShowModal() == wx.ID_OK:
                     timetable.courselist.setCourseName(code, code)
                 else:
@@ -475,21 +468,21 @@ class ChooseCoursesDialog(wx.Dialog):
     "Dialogruta för val av kurser"
     
     def __init__(self, parent):
-        wx.Dialog.__init__(self, parent, -1, _("Valj schemasystem"))
+        wx.Dialog.__init__(self, parent, -1, U_("Valj schemasystem"))
 
         layout = wx.BoxSizer(wx.VERTICAL)
         daisy = wx.BoxSizer(wx.HORIZONTAL)
         timeedit = wx.BoxSizer(wx.HORIZONTAL)
     
         daisy.Add(wx.Button(self, 10, "&Daisy"), 0, wx.RIGHT, 10)
-        daisy.Add(StaticText(self, _("Daisy har scheman for de flesta kurser pa IT-universitetet.")), 0, wx.TOP, 5)
+        daisy.Add(StaticText(self, U_("Daisy har scheman for de flesta kurser pa IT-universitetet.")), 0, wx.TOP, 5)
 
         timeedit.Add(wx.Button(self, 20, "&TimeEdit"), 0, wx.RIGHT, 10)
-        timeedit.Add(StaticText(self, _("TimeEdit har scheman for de flesta ovriga kurser pa KTH.")), 0, wx.TOP, 5)
+        timeedit.Add(StaticText(self, U_("TimeEdit har scheman for de flesta ovriga kurser pa KTH.")), 0, wx.TOP, 5)
 
         layout.Add(daisy, 0, wx.TOP|wx.LEFT|wx.RIGHT, 10)
         layout.Add(timeedit, 0, wx.TOP|wx.LEFT|wx.RIGHT, 10)
-        layout.Add(wx.Button(self, wx.OK, _("&Stang")), 0, wx.ALL, 10)
+        layout.Add(wx.Button(self, wx.OK, U_("&Stang")), 0, wx.ALL, 10)
 
         wx.EVT_BUTTON(self, 10, self.ShowITUDialog)
         wx.EVT_BUTTON(self, 20, self.ShowKTHDialog)
@@ -532,14 +525,14 @@ class ChooseKTHCoursesDialog(OKCancelDialog):
     "Dialogruta för val av KTH-centralt-kurser"
 
     def __init__(self, parent):
-        OKCancelDialog.__init__(self, parent, _("Valj kurser"))
+        OKCancelDialog.__init__(self, parent, U_("Valj kurser"))
 
         layout = wx.BoxSizer(wx.VERTICAL)
         newcourse = wx.BoxSizer(wx.HORIZONTAL)
         list = wx.BoxSizer(wx.HORIZONTAL)
 
         self.courseedit = wx.TextCtrl(self, -1, size=(200, -1))
-        addbtn = wx.Button(self, 10, _("&Lagg till"))
+        addbtn = wx.Button(self, 10, U_("&Lagg till"))
         addbtn.SetDefault()
         newcourse.Add(self.courseedit, 0)
         newcourse.Add(addbtn, 0, wx.LEFT, 10)
@@ -547,12 +540,12 @@ class ChooseKTHCoursesDialog(OKCancelDialog):
         self.chosencourses = []
         self.courselist = wx.ListBox(self, -1, size=(200,100))
         list.Add(self.courselist)
-        list.Add(wx.Button(self, 20, _("&Ta bort")), 0, wx.LEFT, 10)
+        list.Add(wx.Button(self, 20, U_("&Ta bort")), 0, wx.LEFT, 10)
     
         wx.EVT_BUTTON(self, 10, self.AddCourse)
         wx.EVT_BUTTON(self, 20, self.RemoveCourse)
         
-        layout.Add(StaticText(self, _("Ange kurskod for en kurs i taget:")), 0, wx.LEFT|wx.TOP, 10)
+        layout.Add(StaticText(self, U_("Ange kurskod for en kurs i taget:")), 0, wx.LEFT|wx.TOP, 10)
         layout.Add(newcourse, 0, wx.LEFT|wx.TOP|wx.RIGHT, 10)
         layout.Add(list, 0, wx.LEFT|wx.TOP|wx.RIGHT, 10)
         layout.Add(self.buttons, 0, wx.EXPAND|wx.ALL, 10)
@@ -574,15 +567,15 @@ class ChooseKTHCoursesDialog(OKCancelDialog):
     def AddCourse(self, evt):
         import timeedit
         
-        progressdialog = ProgressDialog(self, _("Hamtar kursnamn"), [_("Hamtar dokument fran schema.sys.kth.se...")])
+        progressdialog = ProgressDialog(self, U_("Hamtar kursnamn"), [U_("Hamtar dokument fran schema.sys.kth.se...")])
         progressdialog.startProgress()
 
         try:
             course = timeedit.Conduit().getCourseInfo(self.courseedit.GetValue())
         except ValueError:
             progressdialog.stopProgress()
-            msg = _("Kursen") + " " + _("finns inte") + " " + _("i TimeEdits system.")
-            wx.MessageDialog(self, msg, _("Kursen") + " " + _("finns inte"), style=wx.ICON_WARNING).ShowModal()
+            msg = U_("Kursen") + " " + U_("finns inte") + " " + U_("i TimeEdits system.")
+            wx.MessageDialog(self, msg, U_("Kursen") + " " + U_("finns inte"), style=wx.ICON_WARNING).ShowModal()
             self.courseedit.SetFocus()
             self.courseedit.SetSelection(-1, -1)
             return
@@ -614,10 +607,10 @@ class ChooseITUCoursesDialog(OKCancelDialog):
     def __init__(self, parent):
         global cachedcourselist
 
-        OKCancelDialog.__init__(self, parent, _("Valj kurser"))
+        OKCancelDialog.__init__(self, parent, U_("Valj kurser"))
         
-        self.progressdialog = ProgressDialog(self, _("Hamtar kurslista"), [_("Ansluter till it.kth.se..."),
-            _("Hamtar dokument..."), _("Analyserar dokument...")])
+        self.progressdialog = ProgressDialog(self, U_("Hamtar kurslista"), [U_("Ansluter till it.kth.se..."),
+            U_("Hamtar dokument..."), U_("Analyserar dokument...")])
 
         self.chosencourses = []
         daisycoursecodes = timetable.courselist.getAllDaisyCourseCodes()
@@ -637,7 +630,7 @@ class ChooseITUCoursesDialog(OKCancelDialog):
 
         self.buttons.Prepend((10, 0), 1)
         self.buttons.Add((30, 0))
-        self.buttons.Add(wx.Button(self, 1, _("Hamta kurslista")))
+        self.buttons.Add(wx.Button(self, 1, U_("Hamta kurslista")))
         self.buttons.Add((10, 0), 1)
 
         layout = wx.BoxSizer(wx.VERTICAL)
@@ -647,7 +640,7 @@ class ChooseITUCoursesDialog(OKCancelDialog):
         lists.Add(vertbuttons, 0, wx.EXPAND)
         lists.Add(self.list_all, 0, wx.ALL, 10)
 
-        layout.Add(StaticText(self, _("Valj de kurser vars schema ska uppdateras fran Daisy: (Ovriga kurser kommer raderas fran ditt schema.)")), 0, wx.TOP|wx.LEFT, 10)
+        layout.Add(StaticText(self, U_("Valj de kurser vars schema ska uppdateras fran Daisy: (Ovriga kurser kommer raderas fran ditt schema.)")), 0, wx.TOP|wx.LEFT, 10)
         layout.Add(lists, 0, wx.EXPAND|wx.ALL, 10)
         layout.Add(self.buttons, 0, wx.EXPAND|wx.ALL, 10)
 
@@ -684,11 +677,11 @@ class ChooseITUCoursesDialog(OKCancelDialog):
             courses = internet.getITUCourses(callback=self.progressdialog.increaseProgress)
             cachedcourselist = courses
         except error.ReadError:
-            msg = _("Kan inte lasa fran IT-universitetets webbplats.\nKontrollera att du har tillgang till Internet.")
-            wx.MessageDialog(self, msg, _("Internetfel"), style=wx.OK|wx.ICON_INFORMATION).ShowModal()
+            msg = U_("Kan inte lasa fran IT-universitetets webbplats.\nKontrollera att du har tillgang till Internet.")
+            wx.MessageDialog(self, msg, U_("Internetfel"), style=wx.OK|wx.ICON_INFORMATION).ShowModal()
         except error.DataError:
-            msg = _("Fick felaktig data fran IT-universitetets kurslista.") + "\n" + _("Det kan bero pa ett serverfel.")
-            wx.MessageDialog(self, msg, _("Datafel"), style=wx.OK|wx.ICON_ERROR).ShowModal()
+            msg = U_("Fick felaktig data fran IT-universitetets kurslista.") + "\n" + U_("Det kan bero pa ett serverfel.")
+            wx.MessageDialog(self, msg, U_("Datafel"), style=wx.OK|wx.ICON_ERROR).ShowModal()
 
         self.progressdialog.stopProgress()
         return courses
@@ -697,92 +690,20 @@ class ChooseITUCoursesDialog(OKCancelDialog):
         self.chosencourses = self.list_chosen.GetAllCourses()
         self.EndModal(wx.ID_OK)
 
-daisypassword = ""
-# -----------------------------------------------------------
-class DaisyLoginDialog(OKCancelDialog):
-    def __init__(self, parent, courseids):
-        OKCancelDialog.__init__(self, parent, _("Daisy-inloggning"))
-
-        self.progressdialog = ProgressDialog(self, _("Uppdaterar schema fran") + " Daisy",
-            [_("Loggar in..."), _("Genererar schema..."), _("Hamtar genererat schema..."),
-            _("Loggar ut...")])
-            
-        self.daisydata = []
-        self.courseids = courseids
-
-        layout = wx.BoxSizer(wx.VERTICAL)
-
-        self.buttons.Prepend((20, 0), 1)
-        self.buttons.Add((20, 0), 1)
-        
-        username = wx.BoxSizer(wx.HORIZONTAL)
-        username.Add(StaticText(self, _("Anvandarnamn"), size=(100, -1), style=wx.ST_NO_AUTORESIZE))
-        self.usernameedit = wx.TextCtrl(self, -1, size=(100, -1))
-        self.usernameedit.SetValue(timetable.timetable.username)
-        username.Add(self.usernameedit)
-
-        global daisypassword
-        password = wx.BoxSizer(wx.HORIZONTAL)
-        password.Add(StaticText(self, _("Losenord"), size=(100, -1), style=wx.ST_NO_AUTORESIZE))
-        self.passwordedit = wx.TextCtrl(self, -1, size=(100, -1), style=wx.TE_PASSWORD)
-        self.passwordedit.SetValue(daisypassword)
-        password.Add(self.passwordedit)
-
-        layout.Add(username, 0, wx.TOP|wx.LEFT, 10)
-        layout.Add(password, 0, wx.TOP|wx.LEFT, 10)
-        layout.Add(StaticText(self, _("Ditt losenord sparas inte och skickas krypterat med SSL."),
-            size=(200, 50), wordwrap=True, style=wx.ST_NO_AUTORESIZE), 0, wx.TOP|wx.LEFT|wx.RIGHT, 10)
-        layout.Add(self.buttons, 0, wx.ALL, 10)
-
-        self.usernameedit.SetFocus()
-        if len(self.usernameedit.GetValue()):
-            self.passwordedit.SetFocus()
-
-        self.SetSizerAndFit(layout)
-        self.Centre()
-        
-        if daisypassword and timetable.timetable.username:
-            self.okbtn.SetFocus()
-
-    def SaveAndClose(self, evt):
-        import daisy
-        
-        timetable.timetable.username = self.usernameedit.GetValue()
-        global daisypassword
-        daisypassword = self.passwordedit.GetValue()
-        self.progressdialog.startProgress()
-
-        self.daisydata = []
-        try:
-            self.daisydata = daisy.Conduit(self.progressdialog.increaseProgress).getvCalendarData(self.usernameedit.GetValue(),
-                self.passwordedit.GetValue(), self.courseids)
-            self.EndModal(wx.ID_OK)
-        except error.LoginError:
-            msg = _("Felaktigt anvandarnamn eller losenord.")
-            wx.MessageDialog(self, msg, _("Loginfel"), style=wx.OK|wx.ICON_WARNING).ShowModal()
-        except error.ReadError:
-            msg = _("Kunde inte lasa fran") + " " + _("Daisy-servern.") + " " + _("Kontrollera att du har tillgang till Internet.")
-            wx.MessageDialog(self, msg, _("Daisyfel"), style=wx.OK|wx.ICON_ERROR).ShowModal()
-        except error.DataError:
-            msg = _("Tog emot felaktig data fran Daisy.") + " " + _("Det kan bero pa ett serverfel.")
-            wx.MessageDialog(self, msg, _("Daisyfel"), style=wx.OK|wx.ICON_ERROR).ShowModal()
-
-        self.progressdialog.stopProgress()
-
 # -----------------------------------------------------------
 class AboutDialog(wx.Dialog):
     def __init__(self, parent):
         global applicationname
         global applicationversion
-        wx.Dialog.__init__(self, parent, -1, _("Om") + " " + applicationname)
+        wx.Dialog.__init__(self, parent, -1, U_("Om") + " " + applicationname)
         
-        btn = wx.Button(self, wx.OK, _("&Stang"))
+        btn = wx.Button(self, wx.OK, U_("&Stang"))
         btn.SetDefault()
         wx.EVT_BUTTON(self, wx.OK, self.Close)
 
-        msg = applicationname + " " + _("ar skapat av") + u" Christian Davén.\n"
-        msg += _("Version") + ": " + applicationversion + "\n\n"
-        msg += _("Programmet och dess kallkod har gjorts tillganglig enligt GNU General Public License. Inga garantier for programmets funktion ges.\n\nRapportera garna buggar och funktionalitetsforslag till") + " <cd@kth.se>."
+        msg = applicationname + " " + U_("ar skapat av") + u" Christian Davén.\n"
+        msg += U_("Version") + ": " + applicationversion + "\n\n"
+        msg += U_("Programmet och dess kallkod har gjorts tillganglig enligt GNU General Public License. Inga garantier for programmets funktion ges.\n\nRapportera garna buggar och funktionalitetsforslag till") + " <cd@kth.se>."
 
         layout = wx.BoxSizer(wx.VERTICAL)
         layout.Add(StaticText(self, msg, wordwrap=True, size=(250,150), style=wx.ST_NO_AUTORESIZE),
@@ -799,7 +720,7 @@ class ExportDialog(OKCancelDialog):
     "Dialogruta för export av schema"
 
     def __init__(self, parent):
-        OKCancelDialog.__init__(self, parent, _("Exportera schema"))
+        OKCancelDialog.__init__(self, parent, U_("Exportera schema"))
 
         self.fromdate = DateText(self)
         self.fromdate.setDate(parent.currentmonday)
@@ -808,23 +729,23 @@ class ExportDialog(OKCancelDialog):
 
         fromdate = wx.BoxSizer(wx.HORIZONTAL)
         fromdate.Add(self.fromdate)
-        fromdate.Add(wx.Button(self, 10, "-", size=(20,20)), 0, wx.LEFT, 10)
-        fromdate.Add(wx.Button(self, 20, "+", size=(20,20)), 0, wx.LEFT, 2)
-        fromdate.Add(wx.Button(self, 30, "+7", size=(20,20)), 0, wx.LEFT, 2)
+        fromdate.Add(wx.Button(self, 10, "-", size=(30,30)), 0, wx.LEFT, 10)
+        fromdate.Add(wx.Button(self, 20, "+", size=(30,30)), 0, wx.LEFT, 2)
+        fromdate.Add(wx.Button(self, 30, "+7", size=(30,30)), 0, wx.LEFT, 2)
 
         todate = wx.BoxSizer(wx.HORIZONTAL)
         todate.Add(self.todate)
-        todate.Add(wx.Button(self, 110, "-", size=(20,20)), 0, wx.LEFT, 10)
-        todate.Add(wx.Button(self, 120, "+", size=(20,20)), 0, wx.LEFT, 2)
-        todate.Add(wx.Button(self, 130, "+7", size=(20,20)), 0, wx.LEFT, 2)
+        todate.Add(wx.Button(self, 110, "-", size=(30,30)), 0, wx.LEFT, 10)
+        todate.Add(wx.Button(self, 120, "+", size=(30,30)), 0, wx.LEFT, 2)
+        todate.Add(wx.Button(self, 130, "+7", size=(30,30)), 0, wx.LEFT, 2)
 
         self.buttons.Prepend((10,0), 1)
         self.buttons.Add((10,0), 1)
 
         layout = wx.BoxSizer(wx.VERTICAL)
-        layout.Add(StaticText(self, _("Valj startdatum") + " " + _("for exportering:")), 0, wx.TOP|wx.LEFT, 10)
+        layout.Add(StaticText(self, U_("Valj startdatum") + " " + U_("for exportering:")), 0, wx.TOP|wx.LEFT, 10)
         layout.Add(fromdate, 0, wx.ALL, 10)
-        layout.Add(StaticText(self, _("Valj slutdatum") + " " + _("for exportering:")), 0, wx.LEFT, 10)
+        layout.Add(StaticText(self, U_("Valj slutdatum") + " " + U_("for exportering:")), 0, wx.LEFT, 10)
         layout.Add(todate, 0, wx.ALL, 10)
         layout.Add(self.buttons, 0, wx.EXPAND|wx.ALL, 10)
         self.SetSizerAndFit(layout)
@@ -856,8 +777,8 @@ class ExportDialog(OKCancelDialog):
         self.todate.add(days=7)
 
     def SaveAndClose(self, evt):
-        filedialog = wx.FileDialog(self, _("Exportera till fil"),
-            wildcard=_("vCalendar-filer") + " (*.vcs)|*.vcs|" + _("iCalendar-filer") + " (*.ics)|*.ics|" + _("HTML-filer") + " (*.html)|*.html|" + _("CSV-filer") + " (*.csv)|*.csv|" + _("Alla filer") + "|*.*",
+        filedialog = wx.FileDialog(self, U_("Exportera till fil"),
+            wildcard=U_("vCalendar-filer") + " (*.vcs)|*.vcs|" + U_("iCalendar-filer") + " (*.ics)|*.ics|" + U_("HTML-filer") + " (*.html)|*.html|" + U_("CSV-filer") + " (*.csv)|*.csv|" + U_("Alla filer") + "|*.*",
             style=wx.SAVE|wx.OVERWRITE_PROMPT)
         if filedialog.ShowModal() == wx.ID_OK:
             import os.path
@@ -871,12 +792,12 @@ class ExportDialog(OKCancelDialog):
                 elif extension == ".csv":
                     self.exportCSV(filedialog.GetPath(), self.fromdate.date, self.todate.date)
                 else:
-                    msg = _("Kan inte exportera till det angivna formatet.")
-                    wx.MessageDialog(self, msg, _("Okand filandelse"), style=wx.OK|wx.ICON_INFORMATION).ShowModal()
+                    msg = U_("Kan inte exportera till det angivna formatet.")
+                    wx.MessageDialog(self, msg, U_("Okand filandelse"), style=wx.OK|wx.ICON_INFORMATION).ShowModal()
                     return
             except error.WriteError:
-                msg = _("Kan inte skriva till filen. Den kan vara skrivskyddad.")
-                wx.MessageDialog(self, msg, _("Filfel"), style=wx.OK|wx.ICON_WARNING).ShowModal()
+                msg = U_("Kan inte skriva till filen. Den kan vara skrivskyddad.")
+                wx.MessageDialog(self, msg, U_("Filfel"), style=wx.OK|wx.ICON_WARNING).ShowModal()
                 return
             
             self.EndModal(wx.ID_OK)
@@ -895,7 +816,7 @@ class DateText(wx.TextCtrl):
     "Datumtext"
     
     def __init__(self, parent):
-        wx.TextCtrl.__init__(self, parent, -1, size=(150, -1), style=wx.TE_READONLY)
+        wx.TextCtrl.__init__(self, parent, -1, size=(170, -1), style=wx.TE_READONLY)
         self.date = calendar.Date()
         self.update()
 
@@ -1044,7 +965,8 @@ class StaticText(wx.StaticText):
 
         self.wordwrap = False
         self.originallabel = ""
-        if wx.Platform == "__WXGTK__" and size[0] != -1 and wordwrap:
+
+        if wx.Platform == "__WXGTK__" and wordwrap:
             self.wordwrap = True
             self.originallabel = label
             self.SetLabel(self.wordWrap(label))

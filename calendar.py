@@ -4,6 +4,7 @@
 
 import datetime
 import error
+from i18n import *
 
 MON = 0
 TUE = 1
@@ -15,9 +16,9 @@ SUN = 6
 
 # -----------------------------------------------------------
 class Date:
-    WEEKDAYS = [_("Man"), _("Tis"), _("Ons"), _("Tor"), _("Fre"), _("Lor"), _("Son")]
-    MONTHS = [_("Januari"), _("Februari"), _("Mars"), _("April"), _("Maj"), _("Juni"),
-            _("Juli"), _("Augusti"), _("September"), _("Oktober"), _("November"), _("December")]
+    WEEKDAYS = [U_("Man"), U_("Tis"), U_("Ons"), U_("Tor"), U_("Fre"), U_("Lor"), U_("Son")]
+    MONTHS = [U_("Januari"), U_("Februari"), U_("Mars"), U_("April"), U_("Maj"), U_("Juni"),
+            U_("Juli"), U_("Augusti"), U_("September"), U_("Oktober"), U_("November"), U_("December")]
 
     def __init__(self, arg=None):
         "Kan initialiseras med datetime.date, Date, sträng eller tomt"
@@ -100,8 +101,8 @@ class Date:
         return self.__date.isocalendar()[1]
     
     def getNiceString(self):
-        return self.getWeekDayName() + " " + str(self.getDay()) + " " + self.getMonthName() +\
-            " " + str(self.getYear())
+        return unicode(self.getWeekDayName() + " " + str(self.getDay()) + " " + self.getMonthName() +\
+            " " + str(self.getYear()))
         
     def isWeekend(self):
         return self.getWeekDay() >= SAT

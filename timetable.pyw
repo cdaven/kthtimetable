@@ -9,10 +9,9 @@
 
 import sys
 import os, os.path
-import gettext
+import i18n
 
-swedish = gettext.translation("timetable", "locale", languages=["sv"])
-swedish.install()
+i18n.getTranslation("sv")
 
 # Raderar alla tmpXXXXXX-filer som skapats av PyInformationalMessagesFrame
 files = os.listdir(os.getcwd())

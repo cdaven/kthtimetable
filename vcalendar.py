@@ -87,8 +87,6 @@ class Writer:
     def write(self, events, filename):
         "Skriver valda händelser till vCalendar-fil"
 
-        print "writing to vcal file"
-        
         data = ["BEGIN:VCALENDAR\n", "VERSION:1.0\n", "PRODID:" + self.prodid + "\n"]
         for event in events:
             data.append("BEGIN:VEVENT")
