@@ -85,17 +85,16 @@ class SummaryParser:
         self.lowercase_letters = u"abcdefghijklmnopqrstuvwxyzåäö"
         self.numbers = "1234567890"
 
-        self.rxcourse = re.compile("(\d\D\d{4})(\.\D)?")
+        self.rxcourse = re.compile("(\d\D\d{4})(\.(\D))?")
         self.rxtype = re.compile("([a-zåäöA-ZÅÄÖ]{2,4})")
         self.rxlocation = re.compile("([A-Z]\d+)")
 
     def parse(self, summary):
         data = {}
-        data["course"] = self.extractCourse(summary)
+        (data["course"], data["group"]) = self.extractCourseAndGroup(summary)
         data["type"] = self.extractType(summary)
         data["location"] = self.extractLocation(summary)
         data["seriesno"] = 0
-        data["group"] = ""
         return data
     
     def extractLocation(self, text):
@@ -119,20 +118,22 @@ class SummaryParser:
 
         return locationstring[:-1]
             
-    def extractCourse(self, text):
+    def extractCourseAndGroup(self, text):
         words = text.split(",")
         coursestring = ""
+        group = ""
 
         for word in words:
             rx = self.rxcourse.search(word)
             if rx:
                 coursestring += rx.group(1) + ","
+                if rx.group(3): group = rx.group(3)
             else:
                 # Så fort orden inte längre är kurser
                 # kommer det inga fler
                 break
         
-        return coursestring[:-1]
+        return (coursestring[:-1], group)
 
     def extractType(self, text):
         typecode = ""

@@ -65,5 +65,5 @@ class ConfigParserX(ConfigParser.SafeConfigParser):
     def set(self, section, key, value):
         if isinstance(value, unicode):
             value = value.encode("latin_1")
-        ConfigParser.SafeConfigParser.set(self, section, key, value)
+        ConfigParser.SafeConfigParser.set(self, section, key, str(value))
 

@@ -27,12 +27,12 @@ class TimeEditSummaryParserTest(xunittest.TestCase):
         self.failUnlessEqual(self.parser.extractLocation(self.summary4), "E35")
         self.failUnlessEqual(self.parser.extractLocation(self.summary5), "D31,E32,E34,E35,E36")
 
-    def testCourse(self):
-        self.failUnlessEqual(self.parser.extractCourse(self.summary1), "9E1300")
-        self.failUnlessEqual(self.parser.extractCourse(self.summary2), "5B1101,5B1108,5B1109,5B1110,5B1128,5B1139,5B1307")
-        self.failUnlessEqual(self.parser.extractCourse(self.summary3), "5B1116")
-        self.failUnlessEqual(self.parser.extractCourse(self.summary4), "5B1116")
-        self.failUnlessEqual(self.parser.extractCourse(self.summary5), "5B1116")
+    def testCourseAndGroup(self):
+        self.failUnlessEqual(self.parser.extractCourseAndGroup(self.summary1), ("9E1300", ""))
+        self.failUnlessEqual(self.parser.extractCourseAndGroup(self.summary2), ("5B1101,5B1108,5B1109,5B1110,5B1128,5B1139,5B1307", ""))
+        self.failUnlessEqual(self.parser.extractCourseAndGroup(self.summary3), ("5B1116", ""))
+        self.failUnlessEqual(self.parser.extractCourseAndGroup(self.summary4), ("5B1116", "c"))
+        self.failUnlessEqual(self.parser.extractCourseAndGroup(self.summary5), ("5B1116", ""))
 
     def testType(self):
         self.failUnlessEqual(self.parser.extractType(self.summary1), u"Lektion")
@@ -40,9 +40,6 @@ class TimeEditSummaryParserTest(xunittest.TestCase):
         self.failUnlessEqual(self.parser.extractType(self.summary3), u"Föreläsning")
         self.failUnlessEqual(self.parser.extractType(self.summary4), u"Övning")
         self.failUnlessEqual(self.parser.extractType(self.summary5), u"Seminarium")
-
-    def testGroup(self):
-        pass
 
 # -----------------------------------------------------------
 xunittest.run()
