@@ -987,14 +987,11 @@ class HTMLExporter:
         self.timetable = timetable
         self.html = """<!DOCTYPE html PUBLIC '-//W3C//DTD XHTML 1.1//EN'
             'http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd'>
-            <html xmlns='http://www.w3.org/1999/xhtml' xml:lang='sv'>
-            <head>
+            <html xmlns='http://www.w3.org/1999/xhtml'><head>
             <title>""" + U_("TimeTable") + """</title>
-            <meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
             <meta name='generator' content='KTH TimeTable' />
             <link rel='stylesheet' type='text/css' href='timetable-html.css' />
-            </head>
-            <body><h1>""" + U_("TimeTable") + "</h1>"
+            </head><body><h1>""" + U_("TimeTable") + "</h1>"
 
         date = fromdate.getLastMonday()
         while date <= todate:
@@ -1002,11 +999,11 @@ class HTMLExporter:
             date += 7
             
         self.html += "</body></html>"
-        return self.html.encode("utf8")
+        return self.html.encode("latin_1")
 
     def export(self, filename, timetable, fromdate, todate):
         self.generate(timetable, fromdate, todate)
-        file(filename, "w+").write(self.html.encode("utf8"))
+        file(filename, "w+").write(self.html.encode("latin_1"))
 
     def formatWeek(self, date):
         import settings
@@ -1029,8 +1026,8 @@ class HTMLExporter:
     def formatEvent(self, event):
         if event.active:
             self.html += "<div class='event'>" +\
-                event.begin.getNiceString() + "-" + event.end.getNiceString() + ": " + unicode(event) +\
-                "</div>"
+                event.begin.getNiceString() + "-" + event.end.getNiceString() + ": " +\
+                unicode(event) + "</div>"
 
 # -----------------------------------------------------------
 class CSVExporter(VCalendarExporter):

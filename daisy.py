@@ -26,9 +26,9 @@ class Conduit:
 
         try:
             url = urllib.urlopen("http://daisy.it.kth.se/servlet/anstalld.schema.BoardSchema" + getdata)
-            if self.callback: self.callback()
+            #if self.callback: self.callback()
             generated = url.read()
-            if self.callback: self.callback()
+            #if self.callback: self.callback()
         except IOError:
             raise error.ReadError(U_("Could not read from") + " " + U_("the timetable server"))
 
@@ -39,7 +39,7 @@ class Conduit:
             raise error.DataError
 
         url = urllib.urlopen("http://daisy.it.kth.se" + generated[start:end])
-        if self.callback: self.callback()
+        #if self.callback: self.callback()
 
         return url.readlines()
 
