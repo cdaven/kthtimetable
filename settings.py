@@ -20,6 +20,9 @@ language = "en"
 preferred_system = "Daisy"
 publish_userid = ""
 publish = False
+maximized = False
+size_x = -1
+size_y = -1
 
 # -----------------------------------------------------------
 def _setDefaultCalendarValues():
@@ -40,6 +43,7 @@ def load():
 def loadFromFile(filename):
     global daybegin, dayend, lastweekday, event_export_category, language
     global preferred_system, publish_userid, publish
+    global maximized, size_x, size_y
 
     config = configfileparser.ConfigParserX()
 
@@ -67,7 +71,7 @@ def loadFromFile(filename):
     try:
         daybegin = calendar.Time(config.get("main", "daybegin"))
         dayend = calendar.Time(config.get("main", "dayend"))
-        lastweekday = int(config.get("main", "lastweekday"))
+        lastweekday = config.getint("main", "lastweekday")
     except (error.DataError, ValueError):
         _setDefaultCalendarValues()
         sys.stderr.write("Settings missing or invalid, using default values.\n")
@@ -78,10 +82,18 @@ def loadFromFile(filename):
     except (error.DataError, IOError):
         sys.stderr.write("Settings missing or invalid, using default values.\n")
 
+    try:
+        maximized = config.getboolean("main", "maximized")
+        size_x = config.getint("main", "size_x")
+        size_y = config.getint("main", "size_y")
+    except (error.DataError, IOError):
+        sys.stderr.write("Settings missing or invalid, using default values.\n")
+
 
 def save():
     global daybegin, dayend, lastweekday, event_export_category, language
     global preferred_system, __filename, publish_userid, publish
+    global maximized, size_x, size_y
 
     config = configfileparser.ConfigParserX()
 
@@ -94,6 +106,9 @@ def save():
     config.set("main", "preferred_system", preferred_system)
     config.set("main", "publish_userid", publish_userid)
     config.set("main", "publish", str(publish))
+    config.set("main", "maximized", str(maximized))
+    config.set("main", "size_x", str(size_x))
+    config.set("main", "size_y", str(size_y))
 
     try:
         config.write(file(__filename, "w+"))

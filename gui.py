@@ -15,7 +15,7 @@ applicationversion = u"2.5"
 
 # -----------------------------------------------------------
 class MainFrame(wx.Frame):
-    def __init__(self):
+    def __init__(self, maximized, size_x, size_y):
         global applicationname
         global applicationversion
         
@@ -51,7 +51,10 @@ class MainFrame(wx.Frame):
         self.SetSizerAndFit(layout)
         self.CentreOnScreen()
         wx.EVT_CLOSE(self, self.OnClose)
- 
+
+        self.SetSize(wx.Size(size_x, size_y))
+        if maximized: self.Maximize()
+
         self.GoToday(None)
 
         if calendar.Date() - self.timetable.updated > 7:
@@ -99,9 +102,9 @@ class MainFrame(wx.Frame):
 
         buttons = wx.BoxSizer(wx.HORIZONTAL)
         buttons.Add(wx.Button(self, 1, U_("Today"), size=(60, -1)), 0)
-        buttons.Add(wx.Button(self, 2, "<-", size=(30, -1)), 0, wx.LEFT|wx.RIGHT, 10)
+        buttons.Add(wx.Button(self, 2, "<-", size=(30, -1)), 0, wx.LEFT|wx.RIGHT, 7)
         buttons.Add(self.weeklabel, 0, wx.TOP, 5)
-        buttons.Add(wx.Button(self, 3, "->", size=(30, -1)), 0, wx.LEFT|wx.RIGHT, 10)
+        buttons.Add(wx.Button(self, 3, "->", size=(30, -1)), 0, wx.LEFT|wx.RIGHT, 7)
         buttons.Add(self.datelabel, 0, wx.TOP, 5)
 
         wx.EVT_BUTTON(self, 1, self.GoToday)
@@ -161,6 +164,9 @@ class MainFrame(wx.Frame):
             msg = U_("Could not save the timetable. The file may be write-protected.")
             wx.MessageDialog(self, msg, U_("File error"), style=wx.OK|wx.ICON_ERROR).ShowModal()
 
+        settings.maximized = self.IsMaximized()
+        settings.size_x = self.GetSizeTuple()[0]
+        settings.size_y = self.GetSizeTuple()[1]
         self.Destroy()
 
     def GoToday(self, event):
