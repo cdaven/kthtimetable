@@ -21,6 +21,9 @@ class MainFrame(wx.Frame):
         
         guisettings.getSystemSettings()
 
+        self.timetable = timetable.TimeTable()
+        self.timetable.load()
+
         self.weeklabel = None
         self.datelabel = None
         self.daylabels = []
@@ -51,7 +54,7 @@ class MainFrame(wx.Frame):
  
         self.GoToday(None)
 
-        if calendar.Date() - timetable.timetable.updated > 7:
+        if calendar.Date() - self.timetable.updated > 7:
             msg = U_("It's been more than a week since you last fetched the timetable. It could have been\nupdated since. Would you like to fetch the timetable now?")
             if wx.MessageDialog(self, msg, U_("The timetable is old"),
                style=wx.YES_NO|wx.ICON_QUESTION).ShowModal() == wx.ID_YES:
@@ -115,39 +118,44 @@ class MainFrame(wx.Frame):
         menu.Append(999, U_("&Quit"))
         menubar.Append(menu, U_("&File"))
 
+        wx.EVT_MENU(self, 120, self.ExportEvents)
+        wx.EVT_MENU(self, 999, self.OnClose)
+
         menu = wx.Menu()
         menu.Append(210, U_("Choose &courses..."))
         menu.Append(220, U_("&Fetch timetable...\tF5"))
         menu.AppendSeparator()
-        menu.Append(230, U_("Export"))
-        menu.Append(240, U_("Import"))
+        menu.Append(230, U_("Choose &groups..."))
+        menu.Append(240, U_("&Name courses..."))
         menu.AppendSeparator()
-        menu.Append(250, U_("Choose &groups..."))
-        menu.Append(260, U_("&Name courses..."))
-        menu.AppendSeparator()
-        menu.Append(270, U_("&Settings..."))
+        menu.Append(250, U_("&Settings..."))
         menubar.Append(menu, U_("&Tools"))
 
-        menu = wx.Menu()
-        menu.Append(310, U_("&About..."))
-        menubar.Append(menu, U_("&Help"))
-
-        wx.EVT_MENU(self, 999, self.OnClose)
-        wx.EVT_MENU(self, 120, self.ExportEvents)
         wx.EVT_MENU(self, 210, self.ChooseCourses)
         wx.EVT_MENU(self, 220, self.Update)
-        wx.EVT_MENU(self, 230, self.Export)
-        wx.EVT_MENU(self, 240, self.Import)
-        wx.EVT_MENU(self, 250, self.ChooseGroups)
-        wx.EVT_MENU(self, 260, self.NameCourses)
-        wx.EVT_MENU(self, 270, self.MakeSettings)
-        wx.EVT_MENU(self, 310, self.About)
+        wx.EVT_MENU(self, 230, self.ChooseGroups)
+        wx.EVT_MENU(self, 240, self.NameCourses)
+        wx.EVT_MENU(self, 250, self.MakeSettings)
+
+        menu = wx.Menu()
+        menu.Append(310, U_("Create &new group..."))
+        menu.AppendSeparator()
+        menubar.Append(menu, U_("&Subscriptions"))
+
+        wx.EVT_MENU(self, 310, self.CreateSubscription)
+        #wx.EVT_MENU_RANGE(self, 320, 350, self.Menu401To403)
+
+        menu = wx.Menu()
+        menu.Append(410, U_("&About..."))
+        menubar.Append(menu, U_("&Help"))
+
+        wx.EVT_MENU(self, 410, self.About)
 
         self.SetMenuBar(menubar)
 
     def OnClose(self, event):
         try:
-            timetable.timetable.save()
+            self.timetable.save()
         except error.WriteError:
             msg = U_("Could not save the timetable. The file may be write-protected.")
             wx.MessageDialog(self, msg, U_("File error"), style=wx.OK|wx.ICON_ERROR).ShowModal()
@@ -172,10 +180,10 @@ class MainFrame(wx.Frame):
         self.weeklabel.SetLabel(U_("Week") + " " + str(date.getWeek()))
         self.datelabel.SetLabel(date.getMonthName() + " " + str(date.getYear()))
 
-        if timetable.timetable.isEmpty():
+        if self.timetable.isEmpty():
             statusmsg = U_("The timetable is empty")
         else:
-            diff = calendar.Date() - timetable.timetable.updated
+            diff = calendar.Date() - self.timetable.updated
             statusmsg = U_("The timetable was fetched") + " " + str(diff) + " " + U_("days ago")
             if diff == 0:
                 statusmsg = U_("The timetable was fetched") + " " + U_("today")
@@ -198,16 +206,13 @@ class MainFrame(wx.Frame):
             self.days[weekday].Freeze()
             self.days[weekday].clear()
 
-            for event in timetable.timetable.getEventsForDate(date):
+            for event in self.timetable.getEventsForDate(date):
                 self.days[weekday].addEvent(event)                  
 
             self.days[weekday].showEvents()
             self.days[weekday].Thaw()
 
             date += 1
-
-    def ImportEvents(self, evt):
-        pass
 
     def Import(self, evt):
         import subscription
@@ -222,12 +227,12 @@ class MainFrame(wx.Frame):
         subscription.Subscription().put()
 
     def ExportEvents(self, evt):
-        ExportDialog(self).ShowModal()
+        ExportDialog(self, self.timetable).ShowModal()
         self.SetFocus()
 
     def Update(self, evt):
-        daisycourses = timetable.courselist.getAllDaisyCourseIDs()
-        timeeditcourses = timetable.courselist.getAllTimeEditCourseCodes()
+        daisycourses = self.timetable.getAllDaisyCourseIDs()
+        timeeditcourses = self.timetable.getAllTimeEditCourseCodes()
         
         if not daisycourses and not timeeditcourses:
             msg = U_("First you must choose which courses to fetch.")
@@ -244,8 +249,8 @@ class MainFrame(wx.Frame):
 
             #file("dbg-caldata", "w+").writelines(data)
 
-            timetable.timetable.importVCalData(data)
-            timetable.timetable.save()
+            self.timetable.importVCalData(data)
+            self.timetable.save()
         except error.ReadError:
             msg = U_("Could not read from") + " " + U_("the timetable server") + ". " + U_("Make sure you have access to the Internet.")
             wx.MessageDialog(self, msg, U_("Server error"), style=wx.OK|wx.ICON_ERROR).ShowModal()
@@ -298,17 +303,17 @@ class MainFrame(wx.Frame):
         AboutDialog(self).ShowModal()
 
     def ChooseGroups(self, evt):
-        if GroupsDialog(self).ShowModal() == wx.ID_OK:
+        if GroupsDialog(self, self.timetable).ShowModal() == wx.ID_OK:
             self.updateView()
         self.SetFocus()
 
     def NameCourses(self, evt):
-        if CourseNamesDialog(self).ShowModal() == wx.ID_OK:
+        if CourseNamesDialog(self, self.timetable).ShowModal() == wx.ID_OK:
             self.updateView()
         self.SetFocus()
 
     def ChooseCourses(self, evt):
-        if ChooseCoursesDialog(self).ShowModal() == wx.ID_OK:
+        if ChooseCoursesDialog(self, self.timetable).ShowModal() == wx.ID_OK:
             self.updateView()
             msg = U_("Do you want to fetch the timetable now?")
             dialog = wx.MessageDialog(self, msg, U_("Fetch timetable?"), style=wx.YES_NO|wx.ICON_QUESTION)
@@ -320,6 +325,12 @@ class MainFrame(wx.Frame):
         if SettingsDialog(self).ShowModal() == wx.ID_OK:
             self.updateView()
         self.SetFocus()
+
+    def CreateSubscription(self, evt):
+        if SubscriptionDialog(self, self.timetable).ShowModal() == wx.ID_OK:
+            self.updateView()
+        self.SetFocus()
+
 
 # -----------------------------------------------------------
 class OKCancelDialog(wx.Dialog):
@@ -370,12 +381,13 @@ class OKCancelDialog(wx.Dialog):
 class GroupsDialog(OKCancelDialog):
     "Dialogruta för val av gruppdeltagande i kurser"
 
-    def __init__(self, parent):
+    def __init__(self, parent, timetable):
         OKCancelDialog.__init__(self, parent, U_("Choose groups"))
 
         self.choices = []
         self.nogroup = U_("all")
-        self.courses = timetable.courselist.getAllPersistent()
+        self.timetable = timetable
+        self.courses = self.timetable.getAllPersistentCourses()
         if not self.courses:
             msg = U_("There are no courses to choose groups for.")
             wx.MessageDialog(self, msg, U_("No courses"), style=wx.OK|wx.ICON_INFORMATION).ShowModal()
@@ -389,7 +401,7 @@ class GroupsDialog(OKCancelDialog):
 
         for course in self.courses:
             try:
-                groups = timetable.timetable.getAllGroups(course.code)
+                groups = self.timetable.getAllGroups(course.code)
             except ValueError:
                 groups = []
                 msg = U_("There is no information on which groups") + " " + course.name + "\n" + U_("is divided into. You have to fetch the timetable first.")
@@ -437,7 +449,7 @@ class GroupsDialog(OKCancelDialog):
         for course in self.choices:
             group = course.GetStringSelection()
             if group == self.nogroup: group = ""
-            timetable.courselist.setCourseGroup(course.coursecode, group)
+            self.timetable.setCourseGroup(course.coursecode, group)
 
         self.EndModal(wx.ID_OK)
 
@@ -445,13 +457,14 @@ class GroupsDialog(OKCancelDialog):
 class CourseNamesDialog(OKCancelDialog):
     "Dialogruta för egen namngivning av kurser"
 
-    def __init__(self, parent):
+    def __init__(self, parent, timetable):
         OKCancelDialog.__init__(self, parent, U_("Name courses"))
 
         self.coursecodes = []
         self.edits = []
+        self.timetable = timetable
 
-        courses = timetable.courselist.getAllPersistent()
+        courses = self.timetable.getAllPersistentCourses()
         if not courses:
             msg = U_("There are no courses to name. Please choose some first.")
             wx.MessageDialog(self, msg, U_("No courses"), style=wx.OK|wx.ICON_INFORMATION).ShowModal()
@@ -488,12 +501,12 @@ class CourseNamesDialog(OKCancelDialog):
                 msg = U_("You have entered an empty string. This entry will be ignored.")
                 dialog = wx.MessageDialog(self, msg, U_("Empty string ignored"), style=wx.OK|wx.CANCEL|wx.ICON_INFORMATION)
                 if dialog.ShowModal() == wx.ID_OK:
-                    timetable.courselist.setCourseName(code, code)
+                    self.timetable.setCourseName(code, code)
                 else:
                     self.edits[i].SetFocus()
                     return
             else:
-                timetable.courselist.setCourseName(code, name)
+                self.timetable.setCourseName(code, name)
 
         self.EndModal(wx.ID_OK)
 
@@ -604,15 +617,95 @@ class SettingsDialog(OKCancelDialog):
 
         self.EndModal(wx.ID_OK)
 
+
+# -----------------------------------------------------------
+class SubscriptionDialog(OKCancelDialog):
+    "Dialogruta för hantering av en prenumerationsgrupp"
+
+    def __init__(self, parent, ttable):
+        OKCancelDialog.__init__(self, parent, U_("Select group members"))
+
+        self.timetable = ttable
+
+        layout = wx.BoxSizer(wx.VERTICAL)
+        groupname = wx.BoxSizer(wx.HORIZONTAL)
+        newuser = wx.BoxSizer(wx.HORIZONTAL)
+
+        groupname.Add(StaticText(self, U_("Enter group name:")))
+        self.groupedit = wx.TextCtrl(self, -1, size=(150, -1))
+        groupname.Add(self.groupedit, 0, wx.LEFT, 10)
+
+        self.useredit = wx.TextCtrl(self, -1, size=(150, -1))
+        addbtn = wx.Button(self, 90, U_("&Add"))
+        addbtn.SetDefault()
+
+        newuser.Add(self.useredit, 0)
+        newuser.Add(addbtn, 0, wx.LEFT, 10)
+
+        self.userlist = wx.ListBox(self, -1, size=(300,250), style=wx.LB_EXTENDED|wx.LB_SORT)
+
+        layout.Add(groupname, 0, wx.LEFT|wx.TOP|wx.RIGHT, 10)
+
+        layout.Add(StaticText(self, U_("Select the members of this group, one by one. Each member is identified by his or her chosen timetable ID."), wordwrap=True, size=(300,-1)), 0, wx.ALL, 10)
+        layout.Add(newuser, 0, wx.LEFT|wx.TOP|wx.RIGHT, 10)
+
+        # "Ta bort"-knappen högerjusteras
+        self.buttons.Add(wx.Window(self, -1), 1)
+        self.buttons.Add(wx.Button(self, 20, U_("&Remove")))
+
+        layout.Add(self.userlist, 0, wx.LEFT|wx.TOP|wx.RIGHT, 10)
+        layout.Add(self.buttons, 0, wx.EXPAND|wx.ALL, 10)
+
+        wx.EVT_BUTTON(self, 20, self.RemoveUser)
+        wx.EVT_BUTTON(self, 90, self.AddUser)
+
+        self.SetSizerAndFit(layout)
+        self.CentreOnScreen()
+
+    def AddUser(self, evt):
+        if not self.useredit.GetValue():
+            self.SaveAndClose(evt)
+            return
+
+        userid = self.useredit.GetValue()
+
+        for i in range(self.userlist.GetCount()):
+            if userid == self.userlist.GetString(i):
+                msg = U_("The member") + " " + U_("is already chosen.")
+                wx.MessageDialog(self, msg, U_("Already chosen"),
+                    style=wx.ICON_INFORMATION).ShowModal()
+                self.SetFocus()
+                self.useredit.SetFocus()
+                return
+
+        self.userlist.Append(userid)
+        self.useredit.SetValue("")
+        self.SetFocus()
+        self.useredit.SetFocus()
+
+    def RemoveUser(self, evt):
+        remove = []
+        for i in self.userlist.GetSelections():
+            remove.append(self.userlist.GetString(i))
+
+        for item in remove:
+            self.userlist.Delete(self.userlist.FindString(item))
+
+    def SaveAndClose(self, evt):
+        self.EndModal(wx.ID_OK)
+
+
 # -----------------------------------------------------------
 class ChooseCoursesDialog(OKCancelDialog):
     "Dialogruta för val av kurser"
 
-    def __init__(self, parent):
+    def __init__(self, parent, ttable):
         OKCancelDialog.__init__(self, parent, U_("Choose courses"))
 
         layout = wx.BoxSizer(wx.VERTICAL)
         newcourse = wx.BoxSizer(wx.HORIZONTAL)
+
+        self.timetable = ttable
 
         self.courseedit = wx.TextCtrl(self, -1, size=(150, -1))
         addbtn = wx.Button(self, 90, U_("&Add"))
@@ -620,11 +713,10 @@ class ChooseCoursesDialog(OKCancelDialog):
 
         newcourse.Add(StaticText(self, U_("Enter one course code at a time:"), size=(200,-1)), 0, wx.TOP, 5)
         newcourse.Add(self.courseedit, 0)
-        newcourse.Add(wx.Window(self, -1), 1)
-        newcourse.Add(addbtn, 0)
+        newcourse.Add(addbtn, 0, wx.LEFT, 10)
 
         self.chosencourses = []
-        self.courselist = CourseListBox(self, timetable.courselist.getAllPersistent(), size=(450,250))
+        self.courselist = CourseListBox(self, self.timetable.getAllPersistentCourses(), size=(450,250))
 
         wx.EVT_BUTTON(self, 20, self.RemoveCourse)
         wx.EVT_BUTTON(self, 90, self.addCourse)
@@ -645,7 +737,7 @@ class ChooseCoursesDialog(OKCancelDialog):
 
         # "Ta bort"-knappen högerjusteras
         self.buttons.Add(wx.Window(self, -1), 1)
-        self.buttons.Add(wx.Button(self, 20, U_("&Remove course")))
+        self.buttons.Add(wx.Button(self, 20, U_("&Remove")))
 
         layout.Add(self.courselist, 0, wx.LEFT|wx.TOP|wx.RIGHT, 10)
         layout.Add(self.buttons, 0, wx.EXPAND|wx.ALL, 10)
@@ -746,10 +838,10 @@ class ChooseCoursesDialog(OKCancelDialog):
         if self.radiodaisy.GetValue():
             settings.preferred_system = "Daisy"
 
-        timetable.courselist.clear()
+        self.timetable.clear()
         for i in range(self.courselist.GetCount()):
-            timetable.courselist.addCourse(self.courselist.GetClientData(i))
-        timetable.timetable.removeOrphanEvents()
+            self.timetable.addCourse(self.courselist.GetClientData(i))
+        self.timetable.removeOrphanEvents()
         self.EndModal(wx.ID_OK)
 
 
@@ -782,13 +874,14 @@ class AboutDialog(wx.Dialog):
 class ExportDialog(OKCancelDialog):
     "Dialogruta för export av schema"
 
-    def __init__(self, parent):
+    def __init__(self, parent, ttable):
         OKCancelDialog.__init__(self, parent, U_("Export timetable"))
 
         self.fromdate = DateText(self)
         self.fromdate.setDate(parent.currentmonday)
         self.todate = DateText(self)
         self.todate.setDate(self.fromdate.date + 6)
+        self.timetable = ttable
 
         size = (20,20)
         # större knappar i GTK än i Windows
@@ -871,13 +964,13 @@ class ExportDialog(OKCancelDialog):
             self.EndModal(wx.ID_OK)
 
     def exportVCalendar(self, filename, fromdate, todate, encoding):
-        timetable.VCalendarExporter(encoding).export(filename, timetable.timetable, fromdate, todate)
+        timetable.VCalendarExporter(encoding).export(filename, self.timetable, fromdate, todate)
         
     def exportHTML(self, filename, fromdate, todate):
-        timetable.HTMLExporter().export(filename, timetable.timetable, fromdate, todate)
+        timetable.HTMLExporter().export(filename, self.timetable, fromdate, todate)
 
     def exportCSV(self, filename, fromdate, todate):
-        timetable.CSVExporter().export(filename, timetable.timetable, fromdate, todate)
+        timetable.CSVExporter().export(filename, self.timetable, fromdate, todate)
 
 # -----------------------------------------------------------
 class DateText(wx.TextCtrl):
@@ -1444,3 +1537,5 @@ class EventPanel(Panel):
         self.SetToolTip(wx.ToolTip(self.event.getNiceString()))
         self.paint()
 
+
+# -----------------------------------------------------------

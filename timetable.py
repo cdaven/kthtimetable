@@ -48,8 +48,7 @@ class CourseList:
     def removeCourse(self, code):
         "Tar bort en kurs ur listan"
         self.courses.remove(self.getCourse(code))
-        global timetable
-        timetable.removeCourseEvents(code)
+        print "tar inte bort alla kurshändelser!"
 
     def hasCourse(self, course):
         for c in self.courses:
@@ -118,12 +117,6 @@ class CourseList:
         courses = []
         courses += self.getAllTimeEditCourses()
         courses += self.getAllDaisyCourses()
-        return courses
-
-    def getAllCourses(self):
-        courses = []
-        map(courses.append, self.courses)
-        print "used?"
         return courses
 
     def getAllMatchingName(self, name):
@@ -220,26 +213,15 @@ class TimeTable:
     "Ett schema (dvs en samling schemalagda händelser)"
 
     def __init__(self):
-        self.eventlist = EventList()
-        self.updated = None
+        self.eventlist = EventList(self)
         self.courselist = CourseList()
+        self.updated = None
         
     def clear(self):
         self.eventlist.clear()
+        self.courselist.clear()
         self.updated = None
         
-    def addEvent(self, event):
-        self.eventlist.addEvent(event)
-
-    def getAllEvents(self):
-        return self.eventlist.getAll()
-
-    def getAllDaisyEvents(self):
-        return self.eventlist.getAllDaisyEvents()
-        
-    def getAllTimeEditEvents(self):
-        return self.eventlist.getAllTimeEditEvents()
-    
     def isEmpty(self):
         return self.eventlist.isEmpty()
 
@@ -266,9 +248,6 @@ class TimeTable:
                 cleaner.sweep(self)
                 self.updated = calendar.Date()
 
-    def getEvent(self, id):
-        return self.eventlist.getEvent(id)
-
     def getAllGroups(self, code):
         "Returnerar alla möjliga grupper för en viss kurs"
 
@@ -279,9 +258,6 @@ class TimeTable:
                 groups.append(event.group)
 
         return groups
-
-    def getAllEventsForCourse(self, code):
-        return self.eventlist.getAllEventsForCourse(code)
 
     def getEventsForDate(self, date):
         events = []
@@ -299,21 +275,13 @@ class TimeTable:
             date += 1
         return events
 
-    def removeCourseEvents(self, course):
-        self.eventlist.removeCourseEvents(course)
-
-    def removeEvent(self, id):
-        self.eventlist.removeEvent(id)
-
     def removeOrphanEvents(self):
         "Tar bort alla händelser vars kurs inte längre finns i kurslistan"
 
-        global courselist
         remove = []
-
         for event in self.eventlist.getAll():
-            if not courselist.hasCourse(event.course):
-                self.eventlist.removeEvent(event.getID())
+            if not self.hasCourse(event.course):
+                self.removeEvent(event.getID())
 
     def load(self, filename = ""):
         "Läser in schemat från en INI-liknande fil"
@@ -322,8 +290,6 @@ class TimeTable:
         import settings
         import os.path
 
-        global courselist
-        courselist.clear()
         self.clear()
 
         if not filename:
@@ -347,19 +313,19 @@ class TimeTable:
                 for pair in pairs:
                     code = pair[0]
                     data = pair[1].split("|")
-                    courselist.addCourse(code, data[0], int(data[1]), data[2])
+                    self.addCourse(code, data[0], int(data[1]), data[2])
 
         # ... och därefter alla händelser som beror på de inlästa kurserna
         for section in config.sections():
             if section != "main" and section != "courses" and section != "settings":
-                event = Event()
+                event = Event(self)
 
                 event.setID(section)
                 event.location = config.get(section, "location")
                 event.date = calendar.Date(config.get(section, "date"))
                 event.begin = calendar.Time(config.get(section, "begin"))
                 event.end = calendar.Time(config.get(section, "end"))
-                event.course = courselist.getCourse(config.get(section, "course"))
+                event.course = self.getCourse(config.get(section, "course"))
                 event.type = config.get(section, "type")
 
                 event.group = config.getstrorempty(section, "group")
@@ -396,10 +362,9 @@ class TimeTable:
                 if event.seriesno: config.set(event.getID(), "seriesno", event.seriesno)
                 if not event.active: config.set(event.getID(), "active", "false")
         
-        global courselist
-        if not courselist.isEmpty():
+        if not self.isCourselistEmpty():
             config.add_section("courses")
-            for course in courselist.getAllPersistent():
+            for course in self.getAllPersistentCourses():
                 value = course.name + "|" + str(course.id) + "|" + course.group
                 config.set("courses", course.code, value)
 
@@ -407,7 +372,101 @@ class TimeTable:
             config.write(file(filename, "w+"))
         except IOError:
             raise error.WriteError(U_("Could not write to"), filename)
+
+    # -- delegeringar till EventList
+
+    def addEvent(self, event):
+        self.eventlist.addEvent(event)
+
+    def getAllEvents(self):
+        return self.eventlist.getAll()
+
+    def getAllDaisyEvents(self):
+        return self.eventlist.getAllDaisyEvents()
+        
+    def getAllTimeEditEvents(self):
+        return self.eventlist.getAllTimeEditEvents()
+
+    def getEvent(self, id):
+        return self.eventlist.getEvent(id)
+
+    def getAllEventsForCourse(self, code):
+        return self.eventlist.getAllEventsForCourse(code)
+
+    def removeCourseEvents(self, course):
+        self.eventlist.removeCourseEvents(course)
+
+    def removeEvent(self, id):
+        self.eventlist.removeEvent(id)
+
+    # -- delegeringar till CourseList
+
+    def clearCourses(self):
+        self.courselist.clear()
+
+    def clearDaisyCourses(self):
+        self.courselist.clearDaisyCourses()
+        
+    def clearTimeEditCourses(self):
+        self.courselist.clearTimeEditCourses()
+
+    def isCourselistEmpty(self):
+        return self.courselist.isEmpty()
     
+    def addCourse(self, codeorcourse, name = "", id = 0, group = ""):
+        self.courselist.addCourse(codeorcourse, name, id, group)
+        
+    def removeCourse(self, code):
+        self.courselist.removeCourse(code)
+
+    def hasCourse(self, course):
+        return self.courselist.hasCourse(course)
+
+    def getCourse(self, code):
+        return self.courselist.getCourse(code)
+
+    def getCourseName(self, code):
+        return self.courselist.getCourseName(code)
+
+    def setCourseName(self, code, name):
+        self.courselist.setCourseName(code, name)
+
+    def getCourseGroup(self, code):
+        return self.courselist.getCourseGroup(code)
+
+    def setCourseGroup(self, code, group):
+        self.courselist.setCourseGroup(code, group)
+
+    def getCourseID(self, code):
+        return self.courselist.getCourseID(code)
+
+    def setCourseID(self, code, id):
+        self.courselist.setCourseID(code, id)
+
+    def getAllDaisyCourseIDs(self):
+        return self.courselist.getAllDaisyCourseIDs()
+
+    def getAllDaisyCourses(self):
+        return self.courselist.getAllDaisyCourses()
+
+    def getAllTimeEditCourseCodes(self):
+        return self.courselist.getAllTimeEditCourseCodes()
+
+    def getAllTimeEditCourses(self):
+        return self.courselist.getAllTimeEditCourses()
+
+    def getAllPersistentCourses(self):
+        return self.courselist.getAllPersistent()
+
+    def getAllCoursesMatchingName(self, name):
+        return self.courselist.getAllMatchingName(name)
+
+    def pickleCourses(self):
+        return self.courselist.pickle()
+
+    def unpickleCourses(self, data):
+        self.courselist.unpickle(data)
+
 # -----------------------------------------------------------
 class Course:
     "En kurs"
@@ -466,7 +525,9 @@ class Course:
 class Event:
     "En schemalagd händelse"
 
-    def __init__(self, data = None):
+    cachedcourselist = CachedCourseList() # behövs för att kolla upp Daisy-kurser
+
+    def __init__(self, timetable, data = None):
         """
             Tar emot strängrepresentationer för de fält som Daisy anger
             och gör om till bättre lämpade typer samt tolkar
@@ -489,6 +550,8 @@ class Event:
 
         self.flag = None         # används för att se om en händelse inte har uppdaterats
                                  # vid synkronisering, dvs. om den egentligen är borttagen
+
+        self.timetable = timetable
         
         if not data:
             # om data är None sätts inte instansens värden här
@@ -564,7 +627,6 @@ class Event:
             self.parser = timeedit.SummaryParser()
 
     def _parseSummary(self, summary):
-        global courselist
         data = self.parser.parse(summary)
 
         self.type = data["type"]
@@ -579,7 +641,7 @@ class Event:
             if not self.course:
                 # om inte copyFromDict redan satt kursen,
                 # som den gör om kursen anges explicit
-                self.course = courselist.getCourse(data["course"])
+                self.course = self.timetable.getCourse(data["course"])
         except ValueError:
             "Testar alternativa sätt att hitta rätt kurs för aktivitet"
 
@@ -599,20 +661,18 @@ class Event:
             som redan finns i kurslistan.
         """
 
-        global courselist, cachedcourselist
-
-        for course in cachedcourselist.getAllMatchingName(name):
-            if courselist.hasCourse(course):
-                return courselist.getCourse(course)
+        for course in self.cachedcourselist.getAllMatchingName(name):
+            if self.timetable.hasCourse(course):
+                return self.timetable.getCourse(course)
 
         return None
 
     def _findTimeEditCourse(self, codes):
         "Hittar en TimeEdit-kurs genom att prova alla i en lista"
 
-        global courselist
         for code in codes.split(","):
-            if courselist.hasCourse(code): return courselist.getCourse(code)
+            if self.timetable.hasCourse(code):
+                return self.timetable.getCourse(code)
 
         return None
 
@@ -646,12 +706,10 @@ class Event:
         return location
 
     def getDescriptionWithoutLocation(self):
-        global courselist
-        
         description = ""
         if self.course:
             try:
-                description = courselist.getCourseName(self.course) + " "
+                description = self.timetable.getCourseName(self.course) + " "
             except ValueError:
                 description = unicode(self.course) + " "
 
@@ -694,8 +752,9 @@ class Event:
 
 # -----------------------------------------------------------
 class EventList:
-    def __init__(self, list = None):
+    def __init__(self, timetable, list = None):
         self.events = {}
+        self.timetable = timetable
         if list:
             self.addEvents(list)
             
@@ -790,7 +849,7 @@ class EventList:
                     event["course"] = course
                     event = subscription.SubscribedEvent(event)
                 else:
-                    event = Event(event)
+                    event = Event(self.timetable, event)
             except ValueError, e:
                 # när en händelse skapas som inte hör till någon
                 # känd kurs avbryts inte all inläsning utan just
@@ -846,54 +905,6 @@ class EventCleaner:
 
 
 # -----------------------------------------------------------
-class TimeTableComparator:
-    
-    def compare(self, timetable1, timetable2):
-        pass
-
-    def getDifference(self, events):
-        return {"added": self.getAdded(events), "removed": self.getRemoved(events),
-            "changed": self.getChanged(events)}
-
-    def getAdded(self, events):
-        added = []
-        for event in events:
-            try:
-                self.getEvent(event.getID())
-            except ValueError:
-                added.append(event.getID())
-
-        return added
-        
-    def getRemoved(self, events):
-        removed = []
-        for event in self.events:
-            found = False
-            
-            for newevent in events:
-                if event.getID() == newevent.getID():
-                    found = True
-                    break
-            
-            if not found:
-                removed.append(event.getID())
-        
-        return removed
-
-    def getChanged(self, events):
-        changed = []
-        for event in events:
-            try:
-                oldevent = self.getEvent(event.getID())
-            except ValueError:
-                continue
-            
-            if oldevent != event:
-                changed.append(event.getID())
-
-        return changed
-
-# -----------------------------------------------------------
 class VCalendarExporter:
     
     def __init__(self, encoding = "latin_1"):
@@ -911,6 +922,7 @@ class VCalendarExporter:
     def write(self, events, filename):        
         import vcalendar
         vcalendar.Writer(self.encoding).write(events, filename)
+
 
 # -----------------------------------------------------------
 class HTMLExporter:
@@ -1023,8 +1035,3 @@ class EventSorter:
 
 # -----------------------------------------------------------
 import subscription # "timetable" måste laddas innan "subscription" kan laddas
-
-courselist = CourseList()
-cachedcourselist = CachedCourseList()
-timetable = TimeTable()
-timetable.load()

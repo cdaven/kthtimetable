@@ -11,18 +11,22 @@ subscription_url = "http://chrome/wap/index.py"
 # -----------------------------------------------------------
 class Subscription:
 
+    def __init__(self, timetable):
+        self.timetable = timetable
+
     def get(self, userid):
         import urllib
         global subscription_url
         course = SubscribedCourse(userid)
-        timetable.courselist.addCourse(course)
-        timetable.timetable.importVCalData(urllib.urlopen(subscription_url + "/fetch?" +
+        self.timetable.addCourse(course)
+        self.timetable.importVCalData(urllib.urlopen(subscription_url + "/fetch?" +
             urllib.quote_plus(userid)).readlines(), course)
 
     def remove(self, userid):
         try:
-            course = timetable.courselist.getCourse(userid)
-            timetable.courselist.removeCourse(userid) # tar också bort händelserna
+            course = self.timetable.getCourse(userid)
+            self.timetable.removeCourseEvents(course)
+            self.timetable.removeCourse(userid)
         except ValueError:
             pass
 
@@ -32,7 +36,7 @@ class Subscription:
         global subscription_url
 
         if settings.publish and settings.publish_userid:
-            vars = urllib.urlencode({"courselist": timetable.courselist.pickle(), "username": settings.publish_userid})
+            vars = urllib.urlencode({"courselist": self.timetable.pickleCourses(), "username": settings.publish_userid})
             if urllib.urlopen("http://chrome/wap/index.py/upload", vars).read() == "OK":
                 return True
 
@@ -45,26 +49,26 @@ class EventCompresser:
         händelser genom att slå ihop överlappande eller angränsande händelser.
     """
 
-    def _getallevents(self):
+    def _getallevents(self, timetable):
         events = []
-        for event in timetable.timetable.getAllEvents():
+        for event in timetable.getAllEvents():
             if isinstance(event, SubscribedEvent):
                 events.append(event)
         return events
 
-    def _geteventsfordate(self, date):
+    def _geteventsfordate(self, timetable, date):
         events = []
-        for event in timetable.timetable.getEventsForDate(date):
+        for event in timetable.getEventsForDate(date):
             if isinstance(event, SubscribedEvent):
                 events.append(event)
         return events
 
-    def compress(self):
+    def compress(self, timetable):
         already = []
         remove = []
-        for event1 in self._getallevents():
+        for event1 in self._getallevents(timetable):
             if event1 in already: continue
-            for event2 in self._geteventsfordate(event1.date):
+            for event2 in self._geteventsfordate(timetable, event1.date):
                 if event1 is event2 or event2 in already:
                     continue
 
@@ -77,7 +81,7 @@ class EventCompresser:
 
         for id in remove:
             try:
-                timetable.timetable.removeEvent(id)
+                timetable.removeEvent(id)
             except ValueError:
                 pass
 
@@ -103,7 +107,7 @@ class SubscribedEvent(timetable.Event):
     """
 
     def __init__(self, data):
-        timetable.Event.__init__(self)
+        timetable.Event.__init__(self, None)
 
         self.__id = data["id"]
         self.course = data["course"]
