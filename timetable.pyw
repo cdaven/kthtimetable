@@ -33,7 +33,7 @@ if len(sys.argv) > 1:
         
     events = timetable.EventSorter().sort(events)
     for event in events:
-        if event.active: print event.getNiceString()
+        if event.active: print event.getNiceString().encode("latin_1")
 else:
     try:
         import wx
