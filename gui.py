@@ -782,23 +782,23 @@ class ExportDialog(OKCancelDialog):
 
     def SaveAndClose(self, evt):
         filedialog = wx.FileDialog(self, U_("Export to file"),
-            wildcard=U_("vCalendar files") + " (*.vcs)|*.vcs|" + U_("iCalendar files") + " (*.ics)|*.ics|" + U_("HTML files") + " (*.html)|*.html|" + U_("CSV files") + " (*.csv)|*.csv|" + U_("All files") + "|*.*",
-            style=wx.SAVE|wx.OVERWRITE_PROMPT)
+            wildcard=U_("Outlook/Evolution compatible files") + " (vCalendar Unicode)|*.vcs|" +
+                U_("Palm Desktop compatible files") + " (vCalendar)|*.vcs|" +
+                U_("J-Pilot compatible files") + " (Comma Separated)|*.csv|" +
+                U_("HTML files") + "|*.html", style=wx.SAVE|wx.OVERWRITE_PROMPT)
+
         if filedialog.ShowModal() == wx.ID_OK:
-            import os.path
-            extension = os.path.splitext(filedialog.GetPath())[1]
-            
+            format = filedialog.GetFilterIndex()
+
             try:
-                if extension == ".ics" or extension == ".vcs":
-                    self.exportVCalendar(filedialog.GetPath(), self.fromdate.date, self.todate.date)
-                elif extension == ".html" or extension == ".htm":
-                    self.exportHTML(filedialog.GetPath(), self.fromdate.date, self.todate.date)
-                elif extension == ".csv":
+                if format == 0: # Outlook/Evolution
+                    self.exportVCalendar(filedialog.GetPath(), self.fromdate.date, self.todate.date, "utf8")
+                elif format == 1: # Palm Desktop
+                    self.exportVCalendar(filedialog.GetPath(), self.fromdate.date, self.todate.date, "latin_1")
+                elif format == 2: # J-Pilot
                     self.exportCSV(filedialog.GetPath(), self.fromdate.date, self.todate.date)
-                else:
-                    msg = U_("Cannot export to the chosen file format.")
-                    wx.MessageDialog(self, msg, U_("Unknown extension"), style=wx.OK|wx.ICON_INFORMATION).ShowModal()
-                    return
+                elif format == 3: # HTML
+                    self.exportHTML(filedialog.GetPath(), self.fromdate.date, self.todate.date)
             except error.WriteError:
                 msg = U_("Could not write to the file. It could be write-protected.")
                 wx.MessageDialog(self, msg, U_("File error"), style=wx.OK|wx.ICON_WARNING).ShowModal()
@@ -806,8 +806,8 @@ class ExportDialog(OKCancelDialog):
             
             self.EndModal(wx.ID_OK)
 
-    def exportVCalendar(self, filename, fromdate, todate):
-        timetable.VCalendarExporter().export(filename, timetable.timetable, fromdate, todate)
+    def exportVCalendar(self, filename, fromdate, todate, encoding):
+        timetable.VCalendarExporter(encoding).export(filename, timetable.timetable, fromdate, todate)
         
     def exportHTML(self, filename, fromdate, todate):
         timetable.HTMLExporter().export(filename, timetable.timetable, fromdate, todate)

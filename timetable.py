@@ -918,6 +918,9 @@ class TimeTableComparator:
 # -----------------------------------------------------------
 class VCalendarExporter:
     
+    def __init__(self, encoding = "latin_1"):
+        self.encoding = encoding
+
     def export(self, filename, timetable, fromdate, todate):
         "Exporterar data till fil"
         events = timetable.getEventsForDateRange(fromdate, todate)
@@ -929,7 +932,7 @@ class VCalendarExporter:
 
     def write(self, events, filename):        
         import vcalendar
-        vcalendar.Writer().write(events, filename)
+        vcalendar.Writer(self.encoding).write(events, filename)
 
 # -----------------------------------------------------------
 class HTMLExporter:
@@ -989,7 +992,7 @@ class CSVExporter(VCalendarExporter):
         for event in events:
             data += self.formatEvent(event) + "\n"
 
-        file(filename, "w+").write(data.encode("latin_1"))
+        file(filename, "w+").write(data.encode("utf8"))
 
     def formatEvent(self, event):
         import settings

@@ -81,13 +81,15 @@ class Reader:
 class Writer:
     "Skriver vCalendar-filer"
 
-    def __init__(self, prodid = "-//cda//NONSGML Schema//SV"):
-        self.prodid = prodid
+    def __init__(self, encoding = "latin_1"):
+        self.encoding = encoding
     
     def write(self, events, filename):
         "Skriver valda händelser till vCalendar-fil"
 
-        data = ["BEGIN:VCALENDAR\n", "VERSION:1.0\n", "PRODID:" + self.prodid + "\n"]
+        import settings
+
+        data = ["BEGIN:VCALENDAR\n", "VERSION:1.0\n", "PRODID:-//cda//NONSGML KTHTT//EN\n"]
         for event in events:
             data.append("BEGIN:VEVENT")
             data.append("\nUID:" + str(event.getID()))
@@ -103,9 +105,9 @@ class Writer:
 
             data.append("\nDTSTART:" + str(event.date) + "T" + str(begin) + "Z")
             data.append("\nDTEND:" + str(event.date) + "T" + str(end) + "Z")
-            data.append("\nSUMMARY:" + event.getDescriptionWithoutLocation().encode("utf8"))
-            data.append("\nLOCATION:" + event.location.encode("utf8"))
-            data.append("\nCATEGORIES:KTHTimeTable")
+            data.append("\nSUMMARY:" + event.getDescriptionWithoutLocation().encode(self.encoding))
+            data.append("\nLOCATION:" + event.location.encode(self.encoding))
+            data.append("\nCATEGORIES:" + settings.event_export_category)
             data.append("\nEND:VEVENT\n")
 
         data.append("END:VCALENDAR")
