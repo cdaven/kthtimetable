@@ -11,7 +11,7 @@ import error
 from i18n import *
 
 applicationname = "KTH TimeTable"
-applicationversion = "2.1+"
+applicationversion = "2.2"
 
 # -----------------------------------------------------------
 class MainFrame(wx.Frame):
@@ -121,6 +121,8 @@ class MainFrame(wx.Frame):
         menu.AppendSeparator()
         menu.Append(250, U_("Choose &groups..."))
         menu.Append(260, U_("&Name courses..."))
+        menu.AppendSeparator()
+        menu.Append(270, U_("&Settings..."))
         menubar.Append(menu, U_("&Tools"))
 
         menu = wx.Menu()
@@ -133,6 +135,7 @@ class MainFrame(wx.Frame):
         wx.EVT_MENU(self, 220, self.Update)
         wx.EVT_MENU(self, 250, self.ChooseGroups)
         wx.EVT_MENU(self, 260, self.NameCourses)
+        wx.EVT_MENU(self, 270, self.MakeSettings)
         wx.EVT_MENU(self, 310, self.About)
 
         self.SetMenuBar(menubar)
@@ -288,6 +291,11 @@ class MainFrame(wx.Frame):
             dialog = wx.MessageDialog(self, msg, U_("Fetch timetable?"), style=wx.YES_NO|wx.ICON_QUESTION)
             if dialog.ShowModal() == wx.ID_YES:
                 self.Update(None)
+        self.SetFocus()
+
+    def MakeSettings(self, evt):
+        if SettingsDialog(self).ShowModal() == wx.ID_OK:
+            self.updateView()
         self.SetFocus()
 
 # -----------------------------------------------------------
@@ -474,64 +482,62 @@ class CourseNamesDialog(OKCancelDialog):
         self.EndModal(wx.ID_OK)
 
 # -----------------------------------------------------------
-class ChooseCoursesXDialog(wx.Dialog):
-    "Dialogruta för val av kurser"
-    
+class SettingsDialog(OKCancelDialog):
+    "Dialogruta för inställningar"
+
     def __init__(self, parent):
-        wx.Dialog.__init__(self, parent, -1, U_("Choose timetable system"))
-
+        OKCancelDialog.__init__(self, parent, U_("Make settings"))
         layout = wx.BoxSizer(wx.VERTICAL)
-        daisy = wx.BoxSizer(wx.HORIZONTAL)
-        timeedit = wx.BoxSizer(wx.HORIZONTAL)
-    
-        daisy.Add(wx.Button(self, 10, "&Daisy"), 0, wx.RIGHT, 10)
-        daisy.Add(StaticText(self, U_("Daisy has timetables for the IT University courses")), 0, wx.TOP, 5)
+        setting1 = wx.BoxSizer(wx.HORIZONTAL)
+        setting2 = wx.BoxSizer(wx.HORIZONTAL)
+        setting3 = wx.BoxSizer(wx.HORIZONTAL)
+        setting4 = wx.BoxSizer(wx.HORIZONTAL)
 
-        timeedit.Add(wx.Button(self, 20, "&TimeEdit"), 0, wx.RIGHT, 10)
-        timeedit.Add(StaticText(self, U_("TimeEdit has timetables for other KTH courses")), 0, wx.TOP, 5)
+        setting1.Add(StaticText(self, U_("Days in week:")), 1, wx.ALL, 10)
+        self.daysinweek = wx.Choice(self, -1, size=(70,-1), choices=["5", "6", "7"])
+        self.daysinweek.SetSelection(settings.lastweekday - 4)
+        setting1.Add(self.daysinweek, 0, wx.LEFT|wx.RIGHT, 10)
 
-        layout.Add(daisy, 0, wx.TOP|wx.LEFT|wx.RIGHT, 10)
-        layout.Add(timeedit, 0, wx.TOP|wx.LEFT|wx.RIGHT, 10)
-        layout.Add(wx.Button(self, wx.OK, U_("&Close")), 0, wx.ALL, 10)
+        setting2.Add(StaticText(self, U_("Program language:")), 1, wx.ALL, 10)
+        self.language = wx.Choice(self, -1, size=(100,-1), choices=["English", "Svenska"])
+        if settings.language == "en": self.language.SetSelection(0)
+        elif settings.language == "sv": self.language.SetSelection(1)
+        setting2.Add(self.language, 0, wx.LEFT|wx.RIGHT, 10)
 
-        wx.EVT_BUTTON(self, 10, self.ShowITUDialog)
-        wx.EVT_BUTTON(self, 20, self.ShowKTHDialog)
-        wx.EVT_BUTTON(self, wx.OK, self.Close)
+        setting3.Add(StaticText(self, U_("Start of day:")), 1, wx.ALL, 10)
+        self.daybegin = wx.Choice(self, -1, size=(80,-1), choices=["08:00", "09:00", "10:00"])
+        if settings.daybegin <= calendar.Time("080000"): self.daybegin.SetSelection(0)
+        elif settings.daybegin <= calendar.Time("090000"): self.daybegin.SetSelection(1)
+        else: self.daybegin.SetSelection(2)
+        setting3.Add(self.daybegin, 0, wx.LEFT|wx.RIGHT, 10)
+
+        setting4.Add(StaticText(self, U_("End of day:")), 1, wx.ALL, 10)
+        self.dayend = wx.Choice(self, -1, size=(80,-1), choices=["17:00", "18:00", "19:00", "20:00", "21:00"])
+        if settings.dayend <= calendar.Time("170000"): self.dayend.SetSelection(0)
+        elif settings.dayend <= calendar.Time("180000"): self.dayend.SetSelection(1)
+        elif settings.dayend <= calendar.Time("190000"): self.dayend.SetSelection(2)
+        elif settings.dayend <= calendar.Time("200000"): self.dayend.SetSelection(3)
+        else: self.dayend.SetSelection(4)
+        setting4.Add(self.dayend, 0, wx.LEFT|wx.RIGHT, 10)
+
+        layout.Add(StaticText(self, U_("Some of these settings will need a\nprogram restart to take effect.")), 0, wx.EXPAND|wx.ALL, 10)
+        layout.Add(setting1, 0, wx.EXPAND|wx.ALL, 10)
+        layout.Add(setting3, 0, wx.EXPAND|wx.ALL, 10)
+        layout.Add(setting4, 0, wx.EXPAND|wx.ALL, 10)
+        layout.Add(setting2, 0, wx.EXPAND|wx.ALL, 10)
+        layout.Add(self.buttons, 0, wx.EXPAND|wx.ALL, 10)
 
         self.SetSizerAndFit(layout)
         self.CentreOnScreen()
-        
-    def Close(self, evt):
-        self.EndModal(wx.ID_CANCEL)
 
-    def ShowKTHDialog(self, evt):
-        kth_dialog = ChooseKTHCoursesDialog(self)
-        if kth_dialog.ShowModal() == wx.ID_CANCEL:
-            self.EndModal(wx.ID_CANCEL)
-            return
-            
-        timetable.courselist.clearTimeEditCourses()
-        for course in kth_dialog.chosencourses:
-            timetable.courselist.addCourse(course)
+    def SaveAndClose(self, evt):
+        settings.dayend = calendar.Time(self.dayend.GetStringSelection()[:2] + "0000")
+        settings.daybegin = calendar.Time(self.daybegin.GetStringSelection()[:2] + "0000")
+        settings.language = self.language.GetStringSelection()[:2].lower()
+        settings.lastweekday = int(self.daysinweek.GetStringSelection()) - 1
 
-        timetable.timetable.save()
         self.EndModal(wx.ID_OK)
 
-    def ShowITUDialog(self, evt):
-        itu_dialog = ChooseITUCoursesDialog(self)
-        if itu_dialog.ShowModal() == wx.ID_CANCEL:
-            self.EndModal(wx.ID_CANCEL)
-            return
-        
-        timetable.courselist.clearDaisyCourses()
-        for course in itu_dialog.chosencourses:
-            timetable.courselist.addCourse(course)
-
-        timetable.timetable.save()
-        self.EndModal(wx.ID_OK)
-
-
-cacheddaisycourselist = [] # den från Internet hämtade kurslistan cachas
 # -----------------------------------------------------------
 class ChooseCoursesDialog(OKCancelDialog):
     "Dialogruta för val av kurser"
@@ -902,7 +908,7 @@ class StaticText(wx.StaticText):
         self.wordwrap = False
         self.originallabel = ""
 
-        # "Wordwrap" finns endast på wxGTK med stöd för GTK2
+        # "Wordwrap" finns endast i wxWindows och wxGTK med stöd för GTK2
         if wx.Platform == "__WXGTK__" and wordwrap:
             self.wordwrap = True
             self.originallabel = label
