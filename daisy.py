@@ -29,12 +29,12 @@ class Conduit:
                 getdata).read()
             if self.callback: self.callback()
         except IOError:
-            raise error.ReadError(U_("Could not read from") + " " + U_("the timetable server"))
+            raise error.ReadError("Could not read from the timetable server")
 
         start = generated.find("/servlet/schema.ics")
         end = generated.find("\"", start)
 
-        if start == -1 or end == -1:
+        if start == -1 or end == -1 or generated[start:end].endswith("null"):
             raise error.DataError
 
         url = urllib.urlopen("http://daisy.it.kth.se" + generated[start:end])
@@ -74,18 +74,18 @@ class Conduit:
             url = urllib.urlopen("http://www.it.kth.se/schema.html?termin=" + period +
                 "&program=0&institution=0&Visa=Visa")
         except IOError:
-            raise error.ReadError(U_("Could not read from") + " www.it.kth.se/schema.html", "www.it.kth.se/schema.html")
+            raise error.ReadError("Could not read from www.it.kth.se")
 
         if callback: callback()
         input = url.read()
 
         if len(input) == 0:
-            raise error.DataError(U_("Received no data from") + " " + U_("the timetable server"))
+            raise error.DataError("Received no data from the timetable server")
 
-        all = re.findall("value=\"(\d{3,})\"[^a-zÂ‰ˆA-Z≈ƒ÷0-9]*(.*?) \((.*?)\)", self.descape(input))
+        all = re.findall("value=\"(\d{3,})\"[^*\w≈ƒ÷]*([^\r\n,]*),\s([^\r\n]*)", self.descape(input))
         courses = []
         for a in all:
-            courses.append(timetable.Course(code=a[2].strip(), name=a[1].strip(), id=a[0], term=period))
+            courses.append(timetable.Course(code=a[1], name=a[2], id=a[0], term=period))
 
         if callback: callback()
         return courses

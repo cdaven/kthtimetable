@@ -29,7 +29,7 @@ class HolidayChecker:
             self.holidays[Date().getYear()] = self.generator.generate(Date().getYear())
             self.otherdays[Date().getYear()] = self.generator.generateOther(Date().getYear())
         else:
-            raise ValueError(U_("The holiday generator") + " " + str(id) + " " + U_("does not exist"))
+            raise ValueError("The holiday generator " + str(id) + "does not exist")
 
     def checkHoliday(self, date):
         """

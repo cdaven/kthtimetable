@@ -240,12 +240,12 @@ class MainFrame(wx.Frame):
             if timeeditcourses:
                 self.updateFromTimeEdit(timeeditcourses)
             self.timetable.save()
-        except error.ReadError:
-            msg = U_("Could not read from") + " " + U_("the timetable server") + ". " + U_("Make sure you have access to the Internet.")
+        except (error.DataError, ValueError):
+            msg = U_("The timetable fetched from the server is corrupt and unusable.")
             wx.MessageDialog(self, msg, U_("Server error"), style=wx.OK|wx.ICON_ERROR).ShowModal()
             return
-        except ValueError, e:
-            msg = U_("The timetable fetched from the server is corrupt and unusable.")
+        except error.ReadError:
+            msg = U_("Could not read from") + " " + U_("the timetable server") + ". " + U_("Make sure you have access to the Internet.")
             wx.MessageDialog(self, msg, U_("Server error"), style=wx.OK|wx.ICON_ERROR).ShowModal()
             return
         except error.WriteError:
@@ -278,7 +278,7 @@ class MainFrame(wx.Frame):
             progressdialog.stopProgress()
             raise
 
-        file("dbg-timeedit-vcal", "w+").writelines(data)
+        #file("dbg-timeedit-vcal", "w+").writelines(data)
         self.timetable.importVCalendarData(data, courses)
         progressdialog.stopProgress()
 
@@ -297,14 +297,20 @@ class MainFrame(wx.Frame):
                 progressdialog.setMessages([U_("Connecting to") + " it.kth.se...",
                     U_("Receiving ") + course.code, U_("Importing ") + course.code])
                 progressdialog.startProgress()
-                data += daisy.Conduit(progressdialog.increaseProgress).getvCalendarData([id])
-                self.timetable.importVCalendarData(data, [course])
+
+                try:
+                    data += daisy.Conduit(progressdialog.increaseProgress).getvCalendarData([id])
+                    self.timetable.importVCalendarData(data, [course])
+                except (error.DataError, ValueError):
+                    msg = U_("The timetable fetched for ") + course.code + U_(" is corrupt and unusable.")
+                    wx.MessageDialog(self, msg, U_("Server error"), style=wx.OK|wx.ICON_ERROR).ShowModal()
+
                 progressdialog.stopProgress()
         except:
             progressdialog.stopProgress()
             raise
         
-        file("dbg-daisy-vcal", "w+").writelines(data)
+        #file("dbg-daisy-vcal", "w+").writelines(data)
         progressdialog.stopProgress()
 
     def About(self, evt):
@@ -839,7 +845,7 @@ class ChooseCoursesDialog(OKCancelDialog):
         wx.EVT_BUTTON(self, 20, self.RemoveCourse)
         wx.EVT_BUTTON(self, 90, self.addCourse)
         
-        layout.Add(StaticText(self, U_("Choose the courses you want included in your timetable. Both TimeEdit and Daisy courses can be added. The course code may be incomplete for Daisy courses; all matching courses will then be added."), size=(450,-1), wordwrap=True), 0, wx.LEFT|wx.TOP, 10)
+        layout.Add(StaticText(self, U_("Choose the courses you want included in your timetable. Both TimeEdit and Daisy courses can be added. For Daisy courses you can enter parts of the code or name. All matching courses will then be added."), size=(450,-1), wordwrap=True), 0, wx.LEFT|wx.TOP, 10)
         layout.Add(newcourse, 0, wx.LEFT|wx.TOP|wx.RIGHT, 10)
 
         self.radiodaisy = wx.RadioButton(self, -1, "Daisy")
@@ -916,7 +922,7 @@ class ChooseCoursesDialog(OKCancelDialog):
 
             self.courseedit.SetValue("")
         else:
-            msg = U_("The course ") + code + " " + U_("does not exist") + " " + U_("in Daisy or TimeEdit.")
+            msg = U_("No course matching ") + code + U_(" exists in Daisy or TimeEdit.")
             wx.MessageDialog(self, msg, U_("The course ") + U_("does not exist"),
                 style=wx.ICON_WARNING).ShowModal()
 
@@ -927,6 +933,11 @@ class ChooseCoursesDialog(OKCancelDialog):
         courses = []
         try:
             courses = self.daisycourses.getAllMatchingCode(code)
+        except ValueError:
+            pass
+
+        try:
+            courses.extend(self.daisycourses.getAllMatchingName(code))
         except ValueError:
             pass
 
@@ -1126,33 +1137,38 @@ class Panel(wx.Panel):
 # -----------------------------------------------------------
 class ProgressDialog:
 
-    def __init__(self, parent, caption, messages=[]):
+    def __init__(self, parent, caption, messages=[], can_abort=False):
         self.progressdialog = None
-        self.progress = 0
+        self.progress = -1
         self.parent = parent
         self.caption = caption
         self.messages = messages
-    
+        self.style = wx.PD_AUTO_HIDE
+        if can_abort:
+            self.style |= wx.PD_CAN_ABORT
+
     def setMessages(self, messages):
         self.messages = messages
     
     def startProgress(self):
-        self.progress = 0
+        self.progress = -1
         if self.progressdialog: self.progressdialog.Destroy()
         self.progressdialog = wx.ProgressDialog(self.caption, self.messages[0],
-            maximum=len(self.messages), parent=self.parent, style=wx.PD_AUTO_HIDE)
+            maximum=len(self.messages) - 1, parent=self.parent, style=self.style)
+
         self.progressdialog.UpdateWindowUI()
         self.parent.UpdateWindowUI()
     
     def increaseProgress(self):
         self.progress += 1
-        self.progressdialog.Update(self.progress, self.messages[self.progress])
+        if not self.progressdialog.Update(self.progress, self.messages[self.progress + 1]):
+            raise error.InterruptedError("The user cancelled the operation")
+
         self.progressdialog.UpdateWindowUI()
         self.parent.UpdateWindowUI()
 
     def stopProgress(self):
         if self.progressdialog:
-            #self.progressdialog.Update(len(self.messages), self.messages[-1])
             self.progressdialog.UpdateWindowUI()
             self.progressdialog.Destroy()
 

@@ -34,7 +34,7 @@ class Conduit:
             if self.callback: self.callback()
             return url.readlines()
         except IOError:
-            raise error.ReadError(U_("Could not read from") + " " + U_("the timetable server"))
+            raise error.ReadError("Could not read from the timetable server")
     
     def getFromYearAndWeek(self):
         date = calendar.Date() - 14
@@ -65,12 +65,12 @@ class Conduit:
         try:
             data = self.urlopener.open(url, getdata).read()
         except IOError:
-            raise error.ReadError(U_("Could not read from") + " " + U_("the timetable server"))
+            raise error.ReadError("Could not read from the timetable server")
 
         rxcode = re.escape(code)
         rx = re.search("<TD>(" + rxcode + ")</TD>.*<TD>(\w.*?)</TD>", data, re.DOTALL|re.IGNORECASE)
         if not rx:
-            raise ValueError(U_("The course ") + code + " " + U_("does not exist"))
+            raise ValueError("The course " + str(code) + " does not exist")
         
         return timetable.Course(rx.group(1), rx.group(2))
 

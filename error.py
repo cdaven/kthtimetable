@@ -7,3 +7,4 @@ class WriteError(IOError): pass
 class DataError(ReadError): pass
 class NullError(DataError): pass
 class LoginError(RuntimeError): pass
+class InterruptedError(RuntimeError): pass

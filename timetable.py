@@ -58,14 +58,14 @@ class CourseList:
         for course in self.courses:
             if course == id: return course
 
-        raise ValueError(U_("The course ") + U_("does not exist") + " (" + U_("code") + " " + str(id) + ")")
+        raise ValueError("The course " + str(id) + " does not exist")
 
     def getCourseByCode(self, code):
         "Returnerar en kurs definierad av kurskod"
         for course in self.courses:
             if course.hasCode(code): return course
 
-        raise ValueError(U_("The course ") + U_("does not exist") + " (" + U_("code") + " " + str(id) + ")")
+        raise ValueError("The course " + str(id) + " does not exist")
 
     def getCourseName(self, code):
         "Returnerar namnet (ev. användardefinierat) på en kurs"
@@ -118,9 +118,9 @@ class CourseList:
 
     def getAllMatchingName(self, name):
         courses = []
+        name = name.lower()
         for course in self.courses:
-            # Daisy exporterar ibland ofullständigt namn
-            if course.name.startswith(name):
+            if name in course.name.lower():
                 courses.append(course)
         return courses
 
@@ -317,7 +317,7 @@ class TimeTable:
         try:
             config.readfp(file(filename))
         except IOError:
-            raise error.ReadError(U_("Could not read from"), filename)
+            raise error.ReadError("Could not read from " + str(filename))
 
         # läser först in inställningarna och kurserna ...
         for section in config.sections():
@@ -399,7 +399,7 @@ class TimeTable:
         try:
             config.write(file(filename, "w+"))
         except IOError:
-            raise error.WriteError(U_("Could not write to"), filename)
+            raise error.WriteError("Could not write to " + str(filename))
 
     # -- delegeringar till EventList
 
@@ -844,7 +844,7 @@ class EventList:
                 events.append(event)
 
         if not coursefound:
-            raise ValueError(U_("The course ") + str(course) + " " + U_("does not exist"))
+            raise ValueError("The course " + str(course) + " does not exist")
             
         return events
 
@@ -905,13 +905,13 @@ class EventList:
         try:
             del self.events[id]
         except KeyError:
-            raise ValueError(U_("The event") + " " + str(id) + " " + U_("does not exist"))
+            raise ValueError("The event " + str(id) + " does not exist")
             
     def getEvent(self, id):
         try:
             return self.events[id]
         except KeyError:
-            raise ValueError(U_("The event") + " " + str(id) + " " + U_("does not exist"))
+            raise ValueError("The event " + str(id) + " does not exist")
 
 
 # -----------------------------------------------------------
@@ -972,7 +972,7 @@ class VCalendarExporter:
         try:
             file(filename, "w+").writelines(data)
         except IOError:
-            raise error.WriteError(U_("Could not write to"), filename)
+            raise error.WriteError("Could not write to " + str(filename))
 
 
 

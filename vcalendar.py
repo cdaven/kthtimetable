@@ -33,10 +33,10 @@ class Reader:
             try:
                 input = file(input).readlines()
             except IOError:
-                raise error.ReadError(U_("Could not read from") + " " + input, input)
+                raise error.ReadError("Could not read from " + str(input))
 
         if not self.verifyFormat(input):
-            raise error.DataError(U_("Bad vCalendar data"))
+            raise error.DataError("Bad vCalendar data")
 
         events = []
         summarycontinues = False
