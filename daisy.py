@@ -22,16 +22,30 @@ class Conduit:
         if self.loggedin:
             self.logout()
             
-    def getvCalendarData(self, username, password, courseids):
+    def getvCalendarData(self, courseids):
+        getdata = "?generator=true"
+
+        for id in courseids:
+            getdata += "&momentid=" + str(id)
+
         try:
-            self.login(username, password)
+            url = urllib.urlopen("http://daisy.it.kth.se/servlet/anstalld.schema.BoardSchema" + getdata)
             if self.callback: self.callback()
-            data = self.getTimeTableData(courseids)
+            generated = url.read()
+            if self.callback: self.callback()
         except IOError:
             raise error.ReadError(_("Kunde inte lasa fran") + " " + _("schemaservern"))
 
+        start = generated.find("/servlet/schema.ics")
+        end = generated.find("\"", start)
+
+        if start == -1 or end == -1:
+            raise error.DataError
+
+        url = self.urlopener.open("http://daisy.it.kth.se" + generated[start:end])
         if self.callback: self.callback()
-        self.logout()
+
+        data = url.readlines()
 
         if settings.in_debug_mode:
             file("dbg-daisydata", "w+").writelines(data)
@@ -40,6 +54,9 @@ class Conduit:
         return data
 
     def login(self, username, password):
+        pass
+
+    def login_X(self, username, password):
         postdata = urllib.urlencode({"anvnamn": username, "losenord": password})
         
         output = self.urlopener.open("https://daisy.it.kth.se/servlet/DaisyStudentInloggning",
@@ -52,13 +69,16 @@ class Conduit:
         self.loggedin = True
 
     def logout(self):
+        pass
+
+    def logout_X(self):
         if self.loggedin:
             try:
                 self.urlopener.open("https://daisy.it.kth.se/servlet/LoggaUt")
             except IOError:
                 pass
             
-    def getTimeTableData(self, courseids):
+    def getTimeTableData_X(self, courseids):
         postdata = urllib.urlencode({"table": "true"})
 
         for id in courseids:

@@ -248,10 +248,22 @@ class MainFrame(wx.Frame):
         timetable.timetable.importData(data, "TimeEdit")
 
     def updateFromDaisy(self, ids):
-        daisydialog = DaisyLoginDialog(self, ids)
-        daisydialog.ShowModal()
-        if daisydialog.daisydata:
-            timetable.timetable.importData(daisydialog.daisydata, "Daisy")
+        import daisy
+        progressdialog = ProgressDialog(self, _("Uppdaterar schema fran") + " Daisy", [_("Ansluter till it.kth.se..."), _("Hamtar dokument..."), _("Genererar schema..."), _("Hamtar genererat schema...")])
+        progressdialog.startProgress()
+        try:
+            data = daisy.Conduit(progressdialog.increaseProgress).getvCalendarData(ids)
+        except:
+            progressdialog.stopProgress()
+            raise
+        
+        progressdialog.stopProgress()
+        timetable.timetable.importData(data, "Daisy")
+
+#        daisydialog = DaisyLoginDialog(self, ids)
+#        daisydialog.ShowModal()
+#        if daisydialog.daisydata:
+#            timetable.timetable.importData(daisydialog.daisydata, "Daisy")
             
     def NewEvent(self, evt):
         pass

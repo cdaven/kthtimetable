@@ -43,13 +43,11 @@ class Reader:
 
         for line in input:
             (key, value) = splitLine(line)
-            #if isUTF8(value):
-            #    value = value.decode("utf_8", "ignore").encode("latin_1", "ignore")
 
+            # får UTF-8-kodade värden från Daisy;
+            # gör om dem till unicode-strängar
             if isUTF8(value):
-                print "before", value
                 value = unicode(value, "utf8")
-                print "after", value
 
             if key == "BEGIN" and value == "VEVENT":
                 id = date = begin = end = location = summary = ""
