@@ -11,7 +11,7 @@ import error
 from i18n import *
 
 applicationname = "KTH TimeTable"
-applicationversion = "2.2.1"
+applicationversion = "2.3"
 
 # -----------------------------------------------------------
 class MainFrame(wx.Frame):
@@ -368,9 +368,9 @@ class GroupsDialog(OKCancelDialog):
 
         self.choices = []
         self.nogroup = U_("all")
-        self.courses = timetable.courselist.getAllDaisyCourses()
+        self.courses = timetable.courselist.getAllCourses()
         if not self.courses:
-            msg = U_("There are no fetched Daisy courses.\nYou can only choose groups for Daisy courses.")
+            msg = U_("There are no courses to choose groups for.")
             wx.MessageDialog(self, msg, U_("No courses"), style=wx.OK|wx.ICON_INFORMATION).ShowModal()
             self.Cancel(None)
             return
@@ -381,14 +381,12 @@ class GroupsDialog(OKCancelDialog):
         layout = wx.BoxSizer(wx.VERTICAL)
 
         for course in self.courses:
-            selectedgroup = course.group
-
             try:
                 groups = timetable.timetable.getAllGroups(course.code)
             except ValueError:
                 groups = []
-                msg = U_("There is no information on which groups") + " " + course.name + "\n" + U_("is divided into. You have to fetch timetable from Daisy.")
-                wx.MessageDialog(self, msg, U_("Group information missing"), style=wx.OK|wx.ICON_INFORMATION).ShowModal()
+                msg = U_("There is no information on which groups") + " " + course.name + "\n" + U_("is divided into. You have to fetch the timetable first.")
+                wx.MessageDialog(self, msg, U_("Timetable missing"), style=wx.OK|wx.ICON_INFORMATION).ShowModal()
 
             text = StaticText(self, course.name, size=(150, -1), style=wx.ST_NO_AUTORESIZE)
 
@@ -397,13 +395,12 @@ class GroupsDialog(OKCancelDialog):
                 groups.append(self.nogroup.encode("latin_1"))
                 rightcomponent = Choice(self, (70, -1), groups, course.code)
 
-                if selectedgroup:
+                # sätter först "ingen"/"alla" som vald
+                rightcomponent.SetStringSelection(self.nogroup)
+                if course.group:
                     # sätter det val som tidigare gjorts
-                    rightcomponent.SetSelection(selectedgroup - 1)
-                else:
-                    # sätter "ingen" som vald
-                    rightcomponent.SetStringSelection(self.nogroup)
-                    
+                    rightcomponent.SetStringSelection(course.group)
+
                 self.choices.append(rightcomponent)
             else:
                 rightcomponent = StaticText(self, U_("(no choice possible)"))
@@ -422,9 +419,6 @@ class GroupsDialog(OKCancelDialog):
         coursestext.Add(allcourses, 0, wx.ALL, 10)
         coursestext.Add(wx.StaticLine(self, -1, style=wx.LI_VERTICAL), 0, wx.EXPAND)
         coursestext.Add(centeredtext, 0, wx.ALL|wx.EXPAND, 10)
-
-        #self.buttons.Prepend((20, 0), 1)
-        #self.buttons.Prepend(wx.Button(self, 1, "&Gissa bästa kombination"))
 
         layout.Add(coursestext)
         layout.Add(self.buttons, 0, wx.EXPAND|wx.ALL, 10)

@@ -79,15 +79,15 @@ class SummaryParser:
 
     def __init__(self):
         self.types = {"DL": u"Datalaboration", "Frl": u"Föreläsning", "FÖ": u"Fältövning",
-            "L": u"Laboration", "Le": u"Lektion", "Proj": u"Projekt", "RS": u"Räknestuga",
-            "Sem": u"Seminarium", "Stu": u"Studiebesök", "WS": u"Workshop",
+            "Lab": u"Laboration", "Le": u"Lektion", "Proj": u"Projekt", "RS": u"Räknestuga",
+            "Sem": u"Seminarium", "Stu": u"Studiebesök", "WS": u"Workshop", "KS": u"Kontrollskrivning",
             "Ovn": u"Övning", "TEN": u"Tentamen"}
         self.lowercase_letters = u"abcdefghijklmnopqrstuvwxyzåäö"
         self.numbers = "1234567890"
 
         self.rxcourse = re.compile("(\d\D\d{4})(\.(\D))?")
         self.rxtype = re.compile("([a-zåäöA-ZÅÄÖ]{2,4})")
-        self.rxlocation = re.compile("([A-Z]\d+)")
+        self.rxlocation = re.compile("([A-Z]{1,2}\d+)")
 
     def parse(self, summary):
         data = {}
@@ -103,7 +103,7 @@ class SummaryParser:
         locations = []
 
         for word in words:
-            rx = self.rxlocation.search(word)
+            rx = self.rxlocation.match(word.strip())
             if rx:
                 locations.append(rx.group(1) + ",")
             else:
@@ -124,7 +124,7 @@ class SummaryParser:
         group = ""
 
         for word in words:
-            rx = self.rxcourse.search(word)
+            rx = self.rxcourse.match(word.strip())
             if rx:
                 coursestring += rx.group(1) + ","
                 if rx.group(3): group = rx.group(3)
@@ -132,7 +132,7 @@ class SummaryParser:
                 # Så fort orden inte längre är kurser
                 # kommer det inga fler
                 break
-        
+
         return (coursestring[:-1], group)
 
     def extractType(self, text):

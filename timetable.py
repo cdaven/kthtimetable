@@ -140,6 +140,16 @@ class CourseList:
 
         return courses
 
+    def getAllMatchingName(self, name):
+        courses = []
+
+        for course in self.courses:
+            if course.name == name:
+                courses.append(course)
+
+        return courses
+
+
 # -----------------------------------------------------------
 class CachedCourseList(CourseList):
     "Lista med kurser som hämtats från ITU:s webbplats"
@@ -155,6 +165,15 @@ class CachedCourseList(CourseList):
             self.courses = pickle.load(file(self.filename))
             if self.isOldList(calendar.Date(time.localtime(os.path.getctime(self.filename)))):
                 self.courses = []
+            else:
+                # omvandlar gamla heltalsgrupper till strängar
+                # bör tas bort till version 2.4
+                courses = []
+                for course in self.courses:
+                    if isinstance(course.group, int):
+                        course.group = str(course.group)
+                    courses.append(course)
+                self.courses = courses
         except IOError:
             self.courses = []
 
@@ -196,15 +215,6 @@ class CachedCourseList(CourseList):
                 return True
 
         return False
-
-    def getCourseByName(self, name):
-        course = None
-
-        for c in self.courses:
-            if c.name == name:
-                course = c
-
-        return course
 
 
 # -----------------------------------------------------------
@@ -450,6 +460,7 @@ class Course:
         self.name = name
         self.id = id
 
+        group = str(group)
         if group == "0": group = ""
         self.group = group
 
@@ -534,7 +545,7 @@ class Event:
         "Returnerar en beskrivning av aktuell händelse, ex. 'Kursnamn Ö7 grp 3 (401)'"
 
         description = self.getDescriptionWithoutLocation()
-        if self.location: description += " (" + self.location + ")"
+        if self.location: description += " (" + self._manipulateLocation(self.location) + ")"
         return description
 
     def __eq__(self, other):
@@ -607,9 +618,22 @@ class Event:
             raise RuntimeError(U_("No parser has been initialized"))
 
     def _findDaisyCourse(self, name):
-        "Hittar en Daisy-kurs via dess ursprungliga namn"
+        """
+            Hittar en Daisy-kurs via dess ursprungliga namn;
+            om flera kurser har samma namn hämtas den (om någon)
+            som redan finns i kurslistan.
+        """
 
-        return CachedCourseList().getCourseByName(name)
+        global courselist
+        stored = CachedCourseList().getAllMatchingName(name)
+        for course in stored:
+            try:
+                courselist.getCourse(course.code)
+                break
+            except ValueError:
+                course = None
+
+        return course
 
     def _findTimeEditCourse(self, courses):
         "Hittar en TimeEdit-kurs genom att prova alla i en lista"
@@ -642,7 +666,20 @@ class Event:
         if "active" in keys: self.active = other["active"]
         if "location" in keys and other["location"]:
             self.location = other["location"]
-        
+
+    def _manipulateLocation(self, location):
+        """
+            Tar bort Daisy-prefixen Hörsal och Övningssal för
+            kurser på Valhallavägen samt möjliggör översättning
+            av språkspecifika ord som Sal, Aulan etc.
+        """
+
+        location = location.replace(u"Övningssal ", "")
+        location = location.replace(u"Hörsal ", "")
+        location = location.replace(u"Sal", U_("Room"))
+        location = location.replace(u"Aulan", U_("Great Hall"))
+        return location
+
     def getDescriptionWithoutLocation(self):
         global courselist
         
