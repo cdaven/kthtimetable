@@ -31,7 +31,7 @@ class MainFrame(wx.Frame):
         wx.Frame.__init__(self, None, -1, applicationname + " " + applicationversion)
 
         self.SetBackgroundColour(guisettings.bgcolour_default)
-        if wx.MINOR_VERSION >= 5:
+        if wx.MINOR_VERSION >= 5: # 2.5
             self.ClearBackground()
 
         layout = wx.BoxSizer(wx.VERTICAL)
@@ -63,7 +63,7 @@ class MainFrame(wx.Frame):
         daynames = wx.BoxSizer(wx.HORIZONTAL)
 
         flag = wx.EXPAND
-        if wx.MINOR_VERSION >= 5:
+        if wx.MINOR_VERSION >= 5: # 2.5
             flag |= wx.FIXED_MINSIZE
 
         hoursanddays.Add(HoursPanel(self), 0, flag)
@@ -243,6 +243,7 @@ class MainFrame(wx.Frame):
             #file("dbg-caldata", "w+").writelines(data)
 
             timetable.timetable.importVCalData(data)
+            timetable.timetable.save()
         except error.ReadError:
             msg = U_("Could not read from") + " " + U_("the timetable server") + ". " + U_("Make sure you have access to the Internet.")
             wx.MessageDialog(self, msg, U_("Server error"), style=wx.OK|wx.ICON_ERROR).ShowModal()
@@ -251,8 +252,11 @@ class MainFrame(wx.Frame):
             msg = U_("The timetable fetched from the server is corrupt and unusable.")
             wx.MessageDialog(self, msg, U_("Server error"), style=wx.OK|wx.ICON_ERROR).ShowModal()
             return
+        except error.WriteError:
+            msg = U_("Could not save the timetable. The file may be write-protected.")
+            wx.MessageDialog(self, msg, U_("File error"), style=wx.OK|wx.ICON_ERROR).ShowModal()
+            return
 
-        timetable.timetable.save()
         self.updateView()        
 
     def updateFromTimeEdit(self, codes):
@@ -1038,7 +1042,7 @@ class TimePanel(Panel):
     def __init__(self, parent):
         import sys
         style = wx.SIMPLE_BORDER
-        if wx.MINOR_VERSION >= 5:
+        if wx.MINOR_VERSION >= 5: # 2.5
             style |= wx.FULL_REPAINT_ON_RESIZE
 
         Panel.__init__(self, parent, -1, size=(60,250), style=style)
@@ -1072,7 +1076,7 @@ class HoursPanel(TimePanel):
 
         TimePanel.__init__(self, parent)
         self.SetBackgroundColour(guisettings.bgcolour_hours)
-        if wx.MINOR_VERSION >= 5:
+        if wx.MINOR_VERSION >= 5: # 2.5
             self.ClearBackground()
 
     def OnPaint(self, evt):
@@ -1368,7 +1372,7 @@ class EventPanel(Panel):
             self.label.SetForegroundColour(fgcolour)
             self.label.SetBackgroundColour(bgcolour)
 
-        if wx.MINOR_VERSION >= 5:
+        if wx.MINOR_VERSION >= 5: # 2.5
             self.ClearBackground()
 
         # flyttar ned texten om "panelen" börjar så högt upp att texten annars inte syns

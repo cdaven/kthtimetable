@@ -245,34 +245,15 @@ class TimeTable:
     def addEvent(self, event):
         self.eventlist.addEvent(event)
 
+    def getAllEvents(self):
+        return self.eventlist.getAll()
+
     def getAllDaisyEvents(self):
-        events = []
-        for event in self.eventlist.getAll():
-            if event.course.isDaisy() == "Daisy":
-                events.append(event)
-        
-        return events
+        return self.eventlist.getAllDaisyEvents()
         
     def getAllTimeEditEvents(self):
-        events = []
-        for event in self.eventlist.getAll():
-            if event.course.isTimeEdit() == "TimeEdit":
-                events.append(event)
-
-        return events
+        return self.eventlist.getAllTimeEditEvents()
     
-    def __clearEventsFromSource(self, source):
-        if source == "Daisy":
-            remove = self.getAllDaisyEvents()
-            for event in remove:
-                self.eventlist.removeEvent(event.getID())
-        elif source == "TimeEdit":
-            remove = self.getAllTimeEditEvents()
-            for event in remove:
-                self.eventlist.removeEvent(event.getID())
-        else:
-            raise ValueError(U_("Bad source id") + ": " + source)
-        
     def isEmpty(self):
         return self.eventlist.isEmpty()
 
@@ -286,7 +267,12 @@ class TimeTable:
         import vcalendar
         events = vcalendar.Reader().read(input)
         if events:
+            # tar också bort de händelser som inte längre
+            # finns på servern, mha EventCleaner
+            cleaner = EventCleaner()
+            cleaner.reset()
             self.eventlist.addEvents(events, course)
+            cleaner.sweep(self)
             self.updated = calendar.Date()
 
     def getEvent(self, id):
@@ -304,19 +290,7 @@ class TimeTable:
         return groups
 
     def getAllEventsForCourse(self, code):
-        "Returnerar alla händelser för en viss kurs, utan hänsyn till gruppval"
-        
-        events = []
-        coursefound = False
-        for event in self.eventlist.getAll():
-            if event.course == code:
-                coursefound = True
-                events.append(event)
-
-        if not coursefound:
-            raise ValueError(U_("The course") + " " + str(code) + " " + U_("does not exist"))
-            
-        return events
+        return self.eventlist.getAllEventsForCourse(code)
 
     def getEventsForDate(self, date):
         events = []
@@ -335,14 +309,10 @@ class TimeTable:
         return events
 
     def removeCourseEvents(self, course):
-        "Tar bort alla händelser för en viss kurs"
+        self.eventlist.removeCourseEvents(course)
 
-        try:
-            remove = self.getAllEventsForCourse(course)
-            for event in remove:
-                self.eventlist.removeEvent(event.getID())
-        except ValueError:
-            return # redan borttaget
+    def removeEvent(self, id):
+        self.eventlist.removeEvent(id)
 
     def removeOrphanEvents(self):
         "Tar bort alla händelser vars kurs inte längre finns i kurslistan"
@@ -539,6 +509,9 @@ class Event:
         
         self.parser = None
         self.active = True       # händelsen är aktiv, dvs. ej "borttagen"
+
+        self.flag = None         # används för att se om en händelse inte har uppdaterats
+                                 # vid synkronisering, dvs. om den egentligen är borttagen
         
         if not data:
             # om data är None sätts inte instansens värden här
@@ -815,6 +788,45 @@ class EventList:
 
         return events
 
+    def getAllDaisyEvents(self):
+        events = []
+        for event in self.events:
+            if event.course.isDaisy(): events.append(event)
+        
+        return events
+        
+    def getAllTimeEditEvents(self):
+        events = []
+        for event in self.events:
+            if event.course.isTimeEdit(): events.append(event)
+        
+        return events
+
+    def getAllEventsForCourse(self, code):
+        "Returnerar alla händelser för en viss kurs, utan hänsyn till gruppval"
+        
+        events = []
+        coursefound = False
+        for event in self.getAll():
+            if event.course == code:
+                coursefound = True
+                events.append(event)
+
+        if not coursefound:
+            raise ValueError(U_("The course") + " " + str(code) + " " + U_("does not exist"))
+            
+        return events
+
+    def removeCourseEvents(self, course):
+        "Tar bort alla händelser för en viss kurs"
+
+        try:
+            remove = self.getAllEventsForCourse(course)
+            for event in remove:
+                self.removeEvent(event.getID())
+        except ValueError:
+            return # redan borttaget
+
     def hasEvent(self, id):
         return id in self.events.keys()
 
@@ -828,22 +840,22 @@ class EventList:
         if self.hasEvent(event.getID()):
             # kopierar tid, plats och datum från ny aktivitet
             # till existerande
-            if not isinstance(event, SubscribedEvent):
-                self.getEvent(event.getID()).copyDetails(event)
+            self.getEvent(event.getID()).copyDetails(event)
         else:
             # aktiviteten är ny, lägg bara till
             self.events[event.getID()] = event
+
+        EventCleaner().mark(self.getEvent(event.getID()))
 
     def addEvent(self, event, course = None):
         if isinstance(event, Event):
             self._add(event)
         else:
             # sätter i förekommande fall kursen explicit
-            event["course"] = course
+            if course: event["course"] = course
 
             try:
-                newevent = Event(event)
-                self._add(newevent)
+                self._add(Event(event))
             except ValueError, e:
                 # när en händelse skapas som inte hör till någon
                 # känd kurs avbryts inte all inläsning utan just
@@ -866,6 +878,34 @@ class EventList:
             return self.events[id]
         except KeyError:
             raise ValueError(U_("The event") + " " + str(id) + " " + U_("does not exist"))
+
+
+# -----------------------------------------------------------
+class EventCleaner:
+    """
+        Rensar borttagna händelser enligt Mark-Sweep-algoritmen.
+
+        Varje uppdaterad händelse som hämtats från schemaservern
+        markeras. De som sedan inte markerats tas bort.
+    """
+
+    __shared_state = {}
+    okflag = False
+
+    def __init__(self):
+        self.__dict__ = self.__shared_state
+
+    def reset(self):
+        self.okflag = not self.okflag
+
+    def mark(self, event):
+        event.flag = self.okflag
+
+    def sweep(self, timetable):
+        for event in timetable.getAllEvents():
+            if not event.flag == self.okflag:
+                timetable.removeEvent(event.getID())
+
 
 # -----------------------------------------------------------
 class TimeTableComparator:
