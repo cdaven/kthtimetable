@@ -15,45 +15,63 @@ daybegin = None
 dayend = None
 lastweekday = 0
 eventtype_examination = ["Salsskrivning", "Kontrollskrivning", "Dugga", "Tentamen"]
-language = ""
+event_export_category = "KTHTimeTable"
+language = "en"
+preferred_system = "Daisy"
 
 # -----------------------------------------------------------
-def setDefaults():
-    global daybegin, dayend, lastweekday, event_export_category, language
-    language = "en"
-    setLanguage(language)
+def _setDefaultCalendarValues():
+    global daybegin, dayend, lastweekday
     import calendar
     daybegin = calendar.Time("080000")
     dayend = calendar.Time("200000")
     lastweekday = calendar.FRI
-    event_export_category = "KTHTimeTable"
+
 
 def load():
     global __filename, language
-    
-    try:
-        loadFromFile(__filename)
-    except (error.DataError, IOError):
-        setDefaults()
-        sys.stderr.write("The settings file is corrupt or missing. Using default settings.\n")
+
+    setLanguage(language)
+    loadFromFile(__filename)
+
 
 def loadFromFile(filename):
-    global daybegin, dayend, lastweekday, event_export_category, language
+    global daybegin, dayend, lastweekday, event_export_category, language, preferred_system
 
     config = configfileparser.ConfigParserX()
-    config.readfp(file(__filename))
 
-    language = config.get("main", "language")
-    setLanguage(language)
+    try:
+        config.readfp(file(__filename))
+    except IOError:
+        sys.stderr.write("Settings missing, using default values.\n")
+        _setDefaultCalendarValues()
+        return
+
+    try:
+        language = config.get("main", "language")
+        setLanguage(language)
+    except (error.DataError, IOError):
+        sys.stderr.write("Settings missing or invalid, using default values.\n")
 
     import calendar
-    daybegin = calendar.Time(config.get("main", "daybegin"))
-    dayend = calendar.Time(config.get("main", "dayend"))
-    lastweekday = int(config.get("main", "lastweekday"))
-    event_export_category = config.get("main", "event_export_category")
+
+    try:
+        daybegin = calendar.Time(config.get("main", "daybegin"))
+        dayend = calendar.Time(config.get("main", "dayend"))
+        lastweekday = int(config.get("main", "lastweekday"))
+    except (error.DataError, ValueError):
+        _setDefaultCalendarValues()
+        sys.stderr.write("Settings missing or invalid, using default values.\n")
+
+    try:
+        preferred_system = config.get("main", "preferred_system")
+        event_export_category = config.get("main", "event_export_category")
+    except (error.DataError, IOError):
+        sys.stderr.write("Settings missing or invalid, using default values.\n")
+
 
 def save():
-    global daybegin, dayend, lastweekday, event_export_category, language, __filename
+    global daybegin, dayend, lastweekday, event_export_category, language, preferred_system, __filename
 
     config = configfileparser.ConfigParserX()
 
@@ -63,6 +81,7 @@ def save():
     config.set("main", "lastweekday", str(lastweekday))
     config.set("main", "event_export_category", event_export_category)
     config.set("main", "language", language)
+    config.set("main", "preferred_system", preferred_system)
 
     try:
         config.write(file(__filename, "w+"))

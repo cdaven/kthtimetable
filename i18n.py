@@ -5,8 +5,6 @@
 import gettext
 import sys
 
-# Hämtar översättningsfilerna
-
 translation = None
 
 def setLanguage(lang):
@@ -18,7 +16,7 @@ def setLanguage(lang):
         sys.stderr.write("Couldn't find translation for " + lang + "\n" + str(e) + "\n")
         sys.exit(1)
     
-    # Sätter gränssnittets språk
+    # sätter gränssnittets språk
     translation.install()
 
 # konverterar språkspecifika strängar till unicode

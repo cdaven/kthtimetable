@@ -445,7 +445,7 @@ class CourseNamesDialog(OKCancelDialog):
         self.coursecodes = []
         self.edits = []
 
-        courses = timetable.courselist.courses
+        courses = timetable.courselist.getAllPersistentCourses()
         if not courses:
             msg = U_("There are no courses to name. Please choose some first.")
             wx.MessageDialog(self, msg, U_("No courses"), style=wx.OK|wx.ICON_INFORMATION).ShowModal()
@@ -561,23 +561,31 @@ class ChooseCoursesDialog(OKCancelDialog):
         newcourse = wx.BoxSizer(wx.HORIZONTAL)
         list = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.courseedit = wx.TextCtrl(self, -1, size=(400, -1))
-        addbtn = wx.Button(self, 10, U_("&Add"))
-        addbtn.SetDefault()
+        self.courseedit = TextCtrl(self, callback=self.addCourse, size=(250, -1))
+        newcourse.Add(StaticText(self, U_("Enter one course code at a time:"), size=(200,-1), style=wx.ST_NO_AUTORESIZE), 0, wx.TOP, 5)
         newcourse.Add(self.courseedit, 0)
-        newcourse.Add(addbtn, 0, wx.LEFT, 10)
 
         self.chosencourses = []
-        self.courselist = CourseListBox(self, timetable.courselist.getAllCourses(), size=(400,250))
+        self.courselist = CourseListBox(self, timetable.courselist.getAllPersistentCourses(), size=(450,250))
         list.Add(self.courselist)
         list.Add(wx.Button(self, 20, U_("&Remove")), 0, wx.LEFT, 10)
-    
-        wx.EVT_BUTTON(self, 10, self.AddCourse)
+
         wx.EVT_BUTTON(self, 20, self.RemoveCourse)
         
-        layout.Add(StaticText(self, U_("Choose the courses you want included in your timetable. Both TimeEdit\nand Daisy courses can be added. The course code may be incomplete\nfor Daisy courses; all matching courses will then be added.")), 0, wx.LEFT|wx.TOP, 10)
-        layout.Add(StaticText(self, U_("Enter one course code at a time:")), 0, wx.LEFT|wx.TOP, 10)
+        layout.Add(StaticText(self, U_("Choose the courses you want included in your timetable. Both TimeEdit and Daisy courses can be added. The course code may be incomplete for Daisy courses; all matching courses will then be added."), size=(500,60), wordwrap=True, style=wx.ST_NO_AUTORESIZE), 0, wx.LEFT|wx.TOP, 10)
         layout.Add(newcourse, 0, wx.LEFT|wx.TOP|wx.RIGHT, 10)
+
+        self.radiodaisy = wx.RadioButton(self, -1, "Daisy")
+        self.radiotimeedit = wx.RadioButton(self, -1, "TimeEdit")
+
+        self.radiodaisy.SetValue(True)
+        if settings.preferred_system == "TimeEdit":
+            self.radiotimeedit.SetValue(True)
+
+        layout.Add(StaticText(self, U_("If the course exists in both systems, prefer:")), 0, wx.LEFT|wx.TOP, 10)
+        layout.Add(self.radiodaisy, 0, wx.LEFT|wx.TOP, 10)
+        layout.Add(self.radiotimeedit, 0, wx.LEFT, 10)
+
         layout.Add(list, 0, wx.LEFT|wx.TOP|wx.RIGHT, 10)
         layout.Add(self.buttons, 0, wx.EXPAND|wx.ALL, 10)
 
@@ -608,19 +616,38 @@ class ChooseCoursesDialog(OKCancelDialog):
         progressdialog.stopProgress()
         return courses
 
-    def AddCourse(self, evt):
+    def addCourse(self):
         code = self.courseedit.GetValue()
-        courses = self.lookForCourseInDaisy(code)
-        if courses:
-            # kursen fanns i Daisy, lägger till alla som matchar
-            self.courselist.InsertItems(courses)
+        if not code:
+            return # tom sträng; gör inget
+
+        if self.radiotimeedit.GetValue():
+            # letar i TimeEdit först
+            courses = self.lookForCourseInTimeEdit(code)
+            if not courses:
+                courses = self.lookForCourseInDaisy(code)
         else:
-            # letar i TimeEdit istället
-            self.lookForCourseInTimeEdit(code)
+            # letar i Daisy först
+            courses = self.lookForCourseInDaisy(code)
+            if not courses:
+                courses = self.lookForCourseInTimeEdit(code)
+
+        if courses:
+            try:
+                self.courselist.InsertItems(courses)
+            except ValueError:
+                msg = U_("The course") + " " + U_("is already chosen.")
+                wx.MessageDialog(self, msg, U_("Already chosen"),
+                    style=wx.ICON_INFORMATION).ShowModal()
+
+            self.courseedit.SetValue("")
+        else:
+            msg = U_("The course") + " " + U_("does not exist") + " " + U_("in Daisy or TimeEdit.")
+            wx.MessageDialog(self, msg, U_("The course") + " " + U_("does not exist"),
+                style=wx.ICON_WARNING).ShowModal()
 
         self.SetFocus()
         self.courseedit.SetFocus()
-        self.courseedit.SetValue("")
 
     def lookForCourseInDaisy(self, code):
         courses = []
@@ -637,22 +664,24 @@ class ChooseCoursesDialog(OKCancelDialog):
         progressdialog = ProgressDialog(self, U_("Fetching course name"), [U_("Receiving data from") + " schema.sys.kth.se..."])
         progressdialog.startProgress()
 
+        course = []
+
         try:
-            course = timeedit.Conduit().getCourseInfo(code)
+            course = [timeedit.Conduit().getCourseInfo(code)]
         except ValueError:
-            progressdialog.stopProgress()
-            msg = U_("The course") + " " + U_("does not exist") + " " + U_("in Daisy or TimeEdit.")
-            wx.MessageDialog(self, msg, U_("The course") + " " + U_("does not exist"),
-                style=wx.ICON_WARNING).ShowModal()
-            return
+            pass
         
-        self.courselist.InsertItems([course])
         progressdialog.stopProgress()
+        return course
         
     def RemoveCourse(self, evt):
         self.courselist.DeleteSelected()
     
     def SaveAndClose(self, evt):
+        settings.preferred_system = "TimeEdit"
+        if self.radiodaisy.GetValue():
+            settings.preferred_system = "Daisy"
+
         timetable.courselist.clear()
         for i in range(self.courselist.GetCount()):
             timetable.courselist.addCourse(self.courselist.GetClientData(i))
@@ -846,11 +875,13 @@ class ProgressDialog:
     def stopProgress(self):
         self.progressdialog.Destroy()
 
+
 # -----------------------------------------------------------
 class Choice(wx.Choice):
     def __init__(self, parent, size, choices, coursecode):
         wx.Choice.__init__(self, parent, -1, size=size, choices=choices)
         self.coursecode = coursecode
+
 
 # -----------------------------------------------------------
 class CourseListBox(wx.ListBox):
@@ -867,19 +898,23 @@ class CourseListBox(wx.ListBox):
         self.Thaw()
 
     def __courseToString(self, course):
-        return course.name + " (" + course.code + ")"
+        string = course.name + " (" + course.code + ") ["
+        if course.isDaisy():
+            string += "Daisy"
+        elif course.isTimeEdit():
+            string += "TimeEdit"
+
+        return string + "]"
         
     def InsertItems(self, courses):
         self.Freeze()
 
         for course in courses:
-            already = False
             for i in range(self.GetCount()):
-                if course.code == self.GetClientData(i).code:
-                    already = True
+                if course.code in self.GetClientData(i).code:
+                    raise ValueError("Course is already in list")
 
-            if not already:
-                self.Append(self.__courseToString(course), course)
+            self.Append(self.__courseToString(course), course)
 
         self.Thaw()
 
@@ -1331,3 +1366,18 @@ class EventPanel(Panel):
         self.SetToolTip(wx.ToolTip(self.event.getNiceString()))
         self.paint()
 
+
+# -----------------------------------------------------------
+class TextCtrl(wx.TextCtrl):
+
+    def __init__(self, parent, callback=None, size=(-1,-1)):
+        wx.TextCtrl.__init__(self, parent, -1, size=size)
+        self.callback = callback
+        wx.EVT_KEY_DOWN(self, self.OnKeyDown)
+
+    def OnKeyDown(self, evt):
+        "Anropar callback om ENTER trycks ned (dock ej om CTRL eller ALT hålls nere)"
+        if evt.GetKeyCode() == wx.WXK_RETURN and self.callback and not evt.HasModifiers():
+            self.callback()
+        else:
+            evt.Skip()

@@ -27,12 +27,6 @@ class CourseList:
     def isEmpty(self):
         return self.courses == []
     
-    def getCourseType(self, code):
-        if code in self.getAllDaisyCourseCodes():
-            return "Daisy"
-        else:
-            return "TimeEdit"        
-
     def addCourse(self, codeorcourse, name = "", id = 0, group = ""):
         """
             Lägger till en kurs eller skriver över befintlig om samma kod
@@ -106,14 +100,14 @@ class CourseList:
     def getAllDaisyCourseCodes(self):
         codes = []
         for course in self.courses:
-            if course.id: codes.append(course.code)
+            if course.isDaisy(): codes.append(course.code)
 
         return codes
 
     def getAllTimeEditCourseCodes(self):
         codes = []
         for course in self.courses:
-            if not course.id: codes.append(course.code)
+            if course.isTimeEdit(): codes.append(course.code)
 
         return codes
 
@@ -131,6 +125,12 @@ class CourseList:
         for code in codes:
             courses.append(self.getCourse(code))
 
+        return courses
+
+    def getAllPersistentCourses(self):
+        courses = []
+        courses += self.getAllTimeEditCourses()
+        courses += self.getAllDaisyCourses()
         return courses
 
     def getAllCourses(self):
@@ -154,7 +154,7 @@ class CourseList:
         import StringIO
         import pickle
         string = StringIO.StringIO()
-        pickle.dump(self.courses, string)
+        pickle.dump(self.getAllPersistentCourses(), string)
         return string.getvalue()
 
     def unpickle(self, data):
@@ -248,7 +248,7 @@ class TimeTable:
     def getAllDaisyEvents(self):
         events = []
         for event in self.eventlist.getAll():
-            if courselist.getCourseType(event.course) == "Daisy":
+            if event.course.isDaisy() == "Daisy":
                 events.append(event)
         
         return events
@@ -256,7 +256,7 @@ class TimeTable:
     def getAllTimeEditEvents(self):
         events = []
         for event in self.eventlist.getAll():
-            if courselist.getCourseType(event.course) == "TimeEdit":
+            if event.course.isTimeEdit() == "TimeEdit":
                 events.append(event)
 
         return events
@@ -438,7 +438,7 @@ class TimeTable:
         global courselist
         if not courselist.isEmpty():
             config.add_section("courses")
-            for course in courselist.courses:
+            for course in courselist.getAllPersistentCourses():
                 value = course.name + "|" + str(course.id) + "|" + course.group
                 config.set("courses", course.code, value)
 
@@ -491,7 +491,30 @@ class Course:
    
     def __repr__(self):
         return self.code + self.name + str(self.id) + self.group
+
+    def isDaisy(self):
+        val = False
+        if self.id: val = True
+        return val
     
+    def isTimeEdit(self):
+        return False == self.isDaisy()
+
+
+# -----------------------------------------------------------
+class SubscribedCourse(Course):
+    "En 'kurs' för prenumererade aktiviteter"
+
+    def __init__(self, code):
+        Course.__init__(self, code, code)
+
+    def __unicode__(self):
+        return unicode(self.code, "latin_1")
+
+    def isTimeEdit(self):
+        return False
+
+
 # -----------------------------------------------------------
 class Event:
     "En schemalagd händelse"
