@@ -1027,8 +1027,8 @@ class ExportDialog(OKCancelDialog):
 
     def SaveAndClose(self, evt):
         filedialog = wx.FileDialog(self, U_("Export to file"),
-            wildcard=U_("Outlook/Evolution compatible files") + " (vCalendar Unicode)|*.vcs|" +
-                U_("Palm Desktop compatible files") + " (vCalendar)|*.vcs|" +
+            wildcard=U_("Outlook/Palm Desktop compatible files") + " (vCalendar)|*.vcs|" +
+                U_("Evolution compatible files") + " (vCalendar UTF-8)|*.vcs|" +
                 U_("J-Pilot compatible files") + " (" + U_("Comma Separated") + ")|*.csv|" +
                 U_("HTML files") + "|*.html", style=wx.SAVE|wx.OVERWRITE_PROMPT)
 
@@ -1036,10 +1036,10 @@ class ExportDialog(OKCancelDialog):
             format = filedialog.GetFilterIndex()
 
             try:
-                if format == 0: # Outlook/Evolution
-                    self.exportVCalendar(filedialog.GetPath(), self.fromdate.date, self.todate.date, "utf8")
-                elif format == 1: # Palm Desktop
+                if format == 0: # Outlook/Palm Desktop
                     self.exportVCalendar(filedialog.GetPath(), self.fromdate.date, self.todate.date, "latin_1")
+                elif format == 1: # Evolution
+                    self.exportVCalendar(filedialog.GetPath(), self.fromdate.date, self.todate.date, "utf8")
                 elif format == 2: # J-Pilot
                     self.exportCSV(filedialog.GetPath(), self.fromdate.date, self.todate.date)
                 elif format == 3: # HTML
