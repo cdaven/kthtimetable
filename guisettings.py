@@ -17,7 +17,7 @@ bgcolour_schedule_holiday = wx.Colour(204, 153, 153)
 bgcolour_hours = wx.Colour(255, 255, 204)
 bgcolour_event = wx.Colour(51, 153, 255)
 bgcolour_event_examination = wx.Colour(255, 51, 51)
-bgcolour_event_personal = wx.Colour(204, 255, 204)
+bgcolour_event_subscribed = wx.Colour(51, 153, 51)
 bgcolour_event_inactive = wx.Colour(204, 204, 204)
 
 font_default = None

@@ -12,7 +12,21 @@ class Reader:
     "Läser ett specialdesignat kalenderformat"
 
     def read(self, input):
-        pass
+        events = []
+
+        for line in input:
+            event = {}
+            fields = line.strip().split("|")
+            if fields:
+                event["id"] = fields[0]
+                event["date"] = fields[1]
+                event["begin"] = fields[2]
+                event["end"] = fields[3]
+                event["summary"] = fields[4]
+                event["location"] = fields[5]
+                events.append(event)
+
+        return events
 
 class Writer:
     def write(self, events):

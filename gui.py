@@ -11,7 +11,7 @@ import error
 from i18n import *
 
 applicationname = "KTH TimeTable"
-applicationversion = "2.2"
+applicationversion = "2.2+"
 
 # -----------------------------------------------------------
 class MainFrame(wx.Frame):
@@ -119,6 +119,9 @@ class MainFrame(wx.Frame):
         menu.Append(210, U_("Choose &courses..."))
         menu.Append(220, U_("&Fetch timetable...\tF5"))
         menu.AppendSeparator()
+        menu.Append(230, U_("Export"))
+        menu.Append(240, U_("Import"))
+        menu.AppendSeparator()
         menu.Append(250, U_("Choose &groups..."))
         menu.Append(260, U_("&Name courses..."))
         menu.AppendSeparator()
@@ -133,6 +136,8 @@ class MainFrame(wx.Frame):
         wx.EVT_MENU(self, 120, self.ExportEvents)
         wx.EVT_MENU(self, 210, self.ChooseCourses)
         wx.EVT_MENU(self, 220, self.Update)
+        wx.EVT_MENU(self, 230, self.Export)
+        wx.EVT_MENU(self, 240, self.Import)
         wx.EVT_MENU(self, 250, self.ChooseGroups)
         wx.EVT_MENU(self, 260, self.NameCourses)
         wx.EVT_MENU(self, 270, self.MakeSettings)
@@ -204,6 +209,16 @@ class MainFrame(wx.Frame):
     def ImportEvents(self, evt):
         pass
 
+    def Import(self, evt):
+        import calfmt
+        timetable.timetable.importData(file("cyner.cal").readlines(), "cyner")
+        self.updateView()
+
+    def Export(self, evt):
+        import calfmt
+        data = calfmt.Writer().write(timetable.timetable.getEventsForDateRange(calendar.Date(), calendar.Date() + 30))
+        file("cyner.cal", "w+").write(data)
+
     def ExportEvents(self, evt):
         ExportDialog(self).ShowModal()
         self.SetFocus()
@@ -239,10 +254,6 @@ class MainFrame(wx.Frame):
 #        msg += str(len(difference["added"])) + " händelser lades till\n"
 #        msg += str(len(difference["removed"])) + " händelser togs bort\n"
 #        wx.MessageDialog(self, msg, "Rapport", style=wx.OK|wx.ICON_INFORMATION).ShowModal()
-
-        import calfmt
-        data = calfmt.Writer().write(timetable.timetable.getEventsForDateRange(calendar.Date(), calendar.Date() + 30))
-        file("cyner.cal", "w+").write(data)
 
         timetable.timetable.save()
         self.updateView()        
@@ -1205,16 +1216,38 @@ class DayPanel(TimePanel, EventOrganiser):
         self.Refresh()
 
 # -----------------------------------------------------------
-class GraphicalEvent(timetable.Event):
+class GraphicalEvent:
     "Händelse som även innehåller information om det grafiska"
 
     def __init__(self, parent, event):
-        timetable.Event.__init__(self)
+        self.event = event
+        self.begin = event.begin
+        self.end = event.end
         self.parent = parent
         self.panel = None
         self.clashes = 0
         self.column = 0
-        self.copy(event)
+
+    def getType(self):
+        return self.event.type
+
+    def getID(self):
+        return self.event.getID()
+
+    def toggleActive(self):
+        self.event.toggleActive()
+
+    def isActive(self):
+        return self.event.active
+
+    def isSubscribed(self):
+        return isinstance(self.event, timetable.SubscribedEvent)
+
+    def __unicode__(self):
+        return unicode(self.event)
+
+    def getNiceString(self):
+        return self.event.getNiceString()
 
     def show(self):
         if self.panel:
@@ -1275,11 +1308,13 @@ class EventPanel(Panel):
         bgcolour = guisettings.bgcolour_event
         fgcolour = guisettings.colour_event_text
         
-        if self.event.type in settings.eventtype_examination:
-            bgcolour = guisettings.bgcolour_event_examination
-        elif not self.event.active:
+        if self.event.isSubscribed():
+            bgcolour = guisettings.bgcolour_event_subscribed
+        elif not self.event.isActive():
             bgcolour = guisettings.bgcolour_event_inactive
             fgcolour = guisettings.colour_event_inactive
+        elif self.event.getType() in settings.eventtype_examination:
+            bgcolour = guisettings.bgcolour_event_examination
 
         self.SetBackgroundColour(bgcolour)
         self.SetForegroundColour(fgcolour)
@@ -1294,7 +1329,6 @@ class EventPanel(Panel):
         self.resize()
 
     def OnClick(self, evt):
-        timetable.timetable.getEvent(self.event.getID()).toggleActive()
         self.event.toggleActive()
         self.SetToolTip(wx.ToolTip(self.event.getNiceString()))
         self.paint()

@@ -267,7 +267,7 @@ class TimeTable:
 
             for event in events:
                 event["course"] = courselist.getCourse(channel)
-                self.eventlist.addEvent(SubscribedEvent(event), "")
+                self.eventlist.addEvent(SubscribedEvent(event))
 
     def getEvent(self, id):
         return self.eventlist.getEvent(id)
@@ -402,7 +402,7 @@ class TimeTable:
             config.add_section("main")
             config.set("main", "updated", str(self.updated))
 
-            for event in self.eventlist.getAll():
+            for event in self.eventlist.getAllPersistent():
                 config.add_section(event.getID())
                 config.set(event.getID(), "date", str(event.date))
                 config.set(event.getID(), "begin", str(event.begin))
@@ -528,7 +528,7 @@ class Event:
         return description
 
     def __eq__(self, other):
-        if self.__id == other.__id and\
+        if self.getID() == other.getID() and\
             self.date == other.date and\
             self.begin == other.begin and\
             self.end == other.end and\
@@ -601,7 +601,7 @@ class Event:
             self.location = other["location"]
         
     def copy(self, other):
-        self.__id = other.__id
+        self.__id = other.getID()
         self.date = other.date
         self.begin = other.begin
         self.end = other.end
@@ -673,10 +673,17 @@ class SubscribedEvent(Event):
         self.end = calendar.Time(data["end"])
         self.location = data["location"]
         self.description = data["summary"]
+        self.type = u"Föreläsning"
+        self.group = 0
+        self.seriesno = 0
         self.active = True
 
     def __unicode__(self):
-        return unicode(self.description + " (" + self.location + ")", "latin_1")
+        string = self.description
+        if self.location:
+            string += " (" + self.location + ")"
+
+        return unicode(string, "latin_1")
 
     def getID(self):
         return self.__id
@@ -703,6 +710,14 @@ class EventList:
     
     def getAll(self):
         return self.events.values()
+
+    def getAllPersistent(self):
+        events = []
+        for event in self.getAll():
+            if not isinstance(event, SubscribedEvent):
+                events.append(event)
+
+        return events
 
     def hasEvent(self, id):
         return id in self.events.keys()
