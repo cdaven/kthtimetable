@@ -131,14 +131,13 @@ class SweHolidays(HolidayGenerator):
         holidays.append(Holiday(easter - 2, U_("Langfredag")))
         holidays.append(Holiday(easter + 1, U_("Annandag pask")))
         holidays.append(Holiday(easter + 39, U_("Kristi himmelsfards dag")))
-        holidays.append(Holiday(easter + 51, U_("Annandag pingst")))
         holidays.append(Holiday(midsummer - 1, U_("Midsommarafton")))
 
         # fasta helgdagar
         holidays.append(Holiday(Date(yearstr + "0101"), U_("Nyarsdagen")))
         holidays.append(Holiday(Date(yearstr + "0106"), U_("Trettondedag jul")))
         holidays.append(Holiday(Date(yearstr + "0501"), U_("Forsta maj")))
-        holidays.append(Holiday(Date(yearstr + "1224"), U_("Julafton")))
+        holidays.append(Holiday(Date(yearstr + "0606"), U_("Sveriges nationaldag")))
         holidays.append(Holiday(Date(yearstr + "1225"), U_("Juldagen")))
         holidays.append(Holiday(Date(yearstr + "1226"), U_("Annandag jul")))
         
@@ -150,16 +149,24 @@ class SweHolidays(HolidayGenerator):
         holidays = []
         yearstr = str(year)
 
-        # Nationella flaggdagar som inte också är helgdagar
+        easter = self.getEaster(year)
+        holidays.append(Holiday(easter - 47, U_("Fettisdagen")))
+
+        # Nationella flaggdagar och andra högtidsdagar som inte också är helgdagar
         holidays.append(Holiday(Date(yearstr + "0128"), U_("Konungens namnsdag")))
+        holidays.append(Holiday(Date(yearstr + "0214"), U_("Alla hjartans dag")))
+        #holidays.append(Holiday(Date(yearstr + "0229"), U_("Skottdagen")))
+        holidays.append(Holiday(Date(yearstr + "0308"), U_("Internationella kvinnodagen")))
         holidays.append(Holiday(Date(yearstr + "0312"), U_("Kronprinsessans namnsdag")))
         holidays.append(Holiday(Date(yearstr + "0430"), U_("Konungens fodelsedag")))
-        holidays.append(Holiday(Date(yearstr + "0606"), U_("Sveriges nationaldag")))
         holidays.append(Holiday(Date(yearstr + "0714"), U_("Kronprinsessans fodelsedag")))
         holidays.append(Holiday(Date(yearstr + "0808"), U_("Drottningens namnsdag")))
         holidays.append(Holiday(Date(yearstr + "1024"), U_("FN-dagen")))
         holidays.append(Holiday(Date(yearstr + "1106"), U_("Gustav Adolfsdagen")))
         holidays.append(Holiday(Date(yearstr + "1210"), U_("Nobeldagen")))
+        holidays.append(Holiday(Date(yearstr + "1213"), U_("Lucia")))
         holidays.append(Holiday(Date(yearstr + "1223"), U_("Drottningens fodelsedag")))
+        holidays.append(Holiday(Date(yearstr + "1224"), U_("Julafton")))
+        holidays.append(Holiday(Date(yearstr + "1231"), U_("Nyarsafton")))
 
         return holidays
