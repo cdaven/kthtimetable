@@ -577,7 +577,8 @@ class ChooseCoursesDialog(OKCancelDialog):
         self.daisycourses = timetable.CachedCourseList()
         if self.daisycourses.isEmpty():
             self.daisycourses.setCourses(self.getDaisyCourses())
-        
+            self.daisycourses.save()
+
     def getDaisyCourses(self):
         import daisy
         progressdialog = ProgressDialog(self, U_("Fetching course list"), [U_("Connecting to") + " it.kth.se...",
@@ -587,7 +588,6 @@ class ChooseCoursesDialog(OKCancelDialog):
         courses = []
         try:
             courses = daisy.Conduit().getCourses(progressdialog.increaseProgress)
-            cachedcourselist = courses
         except error.ReadError:
             msg = U_("Could not read from") + " " + U_("the IT University web site.") + "\n" + U_("Make sure you have access to the Internet.")
             wx.MessageDialog(self, msg, U_("Server error"), style=wx.OK|wx.ICON_INFORMATION).ShowModal()
@@ -640,12 +640,9 @@ class ChooseCoursesDialog(OKCancelDialog):
         progressdialog.stopProgress()
         
     def RemoveCourse(self, evt):
-        selected = self.courselist.GetSelections()
-        for i in selected:
-            self.courselist.Delete(i)
+        self.courselist.DeleteSelected()
     
     def SaveAndClose(self, evt):
-        self.daisycourses.save()
         timetable.courselist.clear()
         for i in range(self.courselist.GetCount()):
             timetable.courselist.addCourse(self.courselist.GetClientData(i))
@@ -858,6 +855,9 @@ class CourseListBox(wx.ListBox):
         self.Clear()
         self.InsertItems(courses)
         self.Thaw()
+
+    def __courseToString(self, course):
+        return course.name + " (" + course.code + ")"
         
     def InsertItems(self, courses):
         self.Freeze()
@@ -869,7 +869,7 @@ class CourseListBox(wx.ListBox):
                     already = True
 
             if not already:
-                self.Append(course.name + " (" + course.code + ")", course)
+                self.Append(self.__courseToString(course), course)
 
         self.Thaw()
 
@@ -878,7 +878,7 @@ class CourseListBox(wx.ListBox):
         courses = self.GetSelectedCourses()
 
         for course in courses:
-            index = self.FindString(self.makeReadable(course))
+            index = self.FindString(self.__courseToString(course))
             self.Delete(index)
 
         self.Thaw()
