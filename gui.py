@@ -240,7 +240,7 @@ class MainFrame(wx.Frame):
             if timeeditcourses:
                 data += self.updateFromTimeEdit(timeeditcourses)
 
-            #file("dbg-caldata", "w+").writelines(data)
+            file("dbg-caldata", "w+").writelines(data)
 
             timetable.timetable.importVCalData(data)
             timetable.timetable.save()
@@ -535,22 +535,69 @@ class SettingsDialog(OKCancelDialog):
         else: self.dayend.SetSelection(4)
         setting4.Add(self.dayend, 0, wx.LEFT|wx.RIGHT, 10)
 
+        boxtitle = wx.StaticBox(self, -1, U_("Publishing"))
+        setting5 = wx.StaticBoxSizer(boxtitle, wx.VERTICAL)
+
+        self.radiobtnDoNotPublish = wx.RadioButton(self, -1, U_("Do not publish timetable"))
+        self.radiobtnPublish = wx.RadioButton(self, -1, U_("Publish timetable with id:"))
+        self.userid = wx.TextCtrl(self, -1, value=settings.publish_userid)
+
+        self.userid.Disable()
+        self.radiobtnDoNotPublish.SetValue(True)
+        if settings.publish:
+            self.userid.Enable(True)
+            self.radiobtnPublish.SetValue(True)
+
+        radiotxt = wx.BoxSizer(wx.HORIZONTAL)
+        radiotxt.Add(self.radiobtnPublish, 0, wx.ALL, 5)
+        radiotxt.Add(self.userid)
+
+        wx.EVT_RADIOBUTTON(self, self.radiobtnDoNotPublish.GetId(), self.OnPublishDeselect)
+        wx.EVT_RADIOBUTTON(self, self.radiobtnPublish.GetId(), self.OnPublishSelect)
+
+        setting5.Add(self.radiobtnDoNotPublish, 0, wx.ALL, 5)
+        setting5.Add(radiotxt)
+
         layout.Add(StaticText(self, U_("The settings will need a\nprogram restart to take effect.")), 0,
             wx.EXPAND|wx.ALL, 10)
         layout.Add(setting1, 0, wx.TOP|wx.LEFT|wx.RIGHT, 10)
         layout.Add(setting3, 0, wx.TOP|wx.LEFT|wx.RIGHT, 10)
         layout.Add(setting4, 0, wx.TOP|wx.LEFT|wx.RIGHT, 10)
         layout.Add(setting2, 0, wx.ALL, 10)
+        layout.Add(setting5, 0, wx.EXPAND|wx.ALL, 10)
         layout.Add(self.buttons, 0, wx.EXPAND|wx.ALL, 10)
 
         self.SetSizerAndFit(layout)
         self.CentreOnScreen()
+
+    def OnPublishSelect(self, evt):
+        msg = U_("Publishing your timetable on the Internet will enable anyone,\nincluding you, to view your timetable using a web or WAP browser.\n\nIt will also enable anyone to view your timetable in KTH TimeTable.\n\nYour timetable will be identified by this string, so make sure you choose something unique, e.g. your KTH.se ID.")
+        if wx.MessageDialog(self, msg, U_("Publish timetable"),
+        style=wx.OK|wx.CANCEL|wx.ICON_INFORMATION).ShowModal() == wx.ID_OK:
+            self.userid.Enable(True)
+            self.userid.SetFocus()
+        else:
+            self.radiobtnDoNotPublish.SetValue(True)
+
+    def OnPublishDeselect(self, evt):
+        self.userid.Disable()
 
     def SaveAndClose(self, evt):
         settings.dayend = calendar.Time(self.dayend.GetStringSelection()[:2] + "0000")
         settings.daybegin = calendar.Time(self.daybegin.GetStringSelection()[:2] + "0000")
         settings.language = self.language.GetStringSelection()[:2].lower()
         settings.lastweekday = self.daysinweek.GetSelection() + 4
+
+        #if self.radiobtnPublish.GetValue() and not self.userid.GetValue() == settings.publish_userid:
+        #    msg = U_("Enter the password for this timetable id:")
+        #    pwdialog = wx.TextEntryDialog(self, msg)
+        #    if pwdialog.ShowModal() == wx.ID_OK:
+        #        settings.publish_pw = pwdialog.GetValue()
+        #    else:
+        #        return
+
+        settings.publish = self.radiobtnPublish.GetValue()
+        settings.publish_userid = self.userid.GetValue()
 
         self.EndModal(wx.ID_OK)
 

@@ -18,6 +18,8 @@ eventtype_examination = ["Salsskrivning", "Kontrollskrivning", "Dugga", "Tentame
 event_export_category = "KTHTimeTable"
 language = "en"
 preferred_system = "Daisy"
+publish_userid = ""
+publish = False
 
 # -----------------------------------------------------------
 def _setDefaultCalendarValues():
@@ -36,7 +38,8 @@ def load():
 
 
 def loadFromFile(filename):
-    global daybegin, dayend, lastweekday, event_export_category, language, preferred_system
+    global daybegin, dayend, lastweekday, event_export_category, language
+    global preferred_system, publish_userid, publish
 
     config = configfileparser.ConfigParserX()
 
@@ -51,6 +54,12 @@ def loadFromFile(filename):
         language = config.get("main", "language")
         setLanguage(language)
     except (error.DataError, IOError):
+        sys.stderr.write("Settings missing or invalid, using default values.\n")
+
+    try:
+        publish = config.getboolean("main", "publish")
+        publish_userid = config.get("main", "publish_userid")
+    except error.DataError:
         sys.stderr.write("Settings missing or invalid, using default values.\n")
 
     import calendar
@@ -71,7 +80,8 @@ def loadFromFile(filename):
 
 
 def save():
-    global daybegin, dayend, lastweekday, event_export_category, language, preferred_system, __filename
+    global daybegin, dayend, lastweekday, event_export_category, language
+    global preferred_system, __filename, publish_userid, publish
 
     config = configfileparser.ConfigParserX()
 
@@ -82,6 +92,8 @@ def save():
     config.set("main", "event_export_category", event_export_category)
     config.set("main", "language", language)
     config.set("main", "preferred_system", preferred_system)
+    config.set("main", "publish_userid", publish_userid)
+    config.set("main", "publish", str(publish))
 
     try:
         config.write(file(__filename, "w+"))

@@ -15,7 +15,7 @@ class CourseList:
 
     def clear(self):
         self.courses = []
-        
+
     def clearDaisyCourses(self):
         for course in self.getAllDaisyCourseCodes():
             self.removeCourse(course)
@@ -92,9 +92,7 @@ class CourseList:
 
     def getAllDaisyCourseIDs(self):
         ids = []
-        for course in self.getAllDaisyCourseCodes():
-            ids.append(self.getCourseID(course))
-
+        map(ids.append, map(self.getCourseID, self.getAllDaisyCourseCodes()))
         return ids
 
     def getAllDaisyCourseCodes(self):
@@ -112,19 +110,13 @@ class CourseList:
         return codes
 
     def getAllDaisyCourses(self):
-        codes = self.getAllDaisyCourseCodes()
         courses = []
-        for code in codes:
-            courses.append(self.getCourse(code))
-
+        map(courses.append, map(self.getCourse, self.getAllDaisyCourseCodes()))
         return courses
 
     def getAllTimeEditCourses(self):
-        codes = self.getAllTimeEditCourseCodes()
         courses = []
-        for code in codes:
-            courses.append(self.getCourse(code))
-
+        map(courses.append, map(self.getCourse, self.getAllTimeEditCourseCodes()))
         return courses
 
     def getAllPersistentCourses(self):
@@ -135,19 +127,16 @@ class CourseList:
 
     def getAllCourses(self):
         courses = []
-        for course in self.courses:
-            courses.append(course)
-
+        map(courses.append, self.courses)
+        print "used?"
         return courses
 
     def getAllMatchingName(self, name):
         courses = []
-
         for course in self.courses:
             # Daisy exporterar ibland ofullständigt namn
             if course.name.startswith(name):
                 courses.append(course)
-
         return courses
 
     def pickle(self):
@@ -170,6 +159,8 @@ class CachedCourseList(CourseList):
     filename = "daisycourses"
 
     def __init__(self):
+        CourseList.__init__(self)
+
         import os.path
         import time
 
@@ -592,13 +583,14 @@ class Event:
     def _parseSummary(self, summary):
         global courselist
         data = self.parser.parse(summary)
-        self.type = data["type"]
+
+        self.type = unicode(data["type"], "latin_1")
         self.group = data["group"]
         self.seriesno = data["seriesno"]
         if not self.location:
             # om inte copyFromDict redan satt lokalen,
             # som den gör för Daisy-aktiviteter
-            self.location = data["location"]
+            self.location = unicode(data["location"], "latin_1")
 
         try:
             if not self.course:
@@ -624,33 +616,22 @@ class Event:
             som redan finns i kurslistan.
         """
 
-        global courselist
-        stored = CachedCourseList().getAllMatchingName(name)
-        course = None
+        global courselist, cachedcourselist
 
-        for course in stored:
-            try:
-                course = courselist.getCourse(course.code)
-                break
-            except ValueError:
-                pass
+        for course in cachedcourselist.getAllMatchingName(name):
+            if courselist.hasCourse(course):
+                return courselist.getCourse(course)
 
-        return course
+        return None
 
-    def _findTimeEditCourse(self, courses):
+    def _findTimeEditCourse(self, codes):
         "Hittar en TimeEdit-kurs genom att prova alla i en lista"
 
         global courselist
-        courses = courses.split(",")
-        course = None
-        for c in courses:
-            try:
-                course = courselist.getCourse(c)
-                break
-            except ValueError:
-                pass
+        for code in codes.split(","):
+            if courselist.hasCourse(code): return courselist.getCourse(code)
 
-        return course
+        return None
 
     def copyFromDict(self, other):
         keys = other.keys()
@@ -661,7 +642,7 @@ class Event:
         if "date" in keys: self.date = calendar.Date(other["date"])
         if "begin" in keys: self.begin = calendar.Time(other["begin"])
         if "end" in keys: self.end = calendar.Time(other["end"])
-        if "type" in keys: self.type = other["type"]
+        if "type" in keys: self.type = unicode(other["type"], "latin_1")
         if "group" in keys: self.group = other["group"]
         if "seriesno" in keys: self.seriesno = other["seriesno"]
         if "active" in keys: self.active = other["active"]
@@ -869,7 +850,7 @@ class EventList:
     def addEvents(self, list, course = None):
         for event in list:
             self.addEvent(event, course)
-            
+
     def removeEvent(self, id):
         try:
             del self.events[id]
@@ -1088,5 +1069,6 @@ class EventSorter:
 
 # -----------------------------------------------------------
 courselist = CourseList()
+cachedcourselist = CachedCourseList()
 timetable = TimeTable()
 timetable.load()
