@@ -1158,8 +1158,8 @@ class CourseListBox(wx.ListBox):
 
         for course in courses:
             for i in range(self.GetCount()):
-                if course.code in self.GetClientData(i).code:
-                    raise ValueError("Course is already in list")
+                if course is self.GetClientData(i):
+                    raise ValueError("Course already in list")
 
             self.Append(self.__courseToString(course), course)
 
