@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: Wed Dec 29 23:51:12 2004\n"
+"POT-Creation-Date: Thu Dec 30 09:07:43 2004\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -90,7 +90,7 @@ msgstr "Oktober"
 msgid "September"
 msgstr "September"
 
-#: daisy.py:33 daisy.py:87 gui.py:226 gui.py:590 timeedit.py:42 timeedit.py:72
+#: daisy.py:33 daisy.py:87 gui.py:226 gui.py:592 timeedit.py:42 timeedit.py:72
 #: timetable.py:343 vcalendar.py:37
 msgid "Could not read from"
 msgstr "Kunde inte läsa från"
@@ -171,7 +171,7 @@ msgid ""
 "is"
 msgstr "Kunde inte spara schemat. Filen kan vara skrivskyddad. Filnamnet är"
 
-#: gui.py:148 gui.py:766
+#: gui.py:148 gui.py:768
 msgid "File error"
 msgstr "Filfel"
 
@@ -207,11 +207,11 @@ msgstr "Först måste du välja kurser att hämta."
 msgid "No courses"
 msgstr "Inga kurser"
 
-#: gui.py:226 gui.py:590
+#: gui.py:226 gui.py:592
 msgid "Make sure you have access to the Internet."
 msgstr "Kontrollera att du har tillgång till Internet."
 
-#: gui.py:227 gui.py:231 gui.py:591 gui.py:594
+#: gui.py:227 gui.py:231 gui.py:593 gui.py:596
 msgid "Server error"
 msgstr "Serverfel"
 
@@ -227,7 +227,7 @@ msgstr "Hämtar schemat från"
 msgid "Receiving timetable..."
 msgstr "Tar emot schema..."
 
-#: gui.py:244 gui.py:257 gui.py:581 gui.py:582
+#: gui.py:244 gui.py:257 gui.py:583 gui.py:584
 msgid "Connecting to"
 msgstr "Kontaktar"
 
@@ -235,7 +235,7 @@ msgstr "Kontaktar"
 msgid "Generating timetable..."
 msgstr "Genererar schema..."
 
-#: gui.py:257 gui.py:582
+#: gui.py:257 gui.py:584
 msgid "Receiving data..."
 msgstr "Tar emot data..."
 
@@ -317,103 +317,106 @@ msgstr "Tom sträng ignorerad"
 msgid "Change settings"
 msgstr "Gör inställningar"
 
-#: gui.py:496
+#: gui.py:498
 msgid "Days in week:"
 msgstr "Dagar per vecka:"
 
-#: gui.py:501
+#: gui.py:503
 msgid "Program language:"
 msgstr "Programspråk:"
 
-#: gui.py:507
+#: gui.py:509
 msgid "Start of day:"
 msgstr "Dagen börjar:"
 
-#: gui.py:514
+#: gui.py:516
 msgid "End of day:"
 msgstr "Dagen slutar:"
 
-#: gui.py:523
+#: gui.py:525
 msgid ""
-"Some of these settings will need a\n"
+"The settings will need a\n"
 "program restart to take effect."
 msgstr ""
-"Vissa inställningar kräver en omstart\n"
+"Inställningarna kräver en omstart\n"
 "av programmet för att träda i kraft."
 
-#: gui.py:546
+#: gui.py:548
 msgid "Choose courses"
 msgstr "Välj kurser"
 
-#: gui.py:553
+#: gui.py:555
 msgid "&Add"
 msgstr "&Lägg till"
 
-#: gui.py:561
+#: gui.py:563
 msgid "&Remove"
 msgstr "&Ta bort"
 
-#: gui.py:566
+#: gui.py:568
 msgid ""
 "Choose the courses you want included in your timetable. Both TimeEdit\n"
 "and Daisy courses can be added. The course code may be incomplete\n"
 "for Daisy courses; all matching courses will then be added."
 msgstr ""
+"Välj de kurser du vill ta med i ditt schema. Kurser från både TimeEdit\n"
+"och Daisy kan väljas. Kurskoderna kan vara ofullständiga; alla\n"
+"matchande Daisy-kurser kommer då läggas till listan."
 
-#: gui.py:567
+#: gui.py:569
 msgid "Enter one course code at a time:"
 msgstr "Ange en kurskod i taget:"
 
-#: gui.py:581
+#: gui.py:583
 msgid "Fetching course list"
 msgstr "Hämtar kurslista"
 
-#: gui.py:590 gui.py:593
+#: gui.py:592 gui.py:595
 msgid "the IT University web site."
 msgstr "IT-universitetets webbplats."
 
-#: gui.py:593
+#: gui.py:595
 msgid "Got bad and unusable data from"
 msgstr "Tog emot oanvändbar data från"
 
-#: gui.py:625
+#: gui.py:627
 msgid "Fetching course name"
 msgstr "Hämtar kursnamn"
 
-#: gui.py:625
+#: gui.py:627
 msgid "Receiving data from"
 msgstr "Tar emot data från"
 
-#: gui.py:632
+#: gui.py:634
 msgid "in Daisy or TimeEdit."
 msgstr "i Daisy eller TimeEdit."
 
-#: gui.py:632 gui.py:633 holidays.py:32 timeedit.py:77 timetable.py:78
+#: gui.py:634 gui.py:635 holidays.py:32 timeedit.py:77 timetable.py:78
 #: timetable.py:283 timetable.py:683 timetable.py:689
 msgid "does not exist"
 msgstr "finns inte"
 
-#: gui.py:632 gui.py:633 timeedit.py:77 timetable.py:78 timetable.py:283
+#: gui.py:634 gui.py:635 timeedit.py:77 timetable.py:78 timetable.py:283
 msgid "The course"
 msgstr "Kursen"
 
-#: gui.py:659
+#: gui.py:661
 msgid "About"
 msgstr "Om"
 
-#: gui.py:661
+#: gui.py:663
 msgid "&Close"
 msgstr "&Stäng"
 
-#: gui.py:665
+#: gui.py:667
 msgid "is created by"
 msgstr "är skapat av"
 
-#: gui.py:666
+#: gui.py:668
 msgid "Version:"
 msgstr "Version:"
 
-#: gui.py:667
+#: gui.py:669
 msgid ""
 "The program and its source code is licensed under the terms of the GNU GPL.\n"
 "\n"
@@ -423,55 +426,55 @@ msgstr ""
 "\n"
 "Skicka gärna buggrapporter och förslag till"
 
-#: gui.py:684
+#: gui.py:686
 msgid "Export timetable"
 msgstr "Exportera schema"
 
-#: gui.py:712
+#: gui.py:714
 msgid "Choose start date"
 msgstr "Välj startdatum"
 
-#: gui.py:712 gui.py:714
+#: gui.py:714 gui.py:716
 msgid "for export:"
 msgstr "för export:"
 
-#: gui.py:714
+#: gui.py:716
 msgid "Choose end date"
 msgstr "Välj slutdatum"
 
-#: gui.py:746
+#: gui.py:748
 msgid "Export to file"
 msgstr "Exportera till fil"
 
-#: gui.py:747
+#: gui.py:749
 msgid "All files"
 msgstr "Alla filer"
 
-#: gui.py:747
+#: gui.py:749
 msgid "CSV files"
 msgstr "CSV-filer"
 
-#: gui.py:747
+#: gui.py:749
 msgid "HTML files"
 msgstr "HTML-filer"
 
-#: gui.py:747
+#: gui.py:749
 msgid "iCalendar files"
 msgstr "iCalendar-filer"
 
-#: gui.py:747
+#: gui.py:749
 msgid "vCalendar files"
 msgstr "vCalendar-filer"
 
-#: gui.py:761
+#: gui.py:763
 msgid "Cannot export to the chosen file format."
 msgstr "Kan inte exportera till det valda filformatet."
 
-#: gui.py:762
+#: gui.py:764
 msgid "Unknown extension"
 msgstr "Okänd filändelse"
 
-#: gui.py:765
+#: gui.py:767
 msgid "Could not write to the file. It could be write-protected."
 msgstr "Kunde inte skriva till filen. Den kan vara skrivskyddad."
 

@@ -374,7 +374,7 @@ class GroupsDialog(OKCancelDialog):
                 msg = U_("There is no information on which groups") + " " + course.name + "\n" + U_("is divided into. You have to fetch timetable from Daisy.")
                 wx.MessageDialog(self, msg, U_("Group information missing"), style=wx.OK|wx.ICON_INFORMATION).ShowModal()
 
-            text = StaticText(self, course.name, size=(100, -1), style=wx.ST_NO_AUTORESIZE)
+            text = StaticText(self, course.name, size=(150, -1), style=wx.ST_NO_AUTORESIZE)
 
             if groups:
                 groups.sort()
@@ -447,8 +447,8 @@ class CourseNamesDialog(OKCancelDialog):
         for course in courses:
             self.coursecodes.append(course.code)
 
-            text = StaticText(self, course.code, size=(100, -1), style=wx.ST_NO_AUTORESIZE)
-            edit = wx.TextCtrl(self, -1, size=(200, -1))
+            text = StaticText(self, course.code, size=(110, -1), style=wx.ST_NO_AUTORESIZE)
+            edit = wx.TextCtrl(self, -1, size=(240, -1))
             edit.SetValue(course.name)
             self.edits.append(edit)
 
@@ -493,25 +493,27 @@ class SettingsDialog(OKCancelDialog):
         setting3 = wx.BoxSizer(wx.HORIZONTAL)
         setting4 = wx.BoxSizer(wx.HORIZONTAL)
 
-        setting1.Add(StaticText(self, U_("Days in week:")), 1, wx.ALL, 10)
+        size = (150,-1)
+
+        setting1.Add(StaticText(self, U_("Days in week:"), size=size, style=wx.ST_NO_AUTORESIZE), 0, wx.ALL, 10)
         self.daysinweek = wx.Choice(self, -1, size=(70,-1), choices=["5", "6", "7"])
         self.daysinweek.SetSelection(settings.lastweekday - 4)
         setting1.Add(self.daysinweek, 0, wx.LEFT|wx.RIGHT, 10)
 
-        setting2.Add(StaticText(self, U_("Program language:")), 1, wx.ALL, 10)
+        setting2.Add(StaticText(self, U_("Program language:"), size=size, style=wx.ST_NO_AUTORESIZE), 0, wx.ALL, 10)
         self.language = wx.Choice(self, -1, size=(100,-1), choices=["English", "Svenska"])
         if settings.language == "en": self.language.SetSelection(0)
         elif settings.language == "sv": self.language.SetSelection(1)
         setting2.Add(self.language, 0, wx.LEFT|wx.RIGHT, 10)
 
-        setting3.Add(StaticText(self, U_("Start of day:")), 1, wx.ALL, 10)
+        setting3.Add(StaticText(self, U_("Start of day:"), size=size, style=wx.ST_NO_AUTORESIZE), 0, wx.ALL, 10)
         self.daybegin = wx.Choice(self, -1, size=(80,-1), choices=["08:00", "09:00", "10:00"])
         if settings.daybegin <= calendar.Time("080000"): self.daybegin.SetSelection(0)
         elif settings.daybegin <= calendar.Time("090000"): self.daybegin.SetSelection(1)
         else: self.daybegin.SetSelection(2)
         setting3.Add(self.daybegin, 0, wx.LEFT|wx.RIGHT, 10)
 
-        setting4.Add(StaticText(self, U_("End of day:")), 1, wx.ALL, 10)
+        setting4.Add(StaticText(self, U_("End of day:"), size=size, style=wx.ST_NO_AUTORESIZE), 0, wx.ALL, 10)
         self.dayend = wx.Choice(self, -1, size=(80,-1), choices=["17:00", "18:00", "19:00", "20:00", "21:00"])
         if settings.dayend <= calendar.Time("170000"): self.dayend.SetSelection(0)
         elif settings.dayend <= calendar.Time("180000"): self.dayend.SetSelection(1)
@@ -520,7 +522,7 @@ class SettingsDialog(OKCancelDialog):
         else: self.dayend.SetSelection(4)
         setting4.Add(self.dayend, 0, wx.LEFT|wx.RIGHT, 10)
 
-        layout.Add(StaticText(self, U_("Some of these settings will need a\nprogram restart to take effect.")), 0, wx.EXPAND|wx.ALL, 10)
+        layout.Add(StaticText(self, U_("The settings will need a\nprogram restart to take effect.")), 0, wx.EXPAND|wx.ALL, 10)
         layout.Add(setting1, 0, wx.EXPAND|wx.ALL, 10)
         layout.Add(setting3, 0, wx.EXPAND|wx.ALL, 10)
         layout.Add(setting4, 0, wx.EXPAND|wx.ALL, 10)
