@@ -106,6 +106,20 @@ class Date:
     def isWeekend(self):
         return self.getWeekDay() >= SAT
         
+    def isHoliday(self):
+        return holidaychecker.checkHoliday(self)
+
+    def getSpecialName(self):
+        """
+            Returnerar namnet på dagen om det är en helgdag
+            eller i andra hand en flaggdag eller annat.
+        """
+        name = holidaychecker.checkHoliday(self)
+        if name == False:
+            name = holidaychecker.checkOther(self)
+
+        return name
+
     def getNextMonday(self):
         return self + 7 - self.getWeekDay()
         
@@ -118,9 +132,6 @@ class Date:
         else:
             return self.getLastMonday()
 
-    def isHoliday(self):
-        return holidaychecker.check(self)
-        
     def isDaylightSavingTime(self):
         "Är aktuellt datum i sommartid?"
         if self >= self.getDaylightSavingBegin() and self < self.getDaylightSavingEnd():

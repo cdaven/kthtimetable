@@ -94,13 +94,13 @@ class WriterTest(xunittest.TestCase):
             
         data = "BEGIN:VCALENDAR\nVERSION:1.0\nPRODID:-//cda//NONSGML Schema//SV\n" +\
             "BEGIN:VEVENT\nUID:DAISYKTH1000\nDTSTART:20040301T100000Z\nDTEND:20040301T120000Z\n" +\
-            "SUMMARY:Matte F1\nLOCATION:Sal A\nEND:VEVENT\n" +\
+            "SUMMARY:Matte F1\nLOCATION:Sal A\nCATEGORIES:KTHTimeTable\nEND:VEVENT\n" +\
             "BEGIN:VEVENT\nUID:DAISYKTH1001\nDTSTART:20040414T073000Z\nDTEND:20040414T100000Z\n" +\
-            "SUMMARY:DigEl Lekt3 grp 2\nLOCATION:540\nEND:VEVENT\n" +\
+            "SUMMARY:DigEl Lekt3 grp 2\nLOCATION:540\nCATEGORIES:KTHTimeTable\nEND:VEVENT\n" +\
             "BEGIN:VEVENT\nUID:DAISYKTH1002\nDTSTART:20040414T133000Z\nDTEND:20040414T160000Z\n" +\
-            "SUMMARY:Kommunikation Intro\nLOCATION:Aulan\nEND:VEVENT\n" +\
+            "SUMMARY:Kommunikation Intro\nLOCATION:Aulan\nCATEGORIES:KTHTimeTable\nEND:VEVENT\n" +\
             "BEGIN:VEVENT\nUID:DAISYKTH1003\nDTSTART:20040416T080000Z\nDTEND:20040416T100000Z\n" +\
-            "SUMMARY:Kommunikation F1\nLOCATION:Aulan\nEND:VEVENT\n" +\
+            "SUMMARY:Kommunikation F1\nLOCATION:Aulan\nCATEGORIES:KTHTimeTable\nEND:VEVENT\n" +\
             "END:VCALENDAR"
 
         vcalendar.Writer("-//cda//NONSGML Schema//SV").write(events, "_test")

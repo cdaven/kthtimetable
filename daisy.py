@@ -58,14 +58,6 @@ class Conduit:
             except IOError:
                 pass
             
-#    def verifyDocument(self, document):
-#        if len(document) < 10000:
-#            return False
-#        elif document.find("<title>Student -") == -1:
-#            return False
-#        else:
-#            return True
-
     def getTimeTableData(self, courseids):
         postdata = urllib.urlencode({"table": "true"})
 
@@ -99,6 +91,12 @@ class SummaryParser:
         ex. "Föreläsning 8 Sal E - Digital elektro"
     """
     
+    def __init__(self):
+        self.rxtype = re.compile("^(.*?)(  | [0-9A-ZÅÄÖ])")
+        self.rxseries = re.compile("^[A-ZÅÄÖ][a-zåäö ]+ (\d{1,2}) ")
+        self.rxgroup = re.compile("grp (\d+) ")
+        self.rxcourse = re.compile("- (.+)$")
+
     # -----
     #  Observerade händelsetyper i Daisy:
 
@@ -117,6 +115,7 @@ class SummaryParser:
     #  Information
     #  Introduktion
     #  Handledning
+    #  SI-möte
     # -----
 
     def parse(self, summary):
@@ -132,7 +131,7 @@ class SummaryParser:
         "Hittar händelsens typ (ex. Föreläsning)"
         
         type = ""
-        rx = re.search("^([A-ZÅÄÖ][a-zåäö ]+) [0-9A-ZÅÄÖ]", text)
+        rx = self.rxtype.search(text)
         if rx:
             type = rx.group(1)
             
@@ -142,7 +141,7 @@ class SummaryParser:
         "Hittar händelsens löpnummer (ex. (Lektion) 3)"
         
         number = 0
-        rx = re.search("^[A-ZÅÄÖ][a-zåäö ]+ (\d{1,2}) ", text)
+        rx = self.rxseries.search(text)
         if rx:
             number = int(rx.group(1))
                 
@@ -152,7 +151,7 @@ class SummaryParser:
         "Hittar eventuellt gruppnummer"
         
         group = 0
-        rx = re.search("grp (\d+) ", text)
+        rx = self.rxgroup.search(text)
         if rx:
             group = int(rx.group(1))
         
@@ -163,7 +162,7 @@ class SummaryParser:
         
         code = ""
         # kan innehålla alla tecken, ex. "SPÖK , kvällskurs" och "*:59/2I1042/2I4033"
-        rx = re.search("- (.+)$", text)
+        rx = self.rxcourse.search(text)
         if rx:
             code = rx.group(1)
             

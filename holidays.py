@@ -21,18 +21,20 @@ class HolidayChecker:
         "Factorymetod för flera HolidayGenerator"
 
         self.holidays = {}
+        self.otherdays = {}
 
         if id == "SWE":
             self.generator = SweHolidays()
             self.holidays[Date().getYear()] = self.generator.generate(Date().getYear())
+            self.otherdays[Date().getYear()] = self.generator.generateOther(Date().getYear())
         else:
             raise ValueError("Helgdagsgeneratorn " + str(id) + " finns inte.")
 
-    def check(self, date):
+    def checkHoliday(self, date):
         """
-            Jämför angivet datum med alla genererade för
-            årtalet och returnerar namnet på helgdagen
-            eller False om ej helgdag.
+            Jämför angivet datum med alla inlagda helgdagar
+            och returnerar namnet på helgdagen eller False
+            om ej helgdag.
         """
         
         year = date.getYear()
@@ -42,8 +44,26 @@ class HolidayChecker:
         for holiday in self.holidays[year]:
             if date == holiday.date:
                 return holiday.name
+
+        return False
+
+    def checkOther(self, date):
+        """
+            Jämför angivet datum med alla inlagda specialdagar
+            och returnerar namnet på den eller False
+            om ej helgdag.
+        """
+        
+        year = date.getYear()
+        if year not in self.otherdays.keys():
+            self.otherdays[year] = self.generator.generateOther(year)
+    
+        for holiday in self.otherdays[year]:
+            if date == holiday.date:
+                return holiday.name
         
         return False
+
 
 # -----------------------------------------------------------
 class HolidayGenerator:
@@ -123,3 +143,22 @@ class SweHolidays(HolidayGenerator):
         
         return holidays
 
+    def generateOther(self, year):
+        "Speciella dagar som inte är 'röda', dvs helgdagar."
+
+        holidays = []
+        yearstr = str(year)
+
+        # Nationella flaggdagar som inte också är helgdagar
+        holidays.append(Holiday(Date(yearstr + "0128"), "Konungens namnsdag"))
+        holidays.append(Holiday(Date(yearstr + "0312"), "Kronprinsessans namnsdag"))
+        holidays.append(Holiday(Date(yearstr + "0430"), "Konungens födelsedag"))
+        holidays.append(Holiday(Date(yearstr + "0606"), "Sveriges nationaldag"))
+        holidays.append(Holiday(Date(yearstr + "0714"), "Kronprinsessans födelsedag"))
+        holidays.append(Holiday(Date(yearstr + "0808"), "Drottningens namnsdag"))
+        holidays.append(Holiday(Date(yearstr + "1024"), "FN-dagen"))
+        holidays.append(Holiday(Date(yearstr + "1106"), "Gustav Adolfsdagen"))
+        holidays.append(Holiday(Date(yearstr + "1210"), "Nobeldagen"))
+        holidays.append(Holiday(Date(yearstr + "1223"), "Drottningens födelsedag"))
+
+        return holidays

@@ -102,6 +102,7 @@ class Writer:
             data.append("\nDTEND:" + str(event.date) + "T" + str(end) + "Z")
             data.append("\nSUMMARY:" + event.getDescriptionWithoutLocation())
             data.append("\nLOCATION:" + event.location)
+            data.append("\nCATEGORIES:KTHTimeTable")
             data.append("\nEND:VEVENT\n")
             
         data.append("END:VCALENDAR")

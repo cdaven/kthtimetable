@@ -28,6 +28,8 @@ class DaisySummaryParserTest(xunittest.TestCase):
         self.cases.append("Föreläsning 1 Sal A - SPÖK , kvällskurs")
         self.cases.append("Salsskrivning 502,510,Sal C - 2C1225")
         self.cases.append("Handledarens rum Forum, Kista - *:59/2I1140/2I1274/2D1003")
+        self.cases.append("SI-möte (Niklas) 510 - 2I1027")
+        self.cases.append("Salsskrivning  - PP/2I1408/2I4111")
         
         self.casetypes.append("Föreläsning")
         self.casetypes.append("Övning")
@@ -36,6 +38,8 @@ class DaisySummaryParserTest(xunittest.TestCase):
         self.casetypes.append("Föreläsning")
         self.casetypes.append("Salsskrivning")
         self.casetypes.append("Handledarens rum")
+        self.casetypes.append("SI-möte (Niklas)")
+        self.casetypes.append("Salsskrivning")
 
         self.caseseriesnos.append(1)
         self.caseseriesnos.append(4)
@@ -44,9 +48,13 @@ class DaisySummaryParserTest(xunittest.TestCase):
         self.caseseriesnos.append(1)
         self.caseseriesnos.append(0)
         self.caseseriesnos.append(0)
+        self.caseseriesnos.append(0)
+        self.caseseriesnos.append(0)
 
         self.casegroups.append(0)
         self.casegroups.append(1)
+        self.casegroups.append(0)
+        self.casegroups.append(0)
         self.casegroups.append(0)
         self.casegroups.append(0)
         self.casegroups.append(0)
@@ -60,6 +68,8 @@ class DaisySummaryParserTest(xunittest.TestCase):
         self.casecourses.append("SPÖK , kvällskurs")
         self.casecourses.append("2C1225")
         self.casecourses.append("*:59/2I1140/2I1274/2D1003")
+        self.casecourses.append("2I1027")
+        self.casecourses.append("PP/2I1408/2I4111")
 
     def testExtractType(self):
         for i in range(len(self.cases)):

@@ -83,6 +83,9 @@ class SummaryParser:
         self.lowercase_letters = "abcdefghijklmnopqrstuvwxyzåäö"
         self.numbers = "1234567890"
 
+        self.rxcourse = re.compile("([A-Z0-9:/*]+?)\.")
+        self.rxtype = re.compile("\.([A-ZÅÄÖa-z]+)")
+
     def parse(self, summary):
         data = {}
         data["location"] = self.extractLocation(summary)
@@ -115,7 +118,7 @@ class SummaryParser:
             
     def extractCourse(self, text):
         course = "???"
-        rx = re.search("([A-Z0-9:/*]+?)\.", text)
+        rx = self.rxcourse.search(text)
         if rx:
             course = rx.group(1)
         
@@ -123,7 +126,7 @@ class SummaryParser:
 
     def extractType(self, text):
         typecode = ""
-        rx = re.search("\.([A-ZÅÄÖa-z]+)", text)
+        rx = self.rxtype.search(text)
         if rx:
             typecode = rx.group(1)
 

@@ -8,6 +8,13 @@
 # hela licenstexten, se: <http://www.gnu.org/copyleft/gpl.html>
 
 import sys
+import os, os.path
+
+# Raderar alla tmpXXXXXX-filer som skapats av PyInformationalMessagesFrame
+files = os.listdir(os.getcwd())
+for file in files:
+    if file.startswith("tmp") and os.path.isfile(os.path.join(os.getcwd(), file)):
+        os.remove(os.path.join(os.getcwd(), file))
 
 if len(sys.argv) > 1:
     import timetable

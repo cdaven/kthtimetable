@@ -10,7 +10,7 @@ import timetable
 import error
 
 applicationname = "KTH TimeTable"
-applicationversion = "2.2"
+applicationversion = "2.?"
 
 # center(width)
 # Return centered in a string of length width. Padding is done using spaces. 
@@ -21,6 +21,8 @@ class MainFrame(wx.Frame):
         global applicationname
         global applicationversion
         
+        guisettings.getSystemSettings()
+
         self.weeklabel = None
         self.datelabel = None
         self.daylabels = []
@@ -54,10 +56,12 @@ class MainFrame(wx.Frame):
         self.GoToday(None)
         
         if calendar.Date() - timetable.timetable.updated > 7:
-            msg = "Det var över en vecka sedan du uppdaterade schemat senast. Det kan ha\nförändrats sedan dess. Vill du uppdatera schemat nu?"
-            if wx.MessageDialog(self, msg, "Gammalt schema", style=wx.YES_NO|wx.ICON_QUESTION).ShowModal() == wx.ID_YES:
+            msg = "Det var över en vecka sedan du uppdaterade schemat senast. " +\
+                "Det kan ha\nförändrats sedan dess. Vill du uppdatera schemat nu?"
+            if wx.MessageDialog(self, msg, "Gammalt schema",
+               style=wx.YES_NO|wx.ICON_QUESTION).ShowModal() == wx.ID_YES:
                 self.Update(None)
-        
+
     def AddWeekView(self):
         weekview = wx.BoxSizer(wx.VERTICAL)
         hoursanddays = wx.BoxSizer(wx.HORIZONTAL)
@@ -83,7 +87,7 @@ class MainFrame(wx.Frame):
         
     def AddButtonsAndLabels(self):
         self.weeklabel = StaticText(self, "Vecka XX", size=(-1, -1), style=wx.ALIGN_CENTRE)
-        self.datelabel = StaticText(self, "månad år", size=(130, 25), style=wx.ST_NO_AUTORESIZE|wx.ALIGN_RIGHT)
+        self.datelabel = StaticText(self, "Månad år", size=(150, 25), style=wx.ST_NO_AUTORESIZE|wx.ALIGN_RIGHT)
 
         guisettings.font_default.SetWeight(wx.BOLD)
         guisettings.font_default.SetPointSize(guisettings.font_default.GetPointSize() + 1)
@@ -92,10 +96,10 @@ class MainFrame(wx.Frame):
         guisettings.font_default.SetWeight(wx.NORMAL)
 
         buttons = wx.BoxSizer(wx.HORIZONTAL)
-        buttons.Add(wx.Button(self, 1, "Idag"), 0)
-        buttons.Add(wx.Button(self, 2, "<-", size=(25, -1)), 0, wx.LEFT|wx.RIGHT, 10)
+        buttons.Add(wx.Button(self, 1, "Idag", size=(60, -1)), 0)
+        buttons.Add(wx.Button(self, 2, "<-", size=(30, -1)), 0, wx.LEFT|wx.RIGHT, 10)
         buttons.Add(self.weeklabel, 0, wx.TOP, 5)
-        buttons.Add(wx.Button(self, 3, "->", size=(25, -1)), 0, wx.LEFT, 10)
+        buttons.Add(wx.Button(self, 3, "->", size=(30, -1)), 0, wx.LEFT|wx.RIGHT, 10)
         buttons.Add(self.datelabel, 0, wx.TOP, 5)
 
         wx.EVT_BUTTON(self, 1, self.GoToday)
@@ -107,7 +111,6 @@ class MainFrame(wx.Frame):
         menubar = wx.MenuBar()
         
         menu = wx.Menu()
-        #menu.Append(110, "&Importera...")
         menu.Append(120, "&Exportera...")
         menu.AppendSeparator()
         menu.Append(999, "&Avsluta")
@@ -116,13 +119,9 @@ class MainFrame(wx.Frame):
         menu = wx.Menu()
         menu.Append(210, "Välj &kurser...")
         menu.Append(220, "&Uppdatera schema...\tF5")
-        #menu.AppendSeparator()
-        #menu.Append(230, "Ny &händelse...\tAlt+N")
         menu.AppendSeparator()
         menu.Append(250, "Välj &grupper...")
         menu.Append(260, "&Namnge kurser...")
-        #menu.AppendSeparator()
-        #menu.Append(270, "&Inställningar...")
         menubar.Append(menu, "&Verktyg")
 
         menu = wx.Menu()
@@ -130,14 +129,11 @@ class MainFrame(wx.Frame):
         menubar.Append(menu, "&Hjälp")
 
         wx.EVT_MENU(self, 999, self.OnClose)
-        wx.EVT_MENU(self, 110, self.ImportEvents)
         wx.EVT_MENU(self, 120, self.ExportEvents)
         wx.EVT_MENU(self, 210, self.ChooseCourses)
         wx.EVT_MENU(self, 220, self.Update)
-        wx.EVT_MENU(self, 230, self.NewEvent)
         wx.EVT_MENU(self, 250, self.ChooseGroups)
         wx.EVT_MENU(self, 260, self.NameCourses)
-        wx.EVT_MENU(self, 270, self.Preferences)
         wx.EVT_MENU(self, 310, self.About)
 
         self.SetMenuBar(menubar)   
@@ -185,7 +181,13 @@ class MainFrame(wx.Frame):
         for day in self.daylabels:
             weekday = date.getWeekDay()
             self.days[weekday].colorize(date)
-            day.SetLabel(date.getWeekDayName() + " " + str(date.getDay()))
+
+            # Skriver ut dagens "namn" om det är en speciell dag,
+            # exempelvis helg- eller flaggdag
+            if date.getSpecialName():
+                day.SetLabel(date.getSpecialName())
+            else:
+                day.SetLabel(date.getWeekDayName() + " " + str(date.getDay()))
 
             self.days[weekday].Freeze()
             self.days[weekday].clear()
