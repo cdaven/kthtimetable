@@ -11,7 +11,7 @@ import error
 from i18n import *
 
 applicationname = u"KTH TimeTable"
-applicationversion = u"2.3.2"
+applicationversion = u"2.4"
 
 # -----------------------------------------------------------
 class MainFrame(wx.Frame):
@@ -210,7 +210,6 @@ class MainFrame(wx.Frame):
         pass
 
     def Import(self, evt):
-        import calfmt
         timetable.timetable.importData(file("cyner.cal").readlines(), "cyner")
         self.updateView()
 
