@@ -172,6 +172,7 @@ class CachedCourseList(CourseList):
                 for course in self.courses:
                     if isinstance(course.group, int):
                         course.group = str(course.group)
+                        if course.group == "0": course.group = ""
                     courses.append(course)
                 self.courses = courses
         except IOError:
@@ -628,7 +629,7 @@ class Event:
         stored = CachedCourseList().getAllMatchingName(name)
         for course in stored:
             try:
-                courselist.getCourse(course.code)
+                course = courselist.getCourse(course.code)
                 break
             except ValueError:
                 course = None
@@ -719,6 +720,7 @@ class Event:
         val = False
         if not self.group or not self.course.group or self.group == self.course.group:
             val = True
+
         return val
     
     def toggleActive(self):

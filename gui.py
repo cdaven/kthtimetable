@@ -368,7 +368,7 @@ class GroupsDialog(OKCancelDialog):
 
         self.choices = []
         self.nogroup = U_("all")
-        self.courses = timetable.courselist.getAllCourses()
+        self.courses = timetable.courselist.getAllDaisyCourses()
         if not self.courses:
             msg = U_("There are no courses to choose groups for.")
             wx.MessageDialog(self, msg, U_("No courses"), style=wx.OK|wx.ICON_INFORMATION).ShowModal()
@@ -410,7 +410,7 @@ class GroupsDialog(OKCancelDialog):
             coursesizer.Add(rightcomponent)
             allcourses.Add(coursesizer, 0, wx.ALL, 10)
 
-        noticetext = U_("Please note that the choices you make here are not reflected\nin Daisy. You will NOT be assigned to these groups.\nYou have to choose your groups in Daisy as well.")
+        noticetext = U_("Please note that the choices you make here\nare not reflected in Daisy. You will NOT be\nassigned to these groups. You have to choose\nyour groups in Daisy as well.")
 
         centeredtext.Add((0, 10), 1)
         centeredtext.Add(StaticText(self, noticetext), 0, wx.ALL, 10)
@@ -426,29 +426,11 @@ class GroupsDialog(OKCancelDialog):
         self.SetSizerAndFit(layout)
         self.Centre()
 
-    def _groupToInt(self, group):
-        """
-            Omvandlar en gruppsträng till ett heltal,
-            antingen från "", "1", "2", ...
-            eller "", "a", "b", ...
-        """
-
-        gint = 0
-        if group == "": return gint
-
-        try:
-            gint = int(group)
-        except ValueError:
-            gint = ord(group) - 96
-
-        return gint
-
     def SaveAndClose(self, evt):
         for course in self.choices:
-            if course.GetStringSelection() == self.nogroup:
-                timetable.courselist.setCourseGroup(course.coursecode, 0)
-            else:
-                timetable.courselist.setCourseGroup(course.coursecode, course.GetSelection() + 1)
+            group = course.GetStringSelection()
+            if group == self.nogroup: group = ""
+            timetable.courselist.setCourseGroup(course.coursecode, group)
 
         self.EndModal(wx.ID_OK)
 
