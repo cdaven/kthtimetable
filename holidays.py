@@ -103,6 +103,13 @@ class HolidayGenerator:
         
         return None
 
+    def getFirstWeekdayBefore(self, start, weekday):
+        for add in range(7):
+            if (start - add).getWeekDay() == weekday:
+                return start - add
+        
+        return None
+
 # -----------------------------------------------------------
 class SweHolidays(HolidayGenerator):
     def getHalloween(self, year):
@@ -118,20 +125,23 @@ class SweHolidays(HolidayGenerator):
     def generate(self, year):
         """
             Tar fram en lista med alla svenska helgdagar.
-            Än så länge endast de som kan infalla på vardag.
         """
     
         holidays = []
         easter = self.getEaster(year)
         midsummer = self.getMidsummer(year)
+        halloween = self.getHalloween(year)
 
-        yearstr = str(year)
-        
         # rörliga helgdagar
         holidays.append(Holiday(easter - 2, U_("Good Friday")))
+        holidays.append(Holiday(easter, U_("Easter Day")))
         holidays.append(Holiday(easter + 1, U_("Easter Monday")))
         holidays.append(Holiday(easter + 39, U_("Ascension Day")))
-        holidays.append(Holiday(midsummer - 1, U_("Midsummer Eve")))
+        holidays.append(Holiday(easter + 49, U_("Whitsunday")))
+        holidays.append(Holiday(midsummer, U_("Midsummer Day")))
+        holidays.append(Holiday(halloween, U_("All Saints' Day")))
+
+        yearstr = str(year)
 
         # fasta helgdagar
         holidays.append(Holiday(Date(yearstr + "0101"), U_("New Year's Day")))
@@ -147,15 +157,27 @@ class SweHolidays(HolidayGenerator):
         "Speciella dagar som inte är 'röda', dvs helgdagar."
 
         holidays = []
-        yearstr = str(year)
 
         easter = self.getEaster(year)
-        holidays.append(Holiday(easter - 47, U_("Shrove Tuesday")))
+        midsummer = self.getMidsummer(year)
 
-        # Nationella flaggdagar och andra högtidsdagar som inte också är helgdagar
+        mothersday = self.getFirstWeekdayBefore(Date(str(year) + "0531"), SUN)
+        fathersday = self.getFirstWeekdayAfter(Date(str(year) + "1108"), SUN)
+
+        # rörliga
+        holidays.append(Holiday(easter - 47, U_("Shrove Tuesday")))
+        holidays.append(Holiday(easter - 3, U_("Maundy Thursday")))
+        holidays.append(Holiday(easter - 1, U_("Easter Eve")))
+        holidays.append(Holiday(easter + 48, U_("Whitsun Eve")))
+        holidays.append(Holiday(midsummer - 1, U_("Midsummer Eve")))
+        holidays.append(Holiday(mothersday, U_("Mother's Day")))
+        holidays.append(Holiday(fathersday, U_("Father's Day")))
+
+        yearstr = str(year)
+
+        # fasta
         holidays.append(Holiday(Date(yearstr + "0128"), U_("The King's Name-Day")))
         holidays.append(Holiday(Date(yearstr + "0214"), U_("St. Valentine's Day")))
-        #holidays.append(Holiday(Date(yearstr + "0229"), U_("Skottdagen")))
         holidays.append(Holiday(Date(yearstr + "0308"), U_("International Women's Day")))
         holidays.append(Holiday(Date(yearstr + "0312"), U_("The Crown Princess' Name-Day")))
         holidays.append(Holiday(Date(yearstr + "0430"), U_("The King's Birthday")))
@@ -168,5 +190,9 @@ class SweHolidays(HolidayGenerator):
         holidays.append(Holiday(Date(yearstr + "1223"), U_("The Queen's Birthday")))
         holidays.append(Holiday(Date(yearstr + "1224"), U_("Christmas Eve")))
         holidays.append(Holiday(Date(yearstr + "1231"), U_("New Year's Eve")))
+        try:
+            holidays.append(Holiday(Date(yearstr + "0229"), U_("Intercalary Day")))
+        except ValueError:
+            pass
 
         return holidays

@@ -35,9 +35,6 @@ class Conduit:
         start = generated.find("/servlet/schema.ics")
         end = generated.find("\"", start)
 
-#        start = generated.find("listid=") + 7
-#        end = generated.find("&", start)
-
         if start == -1 or end == -1:
             raise error.DataError
 
@@ -183,10 +180,10 @@ class SummaryParser:
     def extractGroup(self, text):
         "Hittar eventuellt gruppnummer"
         
-        group = 0
+        group = ""
         rx = self.rxgroup.search(text)
         if rx:
-            group = int(rx.group(1))
+            group = rx.group(1)
         
         return group
         

@@ -375,7 +375,7 @@ class TimeTable:
                 for pair in pairs:
                     code = pair[0]
                     data = pair[1].split("|")
-                    courselist.addCourse(code, data[0], int(data[1]), int(data[2]))
+                    courselist.addCourse(code, data[0], int(data[1]), data[2])
 
         # ... och därefter alla händelser som beror på de inlästa kurserna
         for section in config.sections():
@@ -449,8 +449,10 @@ class Course:
         self.code = code
         self.name = name
         self.id = id
+
+        if group == "0": group = ""
         self.group = group
-    
+
     def __eq__(self, other):
         othercode = other
         if isinstance(other, Course):
@@ -672,8 +674,8 @@ class Event:
     
     def isGroupChosen(self):
         """
-            Om händelsens grupp är 0 är den inte gruppindelad och ska visas.
-            Om vald grupp är 0 ska alla grupper visas.
+            Om händelsens grupp är tom är den inte gruppindelad och ska visas.
+            Om vald grupp är tom ska alla grupper visas.
             Om vald grupp är lika med händelsens grupp ska den visas.
         """
 

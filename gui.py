@@ -240,6 +240,8 @@ class MainFrame(wx.Frame):
             if timeeditcourses:
                 data += self.updateFromTimeEdit(timeeditcourses)
 
+            #file("dbg-caldata", "w+").writelines(data)
+
             timetable.timetable.importVCalData(data)
         except error.ReadError:
             msg = U_("Could not read from") + " " + U_("the timetable server") + ". " + U_("Make sure you have access to the Internet.")
@@ -249,11 +251,6 @@ class MainFrame(wx.Frame):
             msg = U_("The timetable fetched from the server is corrupt and unusable.")
             wx.MessageDialog(self, msg, U_("Server error"), style=wx.OK|wx.ICON_ERROR).ShowModal()
             return
-
-#        msg = str(len(difference["changed"])) + " händelser uppdaterades\n"
-#        msg += str(len(difference["added"])) + " händelser lades till\n"
-#        msg += str(len(difference["removed"])) + " händelser togs bort\n"
-#        wx.MessageDialog(self, msg, "Rapport", style=wx.OK|wx.ICON_INFORMATION).ShowModal()
 
         timetable.timetable.save()
         self.updateView()        
@@ -1224,7 +1221,7 @@ class DayPanel(TimePanel, EventOrganiser):
     def colorize(self, today):
         if calendar.Date() == today:
             self.SetBackgroundColour(guisettings.bgcolour_schedule_today)
-        elif today.isHoliday():
+        elif today.isHoliday() or today.getWeekDay() == calendar.SUN:
             self.SetBackgroundColour(guisettings.bgcolour_schedule_holiday)
         else:
             self.SetBackgroundColour(guisettings.bgcolour_schedule)
@@ -1311,7 +1308,7 @@ class EventPanel(Panel):
         import math
         (windowsizex, windowsizey, ydelta) = self.getYDelta(self.parent)
         posx = (sizex - 1) * self.column
-        posy = math.floor((self.event.begin - settings.daybegin) * ydelta)
+        posy = int(math.floor((self.event.begin - settings.daybegin) * ydelta))
         return (posx, posy)
 
     def resize(self):
@@ -1342,7 +1339,14 @@ class EventPanel(Panel):
         if wx.MINOR_VERSION >= 5:
             self.ClearBackground()
 
-        self.label = StaticText(self, unicode(self.event), wordwrap=True, pos=(2,2), style=wx.ST_NO_AUTORESIZE)
+        # flyttar ned texten om "panelen" börjar så högt upp att texten annars inte syns
+        ypos = self.GetPositionTuple()[1]
+        textypos = 2
+        if ypos < 0:
+            textypos -= ypos + 10 # skymmer delar av texten för att markera
+                                  # att aktiviteten börjar tidigare
+
+        self.label = StaticText(self, unicode(self.event), wordwrap=True, pos=(2,textypos), style=wx.ST_NO_AUTORESIZE)
         self.resize()
 
     def OnClick(self, evt):

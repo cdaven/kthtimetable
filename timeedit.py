@@ -68,11 +68,11 @@ class Conduit:
             raise error.ReadError(U_("Could not read from") + " " + U_("the timetable server"))
 
         rxcode = re.escape(code)
-        rx = re.search("<TD>" + rxcode + "</TD>.*<TD>(\w.*?)</TD>", data, re.DOTALL|re.IGNORECASE)
+        rx = re.search("<TD>(" + rxcode + ")</TD>.*<TD>(\w.*?)</TD>", data, re.DOTALL|re.IGNORECASE)
         if not rx:
             raise ValueError(U_("The course") + " " + code + " " + U_("does not exist"))
         
-        return timetable.Course(code.upper(), rx.group(1))
+        return timetable.Course(rx.group(1), rx.group(2))
 
 # -----------------------------------------------------------
 class SummaryParser:
@@ -95,7 +95,7 @@ class SummaryParser:
         data["type"] = self.extractType(summary)
         data["location"] = self.extractLocation(summary)
         data["seriesno"] = 0
-        data["group"] = 0
+        data["group"] = ""
         return data
     
     def extractLocation(self, text):
