@@ -58,7 +58,7 @@ class Reader:
                         "location": location, "summary": summary})
                     id = date = begin = end = location = summary = ""
 
-            elif key == "UID":
+            elif key.startswith("UID"):
                 id = value
 
             elif key.startswith("DTSTART"):
@@ -69,10 +69,10 @@ class Reader:
             elif key.startswith("DTEND"):
                 end = value.split("T")[1]
 
-            elif key == "SUMMARY":
+            elif key.startswith("SUMMARY"):
                 summary = value
 
-            elif key == "LOCATION":
+            elif key.startswith("LOCATION"):
                 location = value
 
         return events
