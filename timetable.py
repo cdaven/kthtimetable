@@ -114,7 +114,7 @@ class CourseList:
         map(courses.append, map(self.getCourse, self.getAllTimeEditCourseCodes()))
         return courses
 
-    def getAllPersistentCourses(self):
+    def getAllPersistent(self):
         courses = []
         courses += self.getAllTimeEditCourses()
         courses += self.getAllDaisyCourses()
@@ -138,7 +138,7 @@ class CourseList:
         import StringIO
         import pickle
         string = StringIO.StringIO()
-        pickle.dump(self.getAllPersistentCourses(), string)
+        pickle.dump(self.getAllPersistent(), string)
         return string.getvalue()
 
     def unpickle(self, data):
@@ -240,9 +240,6 @@ class TimeTable:
     def getAllTimeEditEvents(self):
         return self.eventlist.getAllTimeEditEvents()
     
-    def getAllPersistentCourses(self):
-        return self.courselist.getAllPersistentCourses()
-
     def isEmpty(self):
         return self.eventlist.isEmpty()
 
@@ -257,12 +254,17 @@ class TimeTable:
         events = vcalendar.Reader().read(input)
         if events:
             # tar också bort de händelser som inte längre
-            # finns på servern, mha EventCleaner
-            cleaner = EventCleaner()
-            cleaner.reset()
+            # finns på servern, mha EventCleaner. anges en
+            # kurs explicit ska ingen uppstädning göras
+            if not course:
+                cleaner = EventCleaner()
+                cleaner.reset()
+
             self.eventlist.addEvents(events, course)
-            cleaner.sweep(self)
-            self.updated = calendar.Date()
+
+            if not course:
+                cleaner.sweep(self)
+                self.updated = calendar.Date()
 
     def getEvent(self, id):
         return self.eventlist.getEvent(id)
@@ -397,7 +399,7 @@ class TimeTable:
         global courselist
         if not courselist.isEmpty():
             config.add_section("courses")
-            for course in courselist.getAllPersistentCourses():
+            for course in courselist.getAllPersistent():
                 value = course.name + "|" + str(course.id) + "|" + course.group
                 config.set("courses", course.code, value)
 
@@ -458,20 +460,6 @@ class Course:
     
     def isTimeEdit(self):
         return False == self.isDaisy()
-
-
-# -----------------------------------------------------------
-class SubscribedCourse(Course):
-    "En 'kurs' för prenumererade aktiviteter"
-
-    def __init__(self, code):
-        Course.__init__(self, code, code)
-
-    def __unicode__(self):
-        return unicode(self.code, "latin_1")
-
-    def isTimeEdit(self):
-        return False
 
 
 # -----------------------------------------------------------
@@ -705,40 +693,6 @@ class Event:
 
 
 # -----------------------------------------------------------
-class SubscribedEvent(Event):
-    """
-        En aktivitet som inte kommer direkt från Daisy eller TimeEdit
-        utan är importerad/prenumererad från annan källa.
-    """
-
-    def __init__(self, data):
-        Event.__init__(self)
-
-        self.__id = data["id"]
-        self.course = data["course"]
-        self.date = calendar.Date(data["date"])
-        self.begin = calendar.Time(data["begin"])
-        self.end = calendar.Time(data["end"])
-        self.type = u"Föreläsning"
-        self.user = data["user"]
-
-    def __unicode__(self):
-        return unicode(self.user, "latin_1")
-
-    def copyDetails(self, other):
-        pass
-
-    def getID(self):
-        return self.__id
-
-    def isGroupChosen(self):
-        return True
-
-    def toggleActive(self):
-        pass
-
-
-# -----------------------------------------------------------
 class EventList:
     def __init__(self, list = None):
         self.events = {}
@@ -762,7 +716,7 @@ class EventList:
 
         events = []
         for event in self.getAll():
-            if not isinstance(event, SubscribedEvent):
+            if not isinstance(event, subscription.SubscribedEvent):
                 events.append(event)
 
         return events
@@ -824,23 +778,27 @@ class EventList:
             # aktiviteten är ny, lägg bara till
             self.events[event.getID()] = event
 
-        EventCleaner().mark(self.getEvent(event.getID()))
+        return self.getEvent(event.getID())
 
     def addEvent(self, event, course = None):
-        if isinstance(event, Event):
-            self._add(event)
-        else:
-            # sätter i förekommande fall kursen explicit
-            if course: event["course"] = course
-
+        if not isinstance(event, Event):
             try:
-                self._add(Event(event))
+                if course:
+                    # en kurs är angiven explicit, vilket innebär att
+                    # händelsen är "prenumererad på" och inte "vanlig"
+                    event["id"] = "SS_" + event["id"]
+                    event["course"] = course
+                    event = subscription.SubscribedEvent(event)
+                else:
+                    event = Event(event)
             except ValueError, e:
                 # när en händelse skapas som inte hör till någon
                 # känd kurs avbryts inte all inläsning utan just
                 # den händelsen ignoreras
                 import sys
                 sys.stderr.write("\n" + str(e) + "\n")
+
+        EventCleaner().mark(self._add(event))
 
     def addEvents(self, list, course = None):
         for event in list:
@@ -882,7 +840,8 @@ class EventCleaner:
 
     def sweep(self, timetable):
         for event in timetable.getAllEvents():
-            if not event.flag == self.okflag:
+            if not isinstance(event, subscription.SubscribedEvent)\
+            and not event.flag == self.okflag:
                 timetable.removeEvent(event.getID())
 
 
@@ -1063,6 +1022,8 @@ class EventSorter:
         return events        
 
 # -----------------------------------------------------------
+import subscription # "timetable" måste laddas innan "subscription" kan laddas
+
 courselist = CourseList()
 cachedcourselist = CachedCourseList()
 timetable = TimeTable()

@@ -118,9 +118,9 @@ class MainFrame(wx.Frame):
         menu = wx.Menu()
         menu.Append(210, U_("Choose &courses..."))
         menu.Append(220, U_("&Fetch timetable...\tF5"))
-        #menu.AppendSeparator()
-        #menu.Append(230, U_("Export"))
-        #menu.Append(240, U_("Import"))
+        menu.AppendSeparator()
+        menu.Append(230, U_("Export"))
+        menu.Append(240, U_("Import"))
         menu.AppendSeparator()
         menu.Append(250, U_("Choose &groups..."))
         menu.Append(260, U_("&Name courses..."))
@@ -137,7 +137,7 @@ class MainFrame(wx.Frame):
         wx.EVT_MENU(self, 210, self.ChooseCourses)
         wx.EVT_MENU(self, 220, self.Update)
         wx.EVT_MENU(self, 230, self.Export)
-        #wx.EVT_MENU(self, 240, self.Import)
+        wx.EVT_MENU(self, 240, self.Import)
         wx.EVT_MENU(self, 250, self.ChooseGroups)
         wx.EVT_MENU(self, 260, self.NameCourses)
         wx.EVT_MENU(self, 270, self.MakeSettings)
@@ -210,14 +210,16 @@ class MainFrame(wx.Frame):
         pass
 
     def Import(self, evt):
-        timetable.timetable.importData(file("cyner.cal").readlines(), "cyner")
+        import subscription
+        subscription.Subscription().get("cd")
+        subscription.Subscription().get("malin")
+        subscription.Subscription().get("arnling")
+        subscription.EventCompresser().compress()
         self.updateView()
 
     def Export(self, evt):
-        #import calfmt
-        #data = calfmt.Writer().write(timetable.timetable.getEventsForDateRange(calendar.Date(), calendar.Date() + 30))
-        #file("cyner.cal", "w+").write(data)
-        file("cyner", "w+").write(timetable.courselist.pickle())
+        import subscription
+        subscription.Subscription().put()
 
     def ExportEvents(self, evt):
         ExportDialog(self).ShowModal()
@@ -257,7 +259,8 @@ class MainFrame(wx.Frame):
             wx.MessageDialog(self, msg, U_("File error"), style=wx.OK|wx.ICON_ERROR).ShowModal()
             return
 
-        self.updateView()        
+
+        self.updateView()
 
     def updateFromTimeEdit(self, codes):
         import timeedit
@@ -372,7 +375,7 @@ class GroupsDialog(OKCancelDialog):
 
         self.choices = []
         self.nogroup = U_("all")
-        self.courses = timetable.courselist.getAllPersistentCourses()
+        self.courses = timetable.courselist.getAllPersistent()
         if not self.courses:
             msg = U_("There are no courses to choose groups for.")
             wx.MessageDialog(self, msg, U_("No courses"), style=wx.OK|wx.ICON_INFORMATION).ShowModal()
@@ -448,7 +451,7 @@ class CourseNamesDialog(OKCancelDialog):
         self.coursecodes = []
         self.edits = []
 
-        courses = timetable.courselist.getAllPersistentCourses()
+        courses = timetable.courselist.getAllPersistent()
         if not courses:
             msg = U_("There are no courses to name. Please choose some first.")
             wx.MessageDialog(self, msg, U_("No courses"), style=wx.OK|wx.ICON_INFORMATION).ShowModal()
@@ -571,7 +574,7 @@ class SettingsDialog(OKCancelDialog):
         self.CentreOnScreen()
 
     def OnPublishSelect(self, evt):
-        msg = U_("Publishing your timetable on the Internet will enable anyone,\nincluding you, to view your timetable using a web or WAP browser.\n\nIt will also enable anyone to view your timetable in KTH TimeTable.\n\nYour timetable will be identified by this string, so make sure you choose something unique, e.g. your KTH.se ID.")
+        msg = U_("Publishing your timetable on the Internet will enable anyone,\nincluding you, to view your timetable using a web or WAP browser.\n\nIt will also enable anyone to view your timetable in KTH TimeTable.\n\nYour timetable will be identified by this string, so make sure you\nchoose something unique, e.g. your KTH.se ID.")
         if wx.MessageDialog(self, msg, U_("Publish timetable"),
         style=wx.OK|wx.CANCEL|wx.ICON_INFORMATION).ShowModal() == wx.ID_OK:
             self.userid.Enable(True)
@@ -621,7 +624,7 @@ class ChooseCoursesDialog(OKCancelDialog):
         newcourse.Add(addbtn, 0)
 
         self.chosencourses = []
-        self.courselist = CourseListBox(self, timetable.courselist.getAllPersistentCourses(), size=(450,250))
+        self.courselist = CourseListBox(self, timetable.courselist.getAllPersistent(), size=(450,250))
 
         wx.EVT_BUTTON(self, 20, self.RemoveCourse)
         wx.EVT_BUTTON(self, 90, self.addCourse)
@@ -1174,33 +1177,84 @@ class EventOrganiser:
     def clear(self):
         self.events = []
 
+    def _fitsInColumn(self, column, event):
+        # jämför med varje händelse i aktuell kolumn
+        for columnevent in column:
+            if self._isClash(columnevent, event):
+                return False
+            
+        return True
+    
+    def _countClashes(self, columns):
+        for event in self.events:
+            for column in columns:
+                for columnevent in column:
+                    if columnevent is event:
+                        continue
+
+                    # en kollision i en kolumn
+                    if self._isClash(columnevent, event):
+                        event.clashes += 1
+                        break
+
+        self._setMaxClashes()
+
+    def _setMaxClashes(self):
+        """
+            Sätter alla händelsers antal kollisioner till det högsta värdet
+            bland händelserna i "kollisionsgruppen"
+        """
+
+        already = []
+        for event in self.events:
+            if event in already:
+                continue
+
+            clashes = []
+            self.getClashGroup(event, clashes)
+            already.extend(clashes)
+
+            # ingen "kollisionsgrupp", dvs. en händelse som inte kolliderar
+            if not clashes:
+                continue
+
+            maxclashes = max(map(len, clashes))
+            for clash in clashes:
+                clash.clashes = maxclashes
+
     def showEvents(self):
         # den rena superklassen kan inte visa någon grafik,
         # däremot subklassen DayPanel
         if self.__class__ == EventOrganiser:
             return
 
-        self._countClashes()
-
+        self._put()
         for event in self.events: event.show()
 
-    def _countClashes(self):
-        already = []
+    def _put(self):
+        columns = [[]]
 
-        for event in self.events:
-            if event in already: continue
-
-            clashingevents = []
-            self.getClashGroup(event, clashingevents)
-            clashes = len(clashingevents) - 1
+        for event in timetable.EventSorter().sort(self.events):
+            event.clashes = 0
+            foundspot = False
 
             columnno = 0
-            for event in clashingevents:
-                event.clashes = clashes
-                event.column = columnno
-                columnno += 1
+            # tittar igenom alla kolumner
+            for column in columns:
+                # om ej kollision i denna kolumn, addera händelse
+                if self._fitsInColumn(column, event):
+                    event.column = columnno
+                    column.append(event)
+                    foundspot = True
+                    break
 
-            already.extend(clashingevents)
+                columnno += 1
+                    
+            if not foundspot:
+                event.column = len(columns)
+                columns.append([event])
+
+        self._countClashes(columns)
 
     def addEvent(self, event):
         self.events.append(GraphicalEvent(self, event))
@@ -1268,6 +1322,7 @@ class GraphicalEvent:
         self.event = event
         self.begin = event.begin
         self.end = event.end
+        self.date = event.date
         self.parent = parent
         self.panel = None
         self.clashes = 0
@@ -1289,7 +1344,8 @@ class GraphicalEvent:
         return self.event.active
 
     def isSubscribed(self):
-        return isinstance(self.event, timetable.SubscribedEvent)
+        import subscription
+        return isinstance(self.event, subscription.SubscribedEvent)
 
     def __unicode__(self):
         return unicode(self.event)
