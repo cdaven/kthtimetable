@@ -48,7 +48,7 @@ else:
     class Application(wx.App):
         def OnInit(self):
             # skickar felinfo till ett fönster
-            #sys.stderr = wx.lib.infoframe.PyInformationalMessagesFrame()
+            sys.stderr = wx.lib.infoframe.PyInformationalMessagesFrame()
 
             main = gui.MainFrame(settings.maximized, settings.size_x, settings.size_y)
             main.Show(1)
