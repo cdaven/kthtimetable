@@ -28,7 +28,7 @@ class Conduit:
             if self.callback: self.callback()
             data = self.getTimeTableData(courseids)
         except IOError:
-            raise error.ReadError("Kunde inte läsa från Daisy-servern")
+            raise error.ReadError(_("Kunde inte lasa fran") + " " + _("schemaservern"))
 
         if self.callback: self.callback()
         self.logout()
@@ -99,6 +99,7 @@ class SummaryParser:
 
     # -----
     #  Observerade händelsetyper i Daisy:
+    #  (anställda kan lägga in fritext som typ)
 
     #  Föreläsning
 
@@ -106,6 +107,7 @@ class SummaryParser:
     #  Lektion
     #  Seminarium
     #  Laboration
+    #  Designseminarium
     
     #  Kontrollskrivning
     #  Dugga

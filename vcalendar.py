@@ -33,18 +33,23 @@ class Reader:
             try:
                 input = file(input).readlines()
             except IOError:
-                raise error.ReadError("Kan inte läsa från fil " + input, input)
+                raise error.ReadError(_("Kan inte lasa fran fil") + " " + input, input)
 
         if not self.verifyFormat(input):
-            raise error.DataError("Felaktig vCalendar-data")
+            raise error.DataError(_("Felaktig vCalendar-data"))
 
         events = []
         import encodings
 
         for line in input:
             (key, value) = splitLine(line)
+            #if isUTF8(value):
+            #    value = value.decode("utf_8", "ignore").encode("latin_1", "ignore")
+
             if isUTF8(value):
-                value = value.decode("utf_8", "ignore").encode("latin_1", "ignore")
+                print "before", value
+                value = unicode(value, "utf8")
+                print "after", value
 
             if key == "BEGIN" and value == "VEVENT":
                 id = date = begin = end = location = summary = ""
@@ -83,6 +88,8 @@ class Writer:
     
     def write(self, events, filename):
         "Skriver valda händelser till vCalendar-fil"
+
+        print "writing to vcal file"
         
         data = ["BEGIN:VCALENDAR\n", "VERSION:1.0\n", "PRODID:" + self.prodid + "\n"]
         for event in events:
@@ -110,5 +117,5 @@ class Writer:
         try:
             file(filename, "w+").writelines(data)
         except IOError:
-            raise error.WriteError("Kan inte skriva till fil", filename)
+            raise error.WriteError(_("Kan inte skriva till fil"), filename)
 

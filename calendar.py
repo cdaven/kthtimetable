@@ -15,9 +15,9 @@ SUN = 6
 
 # -----------------------------------------------------------
 class Date:
-    WEEKDAYS = ["Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön"]
-    MONTHS = ["Januari", "Februari", "Mars", "April", "Maj", "Juni",
-            "Juli", "Augusti", "September", "Oktober", "November", "December"]
+    WEEKDAYS = [_("Man"), _("Tis"), _("Ons"), _("Tor"), _("Fre"), _("Lor"), _("Son")]
+    MONTHS = [_("Januari"), _("Februari"), _("Mars"), _("April"), _("Maj"), _("Juni"),
+            _("Juli"), _("Augusti"), _("September"), _("Oktober"), _("November"), _("December")]
 
     def __init__(self, arg=None):
         "Kan initialiseras med datetime.date, Date, sträng eller tomt"
@@ -26,7 +26,7 @@ class Date:
             year = arg.year
             month = arg.month
             day = arg.day
-        elif isinstance(arg, str) and (len(arg) == 8 or len(arg) == 14):
+        elif (isinstance(arg, str) or isinstance(arg, unicode)) and (len(arg) == 8 or len(arg) == 14):
             year = int(arg[:4])
             month = int(arg[4:6])
             day = int(arg[6:8])
@@ -157,7 +157,7 @@ class Time:
             hour = arg.hour
             minute = arg.minute
             second = arg.second
-        elif isinstance(arg, str) and len(arg) == 6:
+        elif (isinstance(arg, str) or isinstance(arg, unicode)) and len(arg) == 6:
             hour = int(arg[:2])
             minute = int(arg[2:4])
             second = int(arg[4:])
@@ -234,7 +234,7 @@ class DateTime:
             hour = arg.hour
             minute = arg.minute
             second = arg.second
-        elif isinstance(arg, str) and len(arg) == 14:
+        elif (isinstance(arg, str) or isinstance(arg, unicode)) and len(arg) == 14:
             year = int(arg[:4])
             month = int(arg[4:6])
             day = int(arg[6:8])

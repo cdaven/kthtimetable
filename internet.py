@@ -19,7 +19,7 @@ def getITUCourses(input = None, callback = None):
             url = urllib.urlopen("http://www.it.kth.se/schema.html?termin=" + period +
                 "&program=0&institution=0&Visa=Visa")
         except IOError:
-            raise error.ReadError("Kan inte läsa från www.it.kth.se/schema.html", "www.it.kth.se/schema.html")
+            raise error.ReadError(_("Kunde inte lasa fran") + " www.it.kth.se/schema.html", "www.it.kth.se/schema.html")
 
         if callback: callback()
         input = url.read()
@@ -27,7 +27,7 @@ def getITUCourses(input = None, callback = None):
     if callback: callback()
 
     if len(input) == 0:
-        raise error.DataError("Schemageneratorn gav ingen data")
+        raise error.DataError(_("Schemageneratorn gav ingen data"))
 
     import timetable
     all = re.findall("value=\"(\d{3,})\"[^a-zåäöA-ZÅÄÖ0-9]*(.*?) \((.*?)\)", descape(input))

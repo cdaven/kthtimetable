@@ -69,7 +69,7 @@ class CourseList:
         for course in self.courses:
             if course == code: return course
 
-        raise ValueError("Vald kurs finns inte (kod " + str(code) + ")")
+        raise ValueError(_("Kursen") + " " + _("finns inte") + " (" + _("kod") + " " + str(code) + ")")
 
     def getCourseName(self, code):
         "Returnerar namnet (ev. användardefinierat) på en kurs"
@@ -172,7 +172,7 @@ class TimeTable:
             for event in remove:
                 self.eventlist.removeEvent(event.getID())
         else:
-            raise ValueError("Felaktig källa " + source)
+            raise ValueError(_("Felaktig kalla") + " " + source)
         
     def isEmpty(self):
         return self.eventlist.isEmpty()
@@ -182,7 +182,6 @@ class TimeTable:
         import vcalendar
         self.clearEventsFromSource(source)
         newevents = vcalendar.Reader().read(input)
-
         if newevents:
             self.eventlist.addEvents(newevents)
             self.updated = calendar.Date()
@@ -212,7 +211,7 @@ class TimeTable:
                 events.append(event)
 
         if not coursefound:
-            raise ValueError("Den angivna kursen " + str(code) + " finns inte")
+            raise ValueError(_("Kursen") + " " + str(code) + " " + _("finns inte"))
             
         return events
 
@@ -246,6 +245,7 @@ class TimeTable:
         "Läser in schemat från en INI-liknande fil"
 
         import ConfigParser # för undantag
+        import configparser
         import settings
         import os.path
 
@@ -258,11 +258,11 @@ class TimeTable:
         if not os.path.exists(filename):
             return # ger inget felmeddelande
 
-        config = settings.ConfigParser()
+        config = configparser.ConfigParserX()
         try:
             config.readfp(file(filename))
         except IOError:
-            raise error.ReadError("Kan inte läsa från fil", filename)
+            raise error.ReadError(_("Kan inte lasa fran fil"), filename)
 
         # läser först in inställningarna och kurserna ...
         for section in config.sections():
@@ -294,7 +294,7 @@ class TimeTable:
                     event.course = courselist.getCourse(config.get(section, "course"))
                     event.type = config.get(section, "type")
                 except ConfigParser.NoOptionError:
-                    raise error.DataError("Felaktig data i fil " + filename)
+                    raise error.DataError(_("Felaktig data i fil") + " " + filename)
 
                 try:
                     event.group = config.getint(section, "group")
@@ -317,12 +317,13 @@ class TimeTable:
     def save(self, filename = ""):
         "Sparar schemat till en INI-liknande fil"
 
-        import settings
+        import configparser
 
         if not filename:
+            import settings
             filename = settings.timetablefile
 
-        config = settings.ConfigParser()
+        config = configparser.ConfigParserX()
 
         if not self.isEmpty():
             config.add_section("main")
@@ -352,13 +353,18 @@ class TimeTable:
         try:
             config.write(file(filename, "w+"))
         except IOError:
-            raise error.WriteError("Kan inte skriva till fil", filename)
+            raise error.WriteError(_("Kan inte skriva till fil"), filename)
     
 # -----------------------------------------------------------
 class Course:
     "En kurs"
     
     def __init__(self, code, name, id = 0, group = 0):
+        if not isinstance(code, unicode):
+            code = unicode(code, "latin_1")
+        if not isinstance(name, unicode):
+            name = unicode(name, "latin_1")
+
         self.code = code
         self.name = name
         self.id = id
@@ -382,6 +388,10 @@ class Course:
         return False == self.__eq__(other)
    
     def __str__(self):
+        print "Warning! STR is deprecated (timetable.py, class Course)"
+        return unicode(self).encode("latin_1")
+
+    def __unicode__(self):
         if self.name: return self.name
         else: return self.code
    
@@ -433,15 +443,19 @@ class Event:
     def __repr__(self):
         "Returnerar en exakt beskrivning av aktuell händelse"
         return str(self.__id) + str(self.date) + str(self.begin) + str(self.end) +\
-            str(self.location) + str(self.course) + str(self.type) + str(self.group) + str(self.seriesno)
+            str(self.location) + unicode(self.course) + str(self.type) + str(self.group) + str(self.seriesno)
 
     def __str__(self):
+        print "Warning! STR is deprecated (timetable.py, class Event)"
+        return unicode(self).encode("latin_1")
+
+    def __unicode__(self):
         "Returnerar en beskrivning av aktuell händelse, ex. 'Kursnamn Ö7 grp 3 (401)'"
 
         description = self.getDescriptionWithoutLocation()
         if self.location: description += " (" + self.location + ")"
         return description
-    
+
     def __eq__(self, other):
         if self.__id == other.__id and\
             self.date == other.date and\
@@ -459,14 +473,14 @@ class Event:
         return False == self.__eq__(other)
     
     def getNiceString(self):
-        string = "[" + self.begin.getNiceString() + "-" + self.end.getNiceString() + "] " + str(self)
+        string = "[" + self.begin.getNiceString() + "-" + self.end.getNiceString() + "] " + unicode(self)
         if not self.active:
-            string = "inaktiverad"
+            string = _("inaktiverad")
         return string
 
     def setID(self, id):
         self.__id = id
-        if isinstance(id, str) and id.endswith("timeedit.evolvera.se"):
+        if id.endswith("timeedit.evolvera.se"):
             # även tidsstämpel för när schemat genererades inkluderas
             # i TimeEdits "id"
             try:
@@ -478,13 +492,12 @@ class Event:
         return self.__id
             
     def setParser(self, id):
-        if isinstance(id, str) and id.startswith("DAISYKTH"):
+        self.parser = None
+        if id.startswith("DAISYKTH"):
             self.parser = daisy.SummaryParser()
-        elif isinstance(id, str) and id.endswith("timeedit.evolvera.se"):
+        elif id.endswith("timeedit.evolvera.se"):
             self.parser = timeedit.SummaryParser()
-        else:
-            self.parser = None
-    
+
     def parseSummary(self, summary):
         global courselist
         if self.parser:
@@ -495,11 +508,11 @@ class Event:
             self.group = data["group"]
             self.seriesno = data["seriesno"]
         else:
-            raise RuntimeError("Ingen parser är initialiserad")
+            raise RuntimeError(_("Ingen parser ar initialiserad"))
     
     def copyFromDict(self, other):
         keys = other.keys()
-        if "id" in keys: 
+        if "id" in keys:
             self.setID(other["id"])
             self.setParser(other["id"])
         if "summary" in keys: self.parseSummary(other["summary"])
@@ -531,29 +544,28 @@ class Event:
         
         description = ""
         if self.course:
-            description += str(self.course) + " "
             try:
                 description = courselist.getCourseName(self.course) + " "
             except ValueError:
-                pass
+                description = unicode(self.course) + " "
 
-        if self.type == "Föreläsning": description += "F"
-        elif self.type == "Övning": description += "Ö"
-        elif self.type == "Lektion": description += "Lekt"
-        elif self.type == "Seminarium": description += "Sem"
-        elif self.type == "Laboration": description += "Labb"
-        elif self.type == "Kontrollskrivning": description += "KS"
-        elif self.type == "Salsskrivning": description += "Tenta"
-        elif self.type == "Tentamen": description += "Tenta"
-        elif self.type == "Workshop": description += "WS"
-        elif self.type == "Introduktion": description += "Intro"
-        elif self.type == "Information": description += "Info"
+        if self.type == u"Föreläsning": description += _("F")
+        elif self.type == u"Övning": description += _("O")
+        elif self.type == u"Lektion": description += _("Lekt")
+        elif self.type == u"Seminarium": description += _("Sem")
+        elif self.type == u"Laboration": description += _("Labb")
+        elif self.type == u"Kontrollskrivning": description += _("KS")
+        elif self.type == u"Salsskrivning": description += _("Tenta")
+        elif self.type == u"Tentamen": description += _("Tenta")
+        elif self.type == u"Workshop": description += _("WS")
+        elif self.type == u"Introduktion": description += _("Intro")
+        elif self.type == u"Information": description += _("Info")
         elif self.type == "": description += "???"
         else: description += self.type
 
         if self.seriesno: description += str(self.seriesno)
-        if self.group: description += " grp " + str(self.group)
-        
+        if self.group: description += " " + _("grp") + " " + str(self.group)
+
         return description
     
     def isGroupChosen(self):
@@ -610,13 +622,13 @@ class EventList:
         try:
             del self.events[id]
         except KeyError:
-            raise ValueError("Händelsen " + str(id) + " finns inte")
+            raise ValueError(_("Handelsen") + " " + str(id) + " " + _("finns inte"))
             
     def getEvent(self, id):
         try:
             return self.events[id]
         except KeyError:
-            raise ValueError("Händelsen " + str(id) + " finns inte")
+            raise ValueError(_("Handelsen") + " " + str(id) + " " + _("finns inte"))
 
 # -----------------------------------------------------------
 class TimeTableComparator:
@@ -691,13 +703,12 @@ class HTMLExporter:
             'http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd'>
             <html xmlns='http://www.w3.org/1999/xhtml' xml:lang='sv'>
             <head>
-            <title>Schema</title>
-            <meta http-equiv='Content-Type' content='text/html; charset=iso-8859-1' />
-            <meta name='generator' content='Schema' />
+            <title>""" + _("Schema") + """</title>
+            <meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
+            <meta name='generator' content='KTH TimeTable' />
             <link rel='stylesheet' type='text/css' href='timetable-html.css' />
             </head>
-            <body><h1>Schema</h1>
-            """
+            <body><h1>""" + _("Schema") + "</h1>"
 
         date = fromdate.getLastMonday()
         while date <= todate:
@@ -709,7 +720,7 @@ class HTMLExporter:
 
     def formatWeek(self, date):
         import settings
-        self.html += "<div class='week'><h2>Vecka " + str(date.getWeek()) + "</h2>"
+        self.html += "<div class='week'><h2>" + _("Vecka") + " " + str(date.getWeek()) + "</h2>"
         for i in range(settings.lastweekday + 1):
             events = EventSorter().sort(self.timetable.getEventsForDate(date))
             self.formatDay(date, events)

@@ -37,7 +37,7 @@ class Conduit:
                 print "skrev hämtad data till fil"
             return data
         except IOError:
-            raise error.ReadError("Kunde inte läsa från schemaservern")
+            raise error.ReadError(_("Kunde inte lasa fran") + " " + _("schemaservern"))
     
     def getFromYearAndWeek(self):
         week = str(calendar.Date().getWeek())
@@ -63,12 +63,12 @@ class Conduit:
         try:
             data = self.urlopener.open(url, getdata).read()
         except IOError:
-            raise error.ReadError("Kunde inte läsa från schema-servern")
+            raise error.ReadError(_("Kunde inte lasa fran") + " " + _("schemaservern"))
 
         rxcode = re.escape(code)
         rx = re.search("<TD>" + rxcode + "</TD>.*<TD>(\w.*?)</TD>", data, re.DOTALL|re.IGNORECASE)
         if not rx:
-            raise ValueError("kursen " + code + " existerar inte")
+            raise ValueError(_("Kursen") + " " + code + " " + _("finns inte"))
         
         import timetable
         return timetable.Course(code.upper(), rx.group(1))
@@ -77,10 +77,10 @@ class Conduit:
 class SummaryParser:
 
     def __init__(self):
-        self.types = {"F": "Föreläsning", "L": "Laboration", "Le": "Lektion",
-            "Ö": "Övning", "Sem": "Seminarium", "WS": "Workshop",
-            "TEN": "Tentamen"}
-        self.lowercase_letters = "abcdefghijklmnopqrstuvwxyzåäö"
+        self.types = {"F": u"Föreläsning", "L": u"Laboration", "Le": u"Lektion",
+            "Ö": u"Övning", "Sem": u"Seminarium", "WS": u"Workshop",
+            "TEN": u"Tentamen"}
+        self.lowercase_letters = u"abcdefghijklmnopqrstuvwxyzåäö"
         self.numbers = "1234567890"
 
         self.rxcourse = re.compile("([A-Z0-9:/*]+?)\.")

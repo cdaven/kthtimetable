@@ -9,6 +9,10 @@
 
 import sys
 import os, os.path
+import gettext
+
+swedish = gettext.translation("timetable", "locale", languages=["sv"])
+swedish.install()
 
 # Raderar alla tmpXXXXXX-filer som skapats av PyInformationalMessagesFrame
 files = os.listdir(os.getcwd())
@@ -24,7 +28,7 @@ if len(sys.argv) > 1:
     elif sys.argv[1] == "tomorrow":
         events = timetable.timetable.getEventsForDate(calendar.Date() + 1)
     else:
-        print "Okänt kommando"
+        print _("Okant kommando")
         sys.exit(1)
         
     events = timetable.EventSorter().sort(events)
@@ -35,8 +39,7 @@ else:
         import wx
         import wx.lib.infoframe
     except:
-        print """Kunde inte starta wxPython. Kontrollera att du har en version
-            som är kompatibel med den installerade Python-versionen."""
+        print _("Kunde inte starta wxPython. Kontrollera att du har en version\nsom ar kompatibel med den installerade Python-versionen.")
         sys.exit(1)    
     
     import gui
