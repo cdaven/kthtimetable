@@ -138,7 +138,6 @@ class TimeTable:
         self.eventlist = EventList()
         self.updated = None
         self.courselist = CourseList()
-        self.username = ""
         
     def clear(self):
         self.eventlist.clear()
@@ -245,7 +244,6 @@ class TimeTable:
     def load(self, filename = ""):
         "Läser in schemat från en INI-liknande fil"
 
-        import ConfigParser # för undantag
         import configfileparser
         import settings
         import os.path
@@ -269,10 +267,6 @@ class TimeTable:
         for section in config.sections():
             if section == "main":
                 self.updated = calendar.Date(config.get(section, "updated"))
-                try:
-                    self.username = config.get(section, "username")
-                except ConfigParser.NoOptionError:
-                    pass
 
             elif section == "courses":
                 pairs = config.items(section)
@@ -287,15 +281,12 @@ class TimeTable:
                 event = Event()
 
                 event.setID(section)
-                try:
-                    event.location = config.get(section, "location")
-                    event.date = calendar.Date(config.get(section, "date"))
-                    event.begin = calendar.Time(config.get(section, "begin"))
-                    event.end = calendar.Time(config.get(section, "end"))
-                    event.course = courselist.getCourse(config.get(section, "course"))
-                    event.type = config.get(section, "type")
-                except ConfigParser.NoOptionError:
-                    raise error.DataError(U_("Bad data in file") + " " + filename)
+                event.location = config.get(section, "location")
+                event.date = calendar.Date(config.get(section, "date"))
+                event.begin = calendar.Time(config.get(section, "begin"))
+                event.end = calendar.Time(config.get(section, "end"))
+                event.course = courselist.getCourse(config.get(section, "course"))
+                event.type = config.get(section, "type")
 
                 event.group = config.getintorzero(section, "group")
                 event.seriesno = config.getintorzero(section, "seriesno")
@@ -317,7 +308,6 @@ class TimeTable:
         if not self.isEmpty():
             config.add_section("main")
             config.set("main", "updated", str(self.updated))
-            config.set("main", "username", self.username)
 
             for event in self.eventlist.getAll():
                 config.add_section(event.getID())

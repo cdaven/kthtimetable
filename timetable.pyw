@@ -9,9 +9,10 @@
 
 import sys
 import os, os.path
+import settings
 from i18n import *
 
-getTranslation("sv")
+settings.load()
 
 # Raderar alla tmpXXXXXX-filer som skapats av PyInformationalMessagesFrame
 files = os.listdir(os.getcwd())
@@ -55,6 +56,8 @@ else:
         
     app = Application(0)
     app.MainLoop()
+
+settings.save()
 
 # -----------------------------------------------------------
 # The GNU General Public License is a Free Software license. Like any Free

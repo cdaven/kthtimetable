@@ -30,8 +30,6 @@ class MainFrame(wx.Frame):
         
         wx.Frame.__init__(self, None, -1, applicationname + " " + applicationversion)
 
-        settings.load()
-
         self.SetBackgroundColour(guisettings.bgcolour_default)
         if wx.MINOR_VERSION >= 5:
             self.ClearBackground()
@@ -142,7 +140,6 @@ class MainFrame(wx.Frame):
     def OnClose(self, event):
         try:
             timetable.timetable.save()
-            settings.save()
         except error.WriteError, e:
             msg = U_("Could not save the timetable. The file may be write-protected. The filename is") + ": " + e.filename
             wx.MessageDialog(self, msg, U_("File error"), style=wx.OK|wx.ICON_ERROR).ShowModal()

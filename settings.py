@@ -5,16 +5,31 @@
 import os
 import os.path
 import sys
+import error
+import i18n
 
-# -----------------------------------------------------------
-def load():
-    pass
-
-def save():
-    pass
+i18n.setLanguage("en")
 
 # -----------------------------------------------------------
 timetablefile = os.path.join(os.getcwd(), "timetable")
+
+# -----------------------------------------------------------
+def load():
+    global timetablefile
+    import configfileparser
+    config = configfileparser.ConfigParserX()
+    try:
+        config.readfp(file(timetablefile))
+    except IOError:
+        return
+
+    try:
+        i18n.setLanguage(config.get("settings", "language"))
+    except error.DataError:
+        return
+
+def save():
+    pass
 
 # -----------------------------------------------------------
 #  INSTÄLLNINGAR

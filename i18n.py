@@ -9,7 +9,7 @@ import sys
 
 translation = None
 
-def getTranslation(lang):
+def setLanguage(lang):
     global translation
 
     try:

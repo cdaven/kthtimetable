@@ -3,7 +3,10 @@
 # Skapat av Christian Davén 2004
 
 import ConfigParser
+import error
+from i18n import *
 
+# -----------------------------------------------------------
 class ConfigParserX(ConfigParser.SafeConfigParser):
     """
         En något modifierad variant av "INI-filsläsare".
@@ -32,7 +35,10 @@ class ConfigParserX(ConfigParser.SafeConfigParser):
 
     # en wrapper-metod som returnerar värdet som Unicode
     def get(self, section, key):
-        return unicode(ConfigParser.SafeConfigParser.get(self, section, key), "latin_1")
+        try:
+            return unicode(ConfigParser.SafeConfigParser.get(self, section, key), "latin_1")
+        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+            raise error.DataError(U_("Missing data in timetable file"))
 
     def getintorzero(self, section, key):
         val = 0
@@ -53,3 +59,4 @@ class ConfigParserX(ConfigParser.SafeConfigParser):
         if isinstance(value, unicode):
             value = value.encode("latin_1")
         ConfigParser.SafeConfigParser.set(self, section, key, value)
+
