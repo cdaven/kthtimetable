@@ -10,8 +10,8 @@ import timetable
 import error
 from i18n import *
 
-applicationname = "KTH TimeTable"
-applicationversion = "2.3"
+applicationname = u"KTH TimeTable"
+applicationversion = u"2.4?"
 
 # -----------------------------------------------------------
 class MainFrame(wx.Frame):

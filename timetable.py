@@ -150,6 +150,18 @@ class CourseList:
 
         return courses
 
+    def pickle(self):
+        import StringIO
+        import pickle
+        string = StringIO.StringIO()
+        pickle.dump(self.courses, string)
+        return string.getvalue()
+
+    def unpickle(self, data):
+        import StringIO
+        import pickle
+        string = StringIO.StringIO(data)
+        self.courses = pickle.load(string)
 
 # -----------------------------------------------------------
 class CachedCourseList(CourseList):
@@ -160,10 +172,9 @@ class CachedCourseList(CourseList):
     def __init__(self):
         import os.path
         import time
-        import pickle
 
         try:
-            self.courses = pickle.load(file(self.filename))
+            self.unpickle(file(self.filename).read())
             if self.isOldList(calendar.Date(time.localtime(os.path.getctime(self.filename)))):
                 self.courses = []
             else:
@@ -195,8 +206,7 @@ class CachedCourseList(CourseList):
         return False
 
     def save(self):
-        import pickle
-        pickle.dump(self.courses, file(self.filename, "w+"))
+        file(self.filename, "w+").write(self.pickle())
 
     def setCourses(self, courselist):
         self.courses = courselist
@@ -635,7 +645,7 @@ class Event:
                 course = courselist.getCourse(course.code)
                 break
             except ValueError:
-                course = None
+                pass
 
         return course
 
