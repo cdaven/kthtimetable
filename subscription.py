@@ -19,8 +19,14 @@ class Subscription:
         global subscription_url
         course = SubscribedCourse(userid)
         self.timetable.addCourse(course)
-        self.timetable.importVCalData(urllib.urlopen(subscription_url + "/fetch?" +
+        self.timetable.importOneCourse(urllib.urlopen(subscription_url + "/fetch?" +
             urllib.quote_plus(userid)).readlines(), course)
+
+        # ändrar alla hämtade Event till SubscribedEvent
+        for event in self.timetable.getAllEventsForCourse(course):
+            newevent = SubscribedEvent(event)
+            self.timetable.removeEvent(event.getID())
+            self.timetable.addEvent(newevent)
 
     def remove(self, userid):
         try:
@@ -106,17 +112,24 @@ class SubscribedEvent(timetable.Event):
         utan är importerad/prenumererad från annan källa.
     """
 
-    def __init__(self, data):
+    def __init__(self, event):
         timetable.Event.__init__(self, None)
 
-        self.__id = data["id"]
-        self.course = data["course"]
-        self.date = calendar.Date(data["date"])
-        self.begin = calendar.Time(data["begin"])
-        self.end = calendar.Time(data["end"])
+        self.__id = event.getID()
+        self.course = event.course
+        self.date = event.date
+        self.begin = event.begin
+        self.end = event.end
         self.type = u"Föreläsning"
+        self.names = [unicode(event.course)]
 
-        self.names = [data["course"]]
+        #self.__id = data["id"]
+        #self.course = data["course"]
+        #self.date = calendar.Date(data["date"])
+        #self.begin = calendar.Time(data["begin"])
+        #self.end = calendar.Time(data["end"])
+        #self.type = u"Föreläsning"
+        #self.names = [data["course"]]
 
     def __unicode__(self):
         string = ""

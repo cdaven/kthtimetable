@@ -114,11 +114,13 @@ class MainFrame(wx.Frame):
 
         menu = wx.Menu()
         menu.Append(120, U_("&Export..."))
+        menu.Append(150, U_("IMPORT"))
         menu.AppendSeparator()
         menu.Append(999, U_("&Quit"))
         menubar.Append(menu, U_("&File"))
 
         wx.EVT_MENU(self, 120, self.ExportEvents)
+        wx.EVT_MENU(self, 150, self.Import)
         wx.EVT_MENU(self, 999, self.OnClose)
 
         menu = wx.Menu()
@@ -216,15 +218,9 @@ class MainFrame(wx.Frame):
 
     def Import(self, evt):
         import subscription
-        subscription.Subscription().get("cd")
-        subscription.Subscription().get("malin")
-        subscription.Subscription().get("arnling")
-        subscription.EventCompresser().compress()
+        subscription.Subscription(self.timetable).get("cd")
+        #subscription.EventCompresser().compress()
         self.updateView()
-
-    def Export(self, evt):
-        import subscription
-        subscription.Subscription().put()
 
     def ExportEvents(self, evt):
         ExportDialog(self, self.timetable).ShowModal()
@@ -247,9 +243,9 @@ class MainFrame(wx.Frame):
             if timeeditcourses:
                 data += self.updateFromTimeEdit(timeeditcourses)
 
-            #file("dbg-caldata", "w+").writelines(data)
+            file("dbg-caldata", "w+").writelines(data)
 
-            self.timetable.importVCalData(data)
+            self.timetable.importCourses(data)
             self.timetable.save()
         except error.ReadError:
             msg = U_("Could not read from") + " " + U_("the timetable server") + ". " + U_("Make sure you have access to the Internet.")
@@ -266,6 +262,9 @@ class MainFrame(wx.Frame):
 
 
         self.updateView()
+
+        import subscription
+        subscription.Subscription(self.timetable).put()
 
     def updateFromTimeEdit(self, codes):
         import timeedit

@@ -225,28 +225,37 @@ class TimeTable:
     def isEmpty(self):
         return self.eventlist.isEmpty()
 
-    def importVCalData(self, input, course = None):
-        """
-            Importerar aktiviteter från vCalendar-formatet.
-            Anges "course" kommer alla aktiviteter tillhöra
-            denna kurs.
-        """
+    def importOneCourse(self, input, course):
+        "Importerar händelser för EN kurs från vCalendar-data."
+
+        import vcalendar
+        events = vcalendar.Reader().read(input)
+        if events:
+            self.eventlist.addEvents(events, course)
+
+    def importCourses(self, input):
+        "Importerar händelser från vCalendar-data."
 
         import vcalendar
         events = vcalendar.Reader().read(input)
         if events:
             # tar också bort de händelser som inte längre
-            # finns på servern, mha EventCleaner. anges en
-            # kurs explicit ska ingen uppstädning göras
-            if not course:
-                cleaner = EventCleaner()
-                cleaner.reset()
+            # finns på servern, mha EventCleaner.
+            cleaner = EventCleaner()
+            cleaner.reset()
 
-            self.eventlist.addEvents(events, course)
+            self.eventlist.addEvents(events)
 
-            if not course:
-                cleaner.sweep(self)
-                self.updated = calendar.Date()
+            cleaner.sweep(self)
+            self.updated = calendar.Date()
+
+    def getAllChosenEvents(self):
+        events = []
+        for event in self.eventlist.getAll():
+            if event.isGroupChosen():
+                events.append(event)
+
+        return events
 
     def getAllGroups(self, code):
         "Returnerar alla möjliga grupper för en viss kurs"
@@ -843,13 +852,11 @@ class EventList:
         if not isinstance(event, Event):
             try:
                 if course:
-                    # en kurs är angiven explicit, vilket innebär att
-                    # händelsen är "prenumererad på" och inte "vanlig"
-                    event["id"] = "SS_" + event["id"]
+                    # en kurs är angiven explicit, ex. i webb-gränssnittet
+                    # eller för "prenumererade" händelser från webben
                     event["course"] = course
-                    event = subscription.SubscribedEvent(event)
-                else:
-                    event = Event(self.timetable, event)
+
+                event = Event(self.timetable, event)
             except ValueError, e:
                 # när en händelse skapas som inte hör till någon
                 # känd kurs avbryts inte all inläsning utan just
@@ -921,7 +928,13 @@ class VCalendarExporter:
 
     def write(self, events, filename):        
         import vcalendar
-        vcalendar.Writer(self.encoding).write(events, filename)
+        data = vcalendar.Writer(self.encoding).write(events)
+
+        try:
+            file(filename, "w+").writelines(data)
+        except IOError:
+            raise error.WriteError(U_("Could not write to"), filename)
+
 
 
 # -----------------------------------------------------------

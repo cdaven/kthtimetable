@@ -95,7 +95,7 @@ class Writer:
     def __init__(self, encoding = "latin_1"):
         self.encoding = encoding
     
-    def write(self, events, filename):
+    def write(self, events, UTC = True):
         "Skriver valda händelser till vCalendar-fil"
 
         import settings
@@ -104,15 +104,19 @@ class Writer:
         for event in events:
             data.append("BEGIN:VEVENT")
             data.append("\nUID:" + str(event.getID()))
-            
-            # åtminstone Outlook och Palm Desktop utgår från att importerad data
-            # är angiven i UTC utan hänsyn till sommartid
-            begin = event.begin - 3600 # justerar tidszon
-            end = event.end - 3600
 
-            if event.date.isDaylightSavingTime():
-                begin -= 3600 # justerar ev. sommartid
+            begin = event.begin
+            end = event.end
+
+            if UTC:
+                # de flesta program utgår från att tiden
+                # är angiven i UTC utan hänsyn till sommartid
+                begin -= 3600 # justerar tidszon
                 end -= 3600
+
+                if event.date.isDaylightSavingTime():
+                    begin -= 3600 # justerar ev. sommartid
+                    end -= 3600
 
             data.append("\nDTSTART:" + str(event.date) + "T" + str(begin) + "Z")
             data.append("\nDTEND:" + str(event.date) + "T" + str(end) + "Z")
@@ -122,9 +126,5 @@ class Writer:
             data.append("\nEND:VEVENT\n")
 
         data.append("END:VCALENDAR")
-        
-        try:
-            file(filename, "w+").writelines(data)
-        except IOError:
-            raise error.WriteError(U_("Could not write to"), filename)
+        return data
 
