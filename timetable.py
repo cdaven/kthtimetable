@@ -33,7 +33,7 @@ class CourseList:
         else:
             return "TimeEdit"        
 
-    def addCourse(self, codeorcourse, name="", id=0, group=0):
+    def addCourse(self, codeorcourse, name = "", id = 0, group = ""):
         """
             Lägger till en kurs eller skriver över befintlig om samma kod
 
@@ -87,7 +87,7 @@ class CourseList:
         return self.getCourse(code).group
 
     def setCourseGroup(self, code, group):
-        self.getCourse(code).group = int(group)
+        self.getCourse(code).group = group
 
     def getCourseID(self, code):
         "Returnerar kurs-id på en kurs"
@@ -287,8 +287,8 @@ class TimeTable:
         groups = []
         events = self.getAllEventsForCourse(code)
         for event in events:
-            if event.group and str(event.group) not in groups:
-                groups.append(str(event.group))
+            if event.group and event.group not in groups:
+                groups.append(event.group)
 
         return groups
 
@@ -390,7 +390,7 @@ class TimeTable:
                 event.course = courselist.getCourse(config.get(section, "course"))
                 event.type = config.get(section, "type")
 
-                event.group = config.getintorzero(section, "group")
+                event.group = config.getstrorempty(section, "group")
                 event.seriesno = config.getintorzero(section, "seriesno")
                 event.active = config.getboolean(section, "active")
 
@@ -428,7 +428,7 @@ class TimeTable:
         if not courselist.isEmpty():
             config.add_section("courses")
             for course in courselist.courses:
-                value = course.name + "|" + str(course.id) + "|" + str(course.group)
+                value = course.name + "|" + str(course.id) + "|" + course.group
                 config.set("courses", course.code, value)
 
         try:
@@ -440,7 +440,7 @@ class TimeTable:
 class Course:
     "En kurs"
     
-    def __init__(self, code, name, id = 0, group = 0):
+    def __init__(self, code, name, id = 0, group = ""):
         if not isinstance(code, unicode):
             code = unicode(code, "latin_1")
         if not isinstance(name, unicode):
@@ -469,7 +469,6 @@ class Course:
         return False == self.__eq__(other)
    
     def __str__(self):
-        print "Warning! STR is deprecated (timetable.py, class Course)"
         return unicode(self).encode("latin_1")
 
     def __unicode__(self):
@@ -477,7 +476,7 @@ class Course:
         else: return self.code
    
     def __repr__(self):
-        return self.code + self.name + str(self.id) + str(self.group)
+        return self.code + self.name + str(self.id) + self.group
     
 # -----------------------------------------------------------
 class Event:
@@ -498,7 +497,7 @@ class Event:
     
         self.course = None       # händelsens kurs
         self.type = ""           # händelsens typ (ex. föreläsning, lektion, laboration, seminarium etc)
-        self.group = 0           # händelsens gruppnummer (vissa lektioner etc är indelade i grupper)
+        self.group = ""          # händelsens gruppnummer (vissa lektioner etc är indelade i grupper)
         self.seriesno = 0        # händelsetypens löpnummer (ex. (föreläsning) 7, (lektion) 3)
         
         self.parser = None
@@ -524,7 +523,7 @@ class Event:
     def __repr__(self):
         "Returnerar en exakt beskrivning av aktuell händelse"
         return str(self.__id) + str(self.date) + str(self.begin) + str(self.end) +\
-            str(self.location) + unicode(self.course) + str(self.type) + str(self.group) + str(self.seriesno)
+            str(self.location) + unicode(self.course) + str(self.type) + self.group + str(self.seriesno)
 
     def __str__(self):
         return unicode(self).encode("latin_1")
@@ -592,16 +591,39 @@ class Event:
             try:
                 self.course = courselist.getCourse(data["course"])
             except ValueError:
-                "Ser om kursnamn används som kurskod i Daisy"
-                daisycourses = CachedCourseList()
-                course = daisycourses.getCourseByName(data["course"])
-                if course:
-                    self.course = course
-                else:
-                    raise
+                "Testar alternativa sätt att hitta rätt kurs för aktivitet"
+
+                if self.__id.startswith("DAISYKTH"):
+                    course = self._findDaisyCourse(data["course"])
+                    if course: self.course = course
+                    else: raise
+                elif self.__id.endswith("timeedit.evolvera.se"):
+                    course = self._findTimeEditCourse(data["course"])
+                    if course: self.course = course
+                    else: raise
         else:
             raise RuntimeError(U_("No parser has been initialized"))
-    
+
+    def _findDaisyCourse(self, name):
+        "Hittar en Daisy-kurs via dess ursprungliga namn"
+
+        return CachedCourseList().getCourseByName(name)
+
+    def _findTimeEditCourse(self, courses):
+        "Hittar en TimeEdit-kurs genom att prova alla i en lista"
+
+        global courselist
+        courses = courses.split(",")
+        course = None
+        for c in courses:
+            try:
+                course = courselist.getCourse(c)
+                break
+            except ValueError:
+                pass
+
+        return course
+
     def copyFromDict(self, other):
         keys = other.keys()
         if "id" in keys:
@@ -644,7 +666,7 @@ class Event:
         else: description += self.type
 
         if self.seriesno: description += str(self.seriesno)
-        if self.group: description += " " + U_("grp") + " " + str(self.group)
+        if self.group: description += " " + U_("grp") + " " + self.group
 
         return description
     
@@ -681,7 +703,7 @@ class SubscribedEvent(Event):
         self.location = data["location"]
         self.description = data["summary"]
         self.type = u"Föreläsning"
-        self.group = 0
+        self.group = ""
         self.seriesno = 0
         self.active = True
 

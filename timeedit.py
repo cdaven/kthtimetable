@@ -26,11 +26,7 @@ class Conduit:
         for code in coursecodes:
             url += "/" + code
             
-        url += ".vcs"
-
-        print url
-
-        return url
+        return url + ".vcs"
 
     def getvCalendarData(self, coursecodes):
         try:

@@ -435,6 +435,23 @@ class GroupsDialog(OKCancelDialog):
         self.SetSizerAndFit(layout)
         self.Centre()
 
+    def _groupToInt(self, group):
+        """
+            Omvandlar en gruppsträng till ett heltal,
+            antingen från "", "1", "2", ...
+            eller "", "a", "b", ...
+        """
+
+        gint = 0
+        if group == "": return gint
+
+        try:
+            gint = int(group)
+        except ValueError:
+            gint = ord(group) - 96
+
+        return gint
+
     def SaveAndClose(self, evt):
         for course in self.choices:
             if course.GetStringSelection() == self.nogroup:

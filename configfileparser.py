@@ -40,6 +40,13 @@ class ConfigParserX(ConfigParser.SafeConfigParser):
         except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
             raise error.DataError("Missing data in timetable file")
 
+    def getstrorempty(self, section, key):
+        val = ""
+        if ConfigParser.SafeConfigParser.has_option(self, section, key):
+            val = ConfigParser.SafeConfigParser.get(self, section, key)
+
+        return val
+
     def getintorzero(self, section, key):
         val = 0
         if ConfigParser.SafeConfigParser.has_option(self, section, key):
