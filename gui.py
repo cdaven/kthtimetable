@@ -372,7 +372,7 @@ class GroupsDialog(OKCancelDialog):
 
         self.choices = []
         self.nogroup = U_("all")
-        self.courses = timetable.courselist.getAllDaisyCourses()
+        self.courses = timetable.courselist.getAllPersistentCourses()
         if not self.courses:
             msg = U_("There are no courses to choose groups for.")
             wx.MessageDialog(self, msg, U_("No courses"), style=wx.OK|wx.ICON_INFORMATION).ShowModal()

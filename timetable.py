@@ -254,6 +254,9 @@ class TimeTable:
     def getAllTimeEditEvents(self):
         return self.eventlist.getAllTimeEditEvents()
     
+    def getAllPersistentCourses(self):
+        return self.courselist.getAllPersistentCourses()
+
     def isEmpty(self):
         return self.eventlist.isEmpty()
 
