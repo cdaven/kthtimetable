@@ -277,28 +277,17 @@ class TimeTable:
         return self.eventlist.isEmpty()
 
     def importVCalData(self, input, course = None):
-        "Importerar aktiviteter från vCalendar-format"
+        """
+            Importerar aktiviteter från vCalendar-formatet.
+            Anges "course" kommer alla aktiviteter tillhöra
+            denna kurs.
+        """
 
         import vcalendar
         events = vcalendar.Reader().read(input)
         if events:
-            self.eventlist.addEvents(events)
+            self.eventlist.addEvents(events, course)
             self.updated = calendar.Date()
-
-    def importData(self, input, channel):
-        "Importerar aktiviteter från eget format"
-
-        global courselist
-        import calfmt
-        events = calfmt.Reader().read(input)
-
-        if events:
-            # inte snyggt, kan se denna som kurs i GUI:et
-            courselist.addCourse(channel, channel)
-
-            for event in events:
-                event["course"] = courselist.getCourse(channel)
-                self.eventlist.addEvent(SubscribedEvent(event))
 
     def getEvent(self, id):
         return self.eventlist.getEvent(id)
@@ -564,6 +553,14 @@ class Event:
 
     def __ne__(self, other):
         return False == self.__eq__(other)
+
+    def copyDetails(self, other):
+        "Kopierar tid, plats och datum från annan aktivitet"
+
+        self.begin = other.begin
+        self.end = other.end
+        self.location = other.location
+        self.date = other.date
     
     def getNiceString(self):
         string = "[" + self.begin.getNiceString() + "-" + self.end.getNiceString() + "] " + unicode(self)
@@ -606,6 +603,8 @@ class Event:
 
         try:
             if not self.course:
+                # om inte copyFromDict redan satt kursen,
+                # som den gör om kursen anges explicit
                 self.course = courselist.getCourse(data["course"])
         except ValueError:
             "Testar alternativa sätt att hitta rätt kurs för aktivitet"
@@ -738,24 +737,21 @@ class SubscribedEvent(Event):
     """
 
     def __init__(self, data):
+        Event.__init__(self)
+
         self.__id = data["id"]
         self.course = data["course"]
         self.date = calendar.Date(data["date"])
         self.begin = calendar.Time(data["begin"])
         self.end = calendar.Time(data["end"])
-        self.location = data["location"]
-        self.description = data["summary"]
         self.type = u"Föreläsning"
-        self.group = ""
-        self.seriesno = 0
-        self.active = True
+        self.user = data["user"]
 
     def __unicode__(self):
-        string = self.description
-        if self.location:
-            string += " (" + self.location + ")"
+        return unicode(self.user, "latin_1")
 
-        return unicode(string, "latin_1")
+    def copyDetails(self, other):
+        pass
 
     def getID(self):
         return self.__id
@@ -798,34 +794,43 @@ class EventList:
 
     def hasEvent(self, id):
         return id in self.events.keys()
-        
-    def addEvent(self, event):
+
+    def _add(self, event):
         """
             Lägger till en aktivitet. ID är en unik nyckel i listan.
             Nya aktiviteter med ID som redan existerar skriver
             _inte_ över existerande aktiviteter.
         """
 
-        if isinstance(event, Event):
-            if not self.hasEvent(event.getID()):
-                self.events[event.getID()] = event
+        if self.hasEvent(event.getID()):
+            # kopierar tid, plats och datum från ny aktivitet
+            # till existerande
+            if not isinstance(event, SubscribedEvent):
+                self.getEvent(event.getID()).copyDetails(event)
         else:
+            # aktiviteten är ny, lägg bara till
+            self.events[event.getID()] = event
+
+    def addEvent(self, event, course = None):
+        if isinstance(event, Event):
+            self._add(event)
+        else:
+            # sätter i förekommande fall kursen explicit
+            event["course"] = course
+
             try:
                 newevent = Event(event)
+                self._add(newevent)
             except ValueError, e:
                 # när en händelse skapas som inte hör till någon
                 # känd kurs avbryts inte all inläsning utan just
                 # den händelsen ignoreras
                 import sys
                 sys.stderr.write("\n" + str(e) + "\n")
-                return
 
-            if not self.hasEvent(newevent.getID()):
-                self.events[newevent.getID()] = newevent
-
-    def addEvents(self, list):
+    def addEvents(self, list, course = None):
         for event in list:
-            self.addEvent(event)
+            self.addEvent(event, course)
             
     def removeEvent(self, id):
         try:
