@@ -3,8 +3,6 @@
 # Skapat av Christian Davén 2004
 
 import calendar
-import daisy
-import timeedit
 import error
 from i18n import *
 
@@ -247,14 +245,30 @@ class TimeTable:
     def isEmpty(self):
         return self.eventlist.isEmpty()
 
-    def importData(self, input, source):
-        "Importerar data från fil eller lista"
+    def importVCalData(self, input):
+        "Importerar aktiviteter från vCalendar-format"
+
         import vcalendar
-        newevents = vcalendar.Reader().read(input)
-        if newevents:
-            self.eventlist.addEvents(newevents)
+        events = vcalendar.Reader().read(input)
+        if events:
+            self.eventlist.addEvents(events)
             self.updated = calendar.Date()
-        
+
+    def importData(self, input, channel):
+        "Importerar aktiviteter från eget format"
+
+        global courselist
+        import calfmt
+        events = calfmt.Reader().read(input)
+
+        if events:
+            # inte snyggt, kan se denna som kurs i GUI:et
+            courselist.addCourse(channel, channel)
+
+            for event in events:
+                event["course"] = courselist.getCourse(channel)
+                self.eventlist.addEvent(SubscribedEvent(event), "")
+
     def getEvent(self, id):
         return self.eventlist.getEvent(id)
 
@@ -504,7 +518,6 @@ class Event:
             str(self.location) + unicode(self.course) + str(self.type) + str(self.group) + str(self.seriesno)
 
     def __str__(self):
-        print "Warning! STR is deprecated (timetable.py, class Event)"
         return unicode(self).encode("latin_1")
 
     def __unicode__(self):
@@ -552,8 +565,10 @@ class Event:
     def setParser(self, id):
         self.parser = None
         if id.startswith("DAISYKTH"):
+            import daisy
             self.parser = daisy.SummaryParser()
         elif id.endswith("timeedit.evolvera.se"):
+            import timeedit
             self.parser = timeedit.SummaryParser()
 
     def parseSummary(self, summary):
@@ -642,6 +657,37 @@ class Event:
         if self.active: self.active = False
         else: self.active = True
 
+
+# -----------------------------------------------------------
+class SubscribedEvent(Event):
+    """
+        En aktivitet som inte kommer direkt från Daisy eller TimeEdit
+        utan är importerad/prenumererad från annan källa.
+    """
+
+    def __init__(self, data):
+        self.__id = data["id"]
+        self.course = data["course"]
+        self.date = calendar.Date(data["date"])
+        self.begin = calendar.Time(data["begin"])
+        self.end = calendar.Time(data["end"])
+        self.location = data["location"]
+        self.description = data["summary"]
+        self.active = True
+
+    def __unicode__(self):
+        return unicode(self.description + " (" + self.location + ")", "latin_1")
+
+    def getID(self):
+        return self.__id
+
+    def isGroupChosen(self):
+        return True
+
+    def toggleActive(self):
+        pass
+
+
 # -----------------------------------------------------------
 class EventList:
     def __init__(self, list=None):
@@ -657,14 +703,25 @@ class EventList:
     
     def getAll(self):
         return self.events.values()
+
+    def hasEvent(self, id):
+        return id in self.events.keys()
         
     def addEvent(self, event):
+        """
+            Lägger till en aktivitet. ID är en unik nyckel i listan.
+            Nya aktiviteter med ID som redan existerar skriver
+            _inte_ över existerande aktiviteter.
+        """
+
         if isinstance(event, Event):
-            self.events[event.getID()] = event
+            if not self.hasEvent(event.getID()):
+                self.events[event.getID()] = event
         else:
             try:
                 newevent = Event(event)
-                self.events[newevent.getID()] = newevent
+                if not self.hasEvent(newevent.getID()):
+                    self.events[newevent.getID()] = newevent
             except ValueError, e:
                 # när en händelse skapas som inte hör till någon
                 # känd kurs avbryts inte all inläsning utan just

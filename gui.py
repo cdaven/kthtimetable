@@ -218,10 +218,14 @@ class MainFrame(wx.Frame):
             return
         
         try:
+            data = []
+
             if daisycourses:
-                self.updateFromDaisy(daisycourses)
+                data = self.updateFromDaisy(daisycourses)
             if timeeditcourses:
-                self.updateFromTimeEdit(timeeditcourses)
+                data += self.updateFromTimeEdit(timeeditcourses)
+
+            timetable.timetable.importVCalData(data)
         except error.ReadError:
             msg = U_("Could not read from") + " " + U_("the timetable server") + ". " + U_("Make sure you have access to the Internet.")
             wx.MessageDialog(self, msg, U_("Server error"), style=wx.OK|wx.ICON_ERROR).ShowModal()
@@ -235,6 +239,10 @@ class MainFrame(wx.Frame):
 #        msg += str(len(difference["added"])) + " händelser lades till\n"
 #        msg += str(len(difference["removed"])) + " händelser togs bort\n"
 #        wx.MessageDialog(self, msg, "Rapport", style=wx.OK|wx.ICON_INFORMATION).ShowModal()
+
+        import calfmt
+        data = calfmt.Writer().write(timetable.timetable.getEventsForDateRange(calendar.Date(), calendar.Date() + 30))
+        file("cyner.cal", "w+").write(data)
 
         timetable.timetable.save()
         self.updateView()        
@@ -250,7 +258,7 @@ class MainFrame(wx.Frame):
             raise
 
         progressdialog.stopProgress()
-        timetable.timetable.importData(data, "TimeEdit")
+        return data
 
     def updateFromDaisy(self, ids):
         import daisy
@@ -263,7 +271,7 @@ class MainFrame(wx.Frame):
             raise
         
         progressdialog.stopProgress()
-        timetable.timetable.importData(data, "Daisy")
+        return data
 
     def NewEvent(self, evt):
         pass

@@ -3,7 +3,6 @@
 # Skapat av Christian Davén 2004
 
 import error
-import timetable
 from i18n import *
 
 def isUTF8(string):
