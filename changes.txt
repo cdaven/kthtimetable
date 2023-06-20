@@ -1,0 +1,305 @@
+CHANGES IN 2.7
+===============================================================
+
+----
+New/improved functionality:
+
+* When choosing Daisy courses you can now also enter parts
+of the course name instead of just the code.
+
+* To cope with the peculiarities of the Daisy timetable format
+the program now imports the timetable for one course at a time.
+This will hopefully minimize Daisy course-related errors.
+
+* Handles Daisy's new format when publishing course names
+and course codes.
+
+* Exporting timetable to HTML now generates an ISO 8859-1
+formatted file, instead of UTF-8. This should make your
+"åäö" appear on all web servers.
+
+
+
+CHANGES IN 2.6
+===============================================================
+
+Please remove your old 'daisycourses' file before starting.
+
+----
+New/improved functionality:
+
+* Remembers the window size between sessions
+
+* Resets the course name to the Daisy name if you enter an
+empty string as name for a Daisy course.
+
+* Exporting timetable to Outlook now generates an ISO 8859-1
+formatted file, instead of UTF-8. This makes your "åäö" appear
+in all (?) versions of Outlook.
+
+
+----
+Corrected bugs:
+
+* Doesn't remove the entire timetable when you deselect a course
+
+* No longer gives error messages when saving if you have
+selected courses whose codes contains åäö.
+
+* Handles multiple Daisy courses with the same course code
+
+* Fixed the graphical positioning of events that begin before
+the selected start of day.
+
+
+CHANGES IN 2.5
+===============================================================
+
+----
+New/improved functionality:
+
+* You can now choose groups for TimeEdit courses as well
+
+* When importing timetable for some Daisy courses there
+was a delay for a few seconds for resolving course names.
+This has been fixed.
+
+* Painting the timetable is slightly faster
+
+* Two fixes to handle some changes in TimeEdit's format
+for exported timetables.
+
+
+----
+Corrected bugs:
+
+* Events that have been removed in the timetable server are
+now also removed in the program.
+
+* The text mode now handles Unicode strings
+
+* Some error messages have been fixed
+
+
+
+CHANGES IN 2.4
+===============================================================
+
+----
+New/improved functionality:
+
+* When choosing courses you can now also choose your preferred
+timetable system (TimeEdit or Daisy). Some courses appear in
+both and sometimes they differ.
+
+* When exporting timetable you now choose application
+compatibility instead of the more cryptic formats. (Outlook/
+Evolution, Palm Desktop and J-Pilot. See readme.txt for more
+information.)
+
+
+----
+Corrected bugs:
+
+* A new bug in 2.3 disabled updating of changed timetable
+events. This is now fixed.
+
+* Events that are marked as inactive were previously reset
+when updating the timetable. This is fixed (probably
+already in 2.3).
+
+* Previously you would choose every Daisy course available when
+you left the course code field empty, but now you exit the
+dialog instead.
+
+* J-Pilot files are now exported in Unicode since J-Pilot
+doesn't like non-Unicode strings.
+
+
+----
+Known problems:
+
+* When importing timetable the program sometimes seems to
+freeze for a few seconds. This is because Daisy events without
+course codes have to be resolved.
+
+* Some dialogs look bad in Windows, and probably in some
+Linuxes as well. This is because I mainly develop the
+application in Linux and the visual settings are not exactly
+the same across platforms.
+
+
+
+CHANGES IN 2.3.1
+===============================================================
+
+----
+Corrected bugs:
+
+* One (1) minor bugfix concerning Daisy course names
+
+
+
+CHANGES IN 2.3 (also mistakenly labelled 2.2.1)
+===============================================================
+
+Windows binary built with:
+
+    Python 2.4
+    wxPython 2.5.3.1
+    py2exe 0.5.4
+    UPX 1.25
+
+----
+New/improved functionality:
+
+* Handles the changes in the TimeEdit system
+
+* Handles Daisy events where the course name is used
+instead of the course code.
+
+* Added some holidays that fall on Saturdays and Sundays
+
+* Translates Swedish room names in the IT University ("Aulan"
+and "Sal X" is in English "Great Hall" and "Room X")
+
+
+----
+Corrected bugs:
+
+* Handles TimeEdit events that belong to more than one course
+
+* Shows the event description even when the event starts "above"
+the current view (i.e. it starts earlier than the timetable shows)
+
+* Midsummer Eve is no longer a holiday (but Midsummer Day is)
+
+* Got rid of an annoying warning message on wxGTK 2.4
+
+
+
+CHANGES IN 2.2
+===============================================================
+
+----
+New/improved functionality:
+
+* The user can change some settings for the program
+
+* Courses are chosen in the same way, both for Daisy and TimeEdit
+
+* More than twice as fast painting of the graphical timetable
+
+* Handles term transitions in a much better way. Now the user can
+choose courses from two terms instead of only the current.
+
+* The program is completely translated to English (besides Swedish)
+
+* Recognizes more event types from TimeEdit
+
+* Shows some more holidays and other special days
+
+
+----
+Corrected bugs:
+
+* Christmas Eve is no longer a holiday
+
+
+
+FÖRÄNDRINGAR I 2.1
+===============================================================
+
+----
+Nya funktioner:
+
+* Använder den nya, publika schemageneratorn för Daisy. Det
+krävs alltså inte längre någon inloggning för att hämta schema.
+
+* Visar nationella helg- och flaggdagar (räknas ut med en
+allmängiltig algoritm)
+
+* Exporterar schema till kommaseparerad fil (CSV) för import
+i Linux-programmet jPilot
+
+* Export av schema markerar alla händelser som tillhörande
+kategorin KTHTimeTable (för att enklare kunna ex. radera
+händelserna i Outlook/Palm Desktop/Evolution)
+
+* Gränssnittet är nu kompatibelt med den nya wxPython 2.5,
+och samtidigt bakåtkompatibelt med 2.4
+
+* Använder Unicode-strängar (exporterar UTF-8 till html, dock
+inte till vCalendar/iCalendar och CSV). Detta betyder att
+Unicode-versionen av wxWidgets är nödvändig -- påverkar inte
+dig som använder binärfilen för Windows.
+
+* Raderar vid uppstart alla loggfiler ("tmp*") som skapats av
+programmet.
+
+* Programmet är nu helt förberett för översättning till
+valfritt språk som använder UTF-8. Hör av dig om du vill
+översätta det (ca 160 strängar). Det är enkelt!
+
+
+----
+Åtgärdade buggar:
+
+* Förstår bättre viss data i scheman genererade av Daisy
+* Återställde den tidigare ordnade radbrytningen för wxGTK
+* Mer korrekt beteende vid olika versioner av wxPython
+
+
+----
+Kända buggar som EJ är åtgärdade:
+
+* Vid import av schema för kurs, som också innehåller händelser
+från andra kurser, ignoreras alla "sekundära" kursers händelser.
+Detta är INTE korrekt beteende.
+
+* Vid markering av händelse som inaktiverad blir denna åter
+aktiverad vid import av schema
+
+
+
+FÖRÄNDRINGAR I 2.0
+===============================================================
+
+----
+Nya funktioner:
+
+* Daisys nya format på vCalendar-filer (med tidszoner) hanteras nu.
+
+
+----
+Åtgärdade buggar:
+
+* Vid import av schema för en kurs, som också innehåller händelser
+för andra kurser, ignoreras nu alla andra kursers händelser medan
+den valda kursen importeras (märkligt beteende från TimeEdit)
+
+
+
+FÖRÄNDRINGAR I 2.0 BETA 4
+===============================================================
+
+Källkoden är totalt omstrukturerad och något förbättrad i
+objektorienterat hänseende. Detta borde betyda färre buggar
+och lättare underhåll framöver.
+
+
+----
+Nya funktioner:
+
+* HTML-export av schemat
+* programmet fungerar i textläge
+* enskilda händelser kan markeras som inaktiva
+* felmeddelanden visas i ett fönster istället för konsol
+
+
+----
+Åtgärdade buggar:
+
+* gruppvalet var dåligt skriven och buggig
+* många fler som jag inte ens minns
+
